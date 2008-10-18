@@ -212,7 +212,7 @@
 			var i = 0;
 			this.length = 0;
 			this.tripleStore = [];
-			this.base = (options && options.base) || $.uri.base();
+			this.baseURI = (options && options.base) || $.uri.base();
 			this.namespaces = (options && options.namespaces) || {};
 			this.filters = [];
 			triples = triples || [];
@@ -221,6 +221,15 @@
 			}
 			return this;
 		},
+	
+	  base: function (base) {
+	    if (base === undefined) {
+	      return this.baseURI;
+	    } else {
+	      this.baseURI = base;
+	      return this;
+	    }
+	  },
 	
 		prefix: function (prefix, uri) {
 			if (uri === undefined) {
@@ -239,7 +248,7 @@
 			var 
 				tripleStore = this.tripleStore,
 				filters = this.filters, 
-				base = (options && options.base) || this.base;
+				base = (options && options.base) || this.baseURI;
 				namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {});
 				matches = [];
 			if (typeof triple === 'string') {
@@ -298,7 +307,7 @@
 		
 		where: function (filter, options) {
 			var 
-				base = (options && options.base) || this.base;
+				base = (options && options.base) || this.baseURI;
 				namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {});
 				matches = [];
 			filter = parseFilter(filter, { namespaces: namespaces, base: base } );
