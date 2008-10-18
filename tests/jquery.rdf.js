@@ -65,6 +65,24 @@ test("selecting triples using a search pattern", function() {
 	equals(filtered[1].bindings.photo.uri, $.uri('photo2.jpg'));
 });
 
+test("creating triples and specifying options should helpfully bind prefixes", function() {
+	var namespaces = { dc: ns.dc, foaf: ns.foaf };
+	var triples = [
+		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
+		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+	];
+	var rdf = $.rdf(triples, { namespaces: namespaces });
+	try {
+		var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>');
+		ok(true, "should not raise an error");
+		equals(rdf.prefix('dc'), ns.dc);
+		equals(rdf.prefix('foaf'), ns.foaf);
+	} catch (e) {
+		ok(false, "should not raise the error " + e.message);
+	}
+});
+
 test("selecting triples using a search pattern, then adding another triple that matches the search pattern", function() {
 	var namespaces = { namespaces: { dc: ns.dc, foaf: ns.foaf } };
 	var triples = [
@@ -153,6 +171,28 @@ test("filtering some results based on a regular expression", function() {
 	rdf.filter('title', /^SPARQL/);
 	equals(rdf.length, 1, "should have one item after filtering");
 	equals(rdf.bindings()[0].title.value, "SPARQL Tutorial");
+});
+
+test("creating a namespace binding explicitly, not while creating the triples", function() {
+	var rdf = $.rdf()
+		.prefix('dc', 'http://purl.org/dc/elements/1.1/')
+		.prefix('', 'http://example.org/book/');
+	try {
+		rdf.add(':book1 dc:title "SPARQL Tutorial"');
+		ok(true, "should not generate an error");
+		equals(rdf.tripleStore[0].subject, '<http://example.org/book/book1>');
+		equals(rdf.tripleStore[0].property, '<http://purl.org/dc/elements/1.1/title>');
+	} catch (e) {
+		ok(false, "should not generate the error " + e.message);
+	}
+});
+
+test("creating a base URI explicitly, not while creating the triples", function() {
+	var rdf = $.rdf()
+		.prefix('dc', 'http://purl.org/dc/elements/1.1/')
+		.base('http://www.example.org/images/')
+		.add('<photo1.jpg> dc:creator "Jeni"');
+	equals(rdf.tripleStore[0].subject, '<http://www.example.org/images/photo1.jpg>');
 });
 
 module("Creating Triples");

@@ -212,12 +212,23 @@
 			var i = 0;
 			this.length = 0;
 			this.tripleStore = [];
+			this.base = (options && options.base) || $.uri.base();
+			this.namespaces = (options && options.namespaces) || {};
 			this.filters = [];
 			triples = triples || [];
 			for (; i < triples.length; i += 1) {
-				this.add(triples[i], options);
+				this.add(triples[i]);
 			}
 			return this;
+		},
+	
+		prefix: function (prefix, uri) {
+			if (uri === undefined) {
+				return this.namespaces[prefix];
+			} else {
+				this.namespaces[prefix] = uri;
+				return this;
+			}
 		},
 	
 		size: function () {
@@ -228,9 +239,11 @@
 			var 
 				tripleStore = this.tripleStore,
 				filters = this.filters, 
+				base = (options && options.base) || this.base;
+				namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {});
 				matches = [];
 			if (typeof triple === 'string') {
-				triple = $.rdf.triple(triple, options);
+				triple = $.rdf.triple(triple, { namespaces: namespaces, base: base });
 			}
 			this.tripleStore.push(triple);
 			$.each(filters, function (i, filter) {
@@ -284,8 +297,11 @@
 		},
 		
 		where: function (filter, options) {
-			var matches = [];
-			filter = parseFilter(filter, options);
+			var 
+				base = (options && options.base) || this.base;
+				namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {});
+				matches = [];
+			filter = parseFilter(filter, { namespaces: namespaces, base: base } );
 			this.filters.push(filter);
 			matches = findTriples(this.tripleStore, filter);
 			matches = mergeMatches(this, matches);
