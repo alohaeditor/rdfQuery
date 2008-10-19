@@ -204,21 +204,36 @@
     return new $.rdf.fn.init(triples, options);
   };
 
-  $.rdf.fn = $.rdf.prototype = {    
+  $.rdf.fn = $.rdf.prototype = {
+    rdfquery: '0.1',
+    
     init: function (triples, options) {
-      var i = 0;
+      var i;
       this.length = 0;
       this.tripleStore = [];
       this.baseURI = (options && options.base) || $.uri.base();
-      this.namespaces = (options && options.namespaces) || {};
+      this.namespaces = $.extend({}, (options && options.namespaces) || {});
       this.filters = [];
+      this.union = [];
       triples = triples || [];
-      for (; i < triples.length; i += 1) {
+      for (i = 0; i < triples.length; i += 1) {
         this.add(triples[i]);
       }
       return this;
     },
-  
+
+    clone: function () {
+      var clone = new $.rdf();
+      clone.tripleStore = $.makeArray(this.tripleStore);
+      clone.baseURI = this.baseURI;
+      clone.namespaces = $.extend({}, this.namespaces);
+      clone.filters = $.makeArray(this.filters);
+      clone.union = $.makeArray(this.union);
+      clone.length = 0;
+      Array.prototype.push.apply(clone, $.makeArray(this));
+      return clone;
+    },
+
     base: function (base) {
       if (base === undefined) {
         return this.baseURI;
@@ -245,80 +260,100 @@
         namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {}),
         replacement = [],
         matches = [];
-      if (typeof triple === 'string') {
-        triple = $.rdf.triple(triple, { namespaces: namespaces, base: base });
-      }
-      this.tripleStore.push(triple);
-      $.each(this.filters, function (i, filter) {
-        var bindings, matchesA, matchesB, otherFilters, foundMatch, f, m, k;
-        if (filter.optional) {
-          includesOptionalFilter = true;
+       if (triple.rdfquery !== undefined) {
+        // create a union
+        if (this.filters.length > 0) {
+          return $.rdf([this, triple]);
+        } else {
+          this.tripleStore = $.unique(this.tripleStore.concat(triple.tripleStore));
+          triple.tripleStore = this.tripleStore;
+          this.union.push(triple);
+          return this;
         }
-        bindings = testTriple(triple, filter);
-        if (bindings !== null) {
-          matchesA = [{ bindings: bindings, triples: [triple] }];
-          matchesB = [];
-          otherFilters = rdf.filters.slice();
-          otherFilters.splice(i, 1); // remove the matching filter from the set of filters
-          while (otherFilters.length > 0) {
-            foundMatch = true;
-            $.each(matchesA, function (j, match) {
-              matchesB = [];
-              f = fillFilter(otherFilters[0], match.bindings);
-              m = findTriples(rdf.tripleStore, f);
-              if (m.length === 0) {
-                if (!f.optional) {
-                  foundMatch = false;
-                  return false;
+      } else {
+        if (typeof triple === 'string') {
+          triple = $.rdf.triple(triple, { namespaces: namespaces, base: base });
+        }
+        this.tripleStore.push(triple);
+        $.each(this.filters, function (i, filter) {
+          var bindings, matchesA, matchesB, otherFilters, foundMatch, f, m, k;
+          if (filter.optional) {
+            includesOptionalFilter = true;
+          }
+          bindings = testTriple(triple, filter);
+          if (bindings !== null) {
+            matchesA = [{ bindings: bindings, triples: [triple] }];
+            matchesB = [];
+            otherFilters = rdf.filters.slice();
+            otherFilters.splice(i, 1); // remove the matching filter from the set of filters
+            while (otherFilters.length > 0) {
+              foundMatch = true;
+              $.each(matchesA, function (j, match) {
+                matchesB = [];
+                if ($.isFunction(otherFilters[0])) {
+                  f = otherFilters[0];
+                  if (f(match.bindings)) {
+                    matchesB.push(match);
+                  }
+                  matchesA = matchesB;
+                } else {
+                  f = fillFilter(otherFilters[0], match.bindings);
+                  m = findTriples(rdf.tripleStore, f);
+                  if (m.length === 0) {
+                    if (!f.optional) {
+                      foundMatch = false;
+                      return false;
+                    }
+                  } else {
+                    for (k = 0; k < m.length; k += 1) {
+                      matchesB.push({ 
+                        bindings: $.extend({}, match.bindings, m[k].bindings), 
+                        triples: match.triples.concat(m[k].triples)
+                      });
+                    }
+                    matchesA = matchesB;
+                  }
                 }
-              } else {
-                for (k = 0; k < m.length; k += 1) {
-                  matchesB.push({ 
-                    bindings: $.extend({}, match.bindings, m[k].bindings), 
-                    triples: match.triples.concat(m[k].triples)
-                  });
+              });
+              if (foundMatch = false) {
+                break; // break out of the while loop, not having added anything
+              }
+              otherFilters.splice(0, 1);
+            }
+            if (otherFilters.length === 0) {
+              matches = matches.concat(matchesA);
+            }
+          }
+        });
+        if (includesOptionalFilter) {
+          // Have to worry about the possibility of an existing match being "completed" by the new triple.
+          // The new match will have been found by the above code, so it's a matter of removing any
+          // existing matches that have been completed
+          replacement = $.map(this, function (match) {
+            var isCompleted = false;
+            $.each(matches, function (j, newMatch) {
+              var supersets = true;
+              for (b in newMatch.bindings) {
+                if (match.bindings[b] !== newMatch.bindings[b] && match.bindings[b] !== undefined) {
+                  supersets = false;
+                  break;
                 }
-                matchesA = matchesB;
+              }
+              if (supersets) {
+                isCompleted = true;
+                return false; // break out of the $.each()
               }
             });
-            if (foundMatch = false) {
-              break; // break out of the while loop, not having added anything
-            }
-            otherFilters.splice(0, 1);
-          }
-          if (otherFilters.length === 0) {
-            matches = matches.concat(matchesA);
-          }
-        }
-      });
-      if (includesOptionalFilter) {
-        // Have to worry about the possibility of an existing match being "completed" by the new triple.
-        // The new match will have been found by the above code, so it's a matter of removing any
-        // existing matches that have been completed
-        replacement = $.map(this, function (match) {
-          var isCompleted = false;
-          $.each(matches, function (j, newMatch) {
-            var supersets = true;
-            for (b in newMatch.bindings) {
-              if (match.bindings[b] !== newMatch.bindings[b] && match.bindings[b] !== undefined) {
-                supersets = false;
-                break;
-              }
-            }
-            if (supersets) {
-              isCompleted = true;
-              return false; // break out of the $.each()
-            }
+            return isCompleted ? null : match;
           });
-          return isCompleted ? null : match;
-        });
-        replacement = replacement.concat(matches);
-        this.length = 0;
-        Array.prototype.push.apply(this, replacement);
-      } else {
-        Array.prototype.push.apply(this, matches);
+          replacement = replacement.concat(matches);
+          this.length = 0;
+          Array.prototype.push.apply(this, replacement);
+        } else {
+          Array.prototype.push.apply(this, matches);
+        }
+        return this;
       }
-      return this;
     },
     
     bindings: function () {
@@ -369,6 +404,7 @@
       } else {
         func = binding;
       }
+      this.filters.push(func);
       matches = $.map(this, function (match) {
         return func(match.bindings) ? match : null;
       });

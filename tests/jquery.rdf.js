@@ -239,6 +239,30 @@ test("filtering some results based on a regular expression", function() {
 	equals(rdf.bindings()[0].title.value, "SPARQL Tutorial");
 });
 
+test("filtering some results, then adding a new matching triple", function() {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .prefix('', 'http://example.org/book')
+    .add(':book1 dc:title "SPARQL Tutorial"')
+    .where('?x dc:title ?title')
+    .filter('title', /SPARQL/);
+  equals(rdf.length, 1, "should have one match before adding another triple");
+  rdf.add(':book2 dc:title "Another SPARQL Tutorial"');
+  equals(rdf.length, 2, "should have two matches after adding another matching triple");
+});
+
+test("filtering some results, then adding a new triple that matches the where clause but not the filter", function() {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .prefix('', 'http://example.org/book')
+    .add(':book1 dc:title "SPARQL Tutorial"')
+    .where('?x dc:title ?title')
+    .filter('title', /SPARQL/);
+  equals(rdf.length, 1, "should have one match before adding another triple");
+  rdf.add(':book2 dc:title "XQuery Tutorial"');
+  equals(rdf.length, 1, "should have one match after adding a non-matching triple");
+});
+
 test("creating a namespace binding explicitly, not while creating the triples", function() {
 	var rdf = $.rdf()
 		.prefix('dc', 'http://purl.org/dc/elements/1.1/')
@@ -344,6 +368,42 @@ test("multiple optional clauses", function() {
   equals(rdf.bindings()[1].mbox.uri, 'mailto:bob@work.example');
   equals(rdf.bindings()[1].hpage, undefined);
 });
+
+test("creating a copy", function() {
+  var rdf = $.rdf()
+    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
+    .add('_:a  dc10:creator   "Alice" .')
+    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
+    .add('_:b  dc11:creator   "Bob" .')
+    .add('_:c  dc10:title     "SPARQL" .')
+    .add('_:c  dc11:title     "SPARQL (updated)" .')
+    .where('?x dc10:title ?title')
+  var copy = rdf.clone();
+  ok(copy.tripleStore.length === rdf.tripleStore.length, "the triplestores should be the same length");
+  ok(copy.tripleStore !== rdf.tripleStore, "the triplestores should not be the same object");
+  ok(copy.length === rdf.length, "there should be the same number of matches");
+});
+
+/*
+test("creating a union", function() {
+  var rdf = $.rdf()
+    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
+    .add('_:a  dc10:creator   "Alice" .')
+    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
+    .add('_:b  dc11:creator   "Bob" .')
+    .add('_:c  dc10:title     "SPARQL" .')
+    .add('_:c  dc11:title     "SPARQL (updated)" .');
+  var union = rdf
+    .where('?book dc10:title ?title')
+    .add(rdf.where('?book dc11:title ?title'))
+    SELECT ?title
+    WHERE  { { ?book dc10:title  ?title } UNION { ?book dc11:title  ?title } }
+});
+*/
 
 module("Creating Triples");
 
