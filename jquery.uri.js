@@ -47,11 +47,18 @@
 		},
 
 		path = function (u) {
-			var m = u.match(pathRegex);
-			return {
-				path: m[1],
-				rest: m[2]
-			};
+		  if (typeof u === 'string') {
+  			var m = u.match(pathRegex);
+  			return {
+  				path: m[1],
+  				rest: m[2]
+  			};
+		  } else {
+		    throw {
+		      name: 'MalformedURI',
+		      message: 'Could not parse "' + '"'
+		    };
+		  }
 		},
 
 		query = function (u) {
