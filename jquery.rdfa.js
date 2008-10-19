@@ -232,7 +232,90 @@
 				this.data('rdfa.triples', local);
 			}
 			return triples.concat(local);
+		},
+		
+		nsCounter = 1,
+		
+		createCurieAttr = function (elem, attr, uri) {
+		  var m, curie;
+		  try {
+		    curie = elem.createCurie(uri);
+		  } catch (e) {
+		    if (uri.toString() === rdfXMLLiteral) {
+		      elem.attr('xmlns:rdf', ns.rdf);
+		      curie = 'rdf:XMLLiteral';
+		    } else {
+  		    m = /^(.+[\/#])([^#]+)$/.exec(uri);
+  		    elem.attr('xmlns:ns' + nsCounter, m[1]);
+  		    curie = 'ns' + nsCounter + ':' + m[2];
+  		    nsCounter += 1;
+		    }
+		  }
+		  elem.attr(attr, curie);
+		},
+		
+		resetLang = function (elem, lang) {
+      elem.wrapInner('<span></span>')
+        .children('span')
+        .attr('lang', lang);
+      return elem;
+		},
+		
+		addRDFa = function (triple) {
+		  var content, lang, ns = this.xmlns();
+      if (typeof triple === 'string') {
+        triple = $.rdf.triple(triple, { namespaces: ns, base: $.uri.base() });
+      }
+      if (triple.object.resource) {
+        // TODO
+      } else {
+        createCurieAttr(this, 'property', triple.property.uri);
+        content = this.text() !== triple.object.value;
+        if (content) {
+          if (triple.object.datatype && triple.object.datatype.toString() === rdfXMLLiteral) {
+            this.html(triple.object.value);
+          } else {
+            this.attr('content', triple.object.value);
+          }
+        }
+        lang = getLang(this);
+        if (triple.object.lang) {
+          if (lang !== triple.object.lang) {
+            this.attr('lang', triple.object.lang);
+            if (content) {
+              resetLang(this, lang);
+            }
+          }
+        } else if (triple.object.datatype) {
+          createCurieAttr(this, 'datatype', triple.object.datatype);
+        } else {
+          // the empty datatype ensures that any child elements that might be added won't mess up this triple
+          this.attr('datatype', '');
+          // the empty lang ensures that a language won't be assigned to the literal
+          if (lang !== undefined) {
+            this.attr('lang', '');
+            if (content) {
+              resetLang(this, lang);
+            }
+          }
+        }
+      }
+      return this;
 		};
+
+  $.fn.rdfa = function (triple) {
+    if (triple === undefined) {
+      var triples = $.map($(this), function (elem) {
+        return rdfa.call($(elem));
+      });
+      return $.rdf(triples);
+    } else {
+      $(this).each(function () {
+        addRDFa.call($(this), triple);
+      });
+      return this;
+    }
+  };
 
 	$.rdf.gleaners.push(rdfa);
 
