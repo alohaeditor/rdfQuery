@@ -195,6 +195,71 @@ test("creating a base URI explicitly, not while creating the triples", function(
 	equals(rdf.tripleStore[0].subject, '<http://www.example.org/images/photo1.jpg>');
 });
 
+test("creating an optional clause", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .prefix('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
+    .add('_:a  rdf:type        foaf:Person .')
+    .add('_:a  foaf:name       "Alice" .')
+    .add('_:a  foaf:mbox       <mailto:alice@example.com> .')
+    .add('_:a  foaf:mbox       <mailto:alice@work.example> .')
+    .add('_:b  rdf:type        foaf:Person .')
+    .add('_:b  foaf:name       "Bob" .')
+    .where('?x foaf:name ?name')
+    .optional('?x foaf:mbox ?mbox');
+  equals(rdf.length, 3, "there should be three matches");
+  equals(rdf.bindings()[0].name.value, "Alice");
+  equals(rdf.bindings()[0].mbox.uri, 'mailto:alice@example.com');
+  equals(rdf.bindings()[1].name.value, "Alice");
+  equals(rdf.bindings()[1].mbox.uri, 'mailto:alice@work.example');
+  equals(rdf.bindings()[2].name.value, "Bob");
+  equals(rdf.bindings()[2].mbox, undefined);
+});
+
+test("adding a triple after creating an optional clause", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .add('_:a  foaf:name       "Alice" .')
+    .add('_:a  foaf:mbox       <mailto:alice@example.com> .')
+    .add('_:a  foaf:mbox       <mailto:alice@work.example> .')
+    .where('?x foaf:name ?name')
+    .optional('?x foaf:mbox ?mbox');
+  equals(rdf.length, 2, "there should be two matches");
+  rdf.add('_:b foaf:name "Bob"');
+  equals(rdf.length, 3, "there should be three matches");
+  equals(rdf.bindings()[2].name.value, "Bob");
+  equals(rdf.bindings()[2].mbox, undefined);
+});
+
+test("adding a triple that should cause the creation of two matches", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .add('_:a  foaf:mbox       <mailto:alice@example.com> .')
+    .add('_:a  foaf:mbox       <mailto:alice@work.example> .')
+    .where('?x foaf:name ?name')
+    .where('?x foaf:mbox ?mbox');
+  equals(rdf.length, 0, "there should be no matches");
+  rdf.add('_:a  foaf:name       "Alice" .');
+  equals(rdf.length, 2, "there should be two matches");
+  equals(rdf.bindings()[0].name.value, "Alice");
+  equals(rdf.bindings()[0].mbox.uri, 'mailto:alice@example.com');
+  equals(rdf.bindings()[1].name.value, "Alice");
+  equals(rdf.bindings()[1].mbox.uri, 'mailto:alice@work.example');
+});
+
+test("adding a triple that satisfies an optional clause", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .add('_:a  foaf:name       "Alice" .')
+    .where('?x foaf:name ?name')
+    .optional('?x foaf:mbox ?mbox');
+  equals(rdf.length, 1, "there should be one match");
+  rdf.add('_:a foaf:mbox <mailto:alice@example.com> .')
+  equals(rdf.length, 1, "there should be one match");
+  equals(rdf.bindings()[0].name.value, "Alice");
+  equals(rdf.bindings()[0].mbox.uri, 'mailto:alice@example.com');
+});
+
 module("Creating Triples");
 
 test("two identical triples", function() {
