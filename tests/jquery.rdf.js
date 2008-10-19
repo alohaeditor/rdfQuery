@@ -8,7 +8,8 @@ var ns = {
 	xsd: "http://www.w3.org/2001/XMLSchema#",
 	dc: "http://purl.org/dc/elements/1.1/",
 	foaf: "http://xmlns.com/foaf/0.1/",
-	cc: "http://creativecommons.org/ns#"
+	cc: "http://creativecommons.org/ns#",
+	vcard: "http://www.w3.org/2001/vcard-rdf/3.0#"
 }
 
 module("Triplestore Tests");
@@ -554,6 +555,27 @@ test("filtering a union with a filter clause", function() {
   equals(union.length, 2, "there should be two matches in the union");
   equals(union.bindings().get(1).title.value, "SPARQL");
   equals(union.bindings().get(1).author.value, "Alex");
+});
+
+test("creating new triples", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('_:a    foaf:givenname   "Alice" .')
+    .add('_:a    foaf:family_name "Hacker" .')
+    .add('_:b    foaf:givenname   "Bob" .')
+    .add('_:b    foaf:family_name "Hacker" .')
+    .where('?person foaf:givenname ?gname')
+    .where('?person foaf:family_name ?fname');
+  equals(rdf.tripleStore.length, 4, "should contain four triples");
+  equals(rdf.length, 2, "should have two matches");
+  rdf.prefix('vcard', ns.vcard)
+    .add('?person vcard:N []');
+  equals(rdf.tripleStore.length, 6, "should contain six triples");
+  equals(rdf.length, 2, "should have two matches");
+  rdf.where('?person vcard:N ?v')
+    .add('?v vcard:givenname ?gname')
+    .add('?v vcard:familyName ?fname');
+  equals(rdf.tripleStore.length, 10, "should contain ten triples");
 });
 
 module("Creating Triples");

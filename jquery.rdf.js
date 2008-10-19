@@ -255,6 +255,7 @@
     add: function (triple, options) {
       var 
         rdf = this,
+        template,
         includesOptionalFilter = false;
         base = (options && options.base) || this.baseURI,
         namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {}),
@@ -285,7 +286,27 @@
         return this;
       } else {
         if (typeof triple === 'string') {
-          triple = $.rdf.triple(triple, { namespaces: namespaces, base: base });
+          template = parseFilter(triple, { namespaces: namespaces, base: base });
+          if (typeof template.subject === 'string' ||
+              typeof template.property === 'string' ||
+              typeof template.object === 'string') {
+            $.each(this, function (i, match) {
+              var f = fillFilter(template, match.bindings);
+              if (typeof f.subject === 'string' ||
+                  typeof f.property === 'string' ||
+                  typeof f.object === 'string') {
+                throw {
+                  name: "MalformedTemplate",
+                  message: "Couldn't complete the template: " + f
+                };
+              } else {
+                rdf.add($.rdf.triple(f.subject, f.property, f.object));
+              }
+            });
+            return this;
+          } else {
+            triple = $.rdf.triple(template.subject, template.property, template.object);
+          }
         }
         this.tripleStore.push(triple);
         $.each(this.filters, function (i, filter) {
