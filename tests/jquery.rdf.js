@@ -386,8 +386,25 @@ test("creating a copy", function() {
   ok(copy.length === rdf.length, "there should be the same number of matches");
 });
 
-/*
-test("creating a union", function() {
+test("creating a union from two sets of triples", function() {
+  var rdfA = $.rdf()
+    .prefix('dc', ns.dc)
+    .add('<photo1.jpg> dc:creator "Jane"');
+  var rdfB = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('<photo1.jpg> foaf:depicts "Jane"');
+  var rdf = rdfA.add(rdfB);
+  equals(rdf.tripleStore.length, 2, "it should contain two triples");
+  equals(rdf.union.length, 0, "it shouldn't create a proper union");
+  equals(rdf.prefix('dc'), ns.dc);
+  equals(rdf.prefix('foaf'), ns.foaf);
+  rdf.where('?photo dc:creator ?person').where('?photo foaf:depicts ?person');
+  equals(rdf.length, 1, "it should contain one match");
+  equals(rdf.bindings().get(0).photo.uri, $.uri('photo1.jpg'));
+  equals(rdf.bindings().get(0).person.value, "Jane");
+});
+
+test("creating a union from two differently filtered sets of triples", function() {
   var rdf = $.rdf()
     .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
     .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
@@ -397,13 +414,147 @@ test("creating a union", function() {
     .add('_:b  dc11:creator   "Bob" .')
     .add('_:c  dc10:title     "SPARQL" .')
     .add('_:c  dc11:title     "SPARQL (updated)" .');
-  var union = rdf
-    .where('?book dc10:title ?title')
-    .add(rdf.where('?book dc11:title ?title'))
-    SELECT ?title
-    WHERE  { { ?book dc10:title  ?title } UNION { ?book dc11:title  ?title } }
+  var rdfA = rdf.clone().where('?book dc10:title ?title');
+  equals(rdfA.length, 2, "there should be two matches in the first group");
+  var rdfB = rdf.clone().where('?book dc11:title ?title');
+  equals(rdfB.length, 2, "there should be two matches in the second group");
+  var union = rdfA.add(rdfB);
+  equals(union.tripleStore.length, 0, "the union shouldn't contain a triple store itself");
+  equals(union.length, 4, "there should be four matches in the union");
+  equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
+  equals(union.bindings().get(1).title.value, "SPARQL");
+  equals(union.bindings().get(2).title.value, "SPARQL Protocol Tutorial");
+  equals(union.bindings().get(3).title.value, "SPARQL (updated)")
 });
-*/
+
+test("creating a union with different bindings", function() {
+  var rdf = $.rdf()
+    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
+    .add('_:a  dc10:creator   "Alice" .')
+    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
+    .add('_:b  dc11:creator   "Bob" .')
+    .add('_:c  dc10:title     "SPARQL" .')
+    .add('_:c  dc11:title     "SPARQL (updated)" .');
+  var rdfA = rdf.clone().where('?book dc10:title ?x');
+  var rdfB = rdf.clone().where('?book dc11:title ?y');
+  var union = rdfA.add(rdfB);
+  equals(union.length, 4, "there should be four matches in the union");
+  equals(union.bindings().get(0).x.value, "SPARQL Query Language Tutorial");
+  equals(union.bindings().get(1).x.value, "SPARQL");
+  equals(union.bindings().get(2).y.value, "SPARQL Protocol Tutorial");
+  equals(union.bindings().get(3).y.value, "SPARQL (updated)")
+});
+
+test("creating a union where several filters have been applied", function() {
+  var rdf = $.rdf()
+    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
+    .add('_:a  dc10:creator   "Alice" .')
+    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
+    .add('_:b  dc11:creator   "Bob" .')
+    .add('_:c  dc10:title     "SPARQL" .')
+    .add('_:c  dc11:title     "SPARQL (updated)" .');
+  var rdfA = rdf.clone().where('?book dc10:title ?title').where('?book dc10:creator ?author');
+  var rdfB = rdf.clone().where('?book dc11:title ?title').where('?book dc11:creator ?author');
+  var union = rdfA.add(rdfB);
+  equals(union.length, 2, "there should be two matches in the union");
+  equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
+  equals(union.bindings().get(0).author.value, "Alice");
+  equals(union.bindings().get(1).title.value, "SPARQL Protocol Tutorial");
+  equals(union.bindings().get(1).author.value, "Bob");
+});
+
+test("adding a triple to a union", function() {
+  var rdf = $.rdf()
+    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
+    .add('_:a  dc10:creator   "Alice" .')
+    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
+    .add('_:b  dc11:creator   "Bob" .')
+    .add('_:c  dc10:title     "SPARQL" .')
+    .add('_:c  dc11:title     "SPARQL (updated)" .');
+  var rdfA = rdf.clone().where('?book dc10:title ?title').where('?book dc10:creator ?author');
+  var rdfB = rdf.clone().where('?book dc11:title ?title').where('?book dc11:creator ?author');
+  var union = rdfA.add(rdfB);
+  equals(union.length, 2, "there should be two matches in the union");
+  union.add('_:c dc10:creator "Claire"');
+  equals(union.length, 3, "there should be three matches in the union");
+  equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
+  equals(union.bindings().get(0).author.value, "Alice");
+  equals(union.bindings().get(1).title.value, "SPARQL");
+  equals(union.bindings().get(1).author.value, "Claire");
+  equals(union.bindings().get(2).title.value, "SPARQL Protocol Tutorial");
+  equals(union.bindings().get(2).author.value, "Bob");
+});
+
+test("filtering a union with a where clause", function() {
+  var rdf = $.rdf()
+    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
+    .add('_:a  dc10:creator   "Alice" .')
+    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
+    .add('_:b  dc11:creator   "Bob" .')
+    .add('_:c  dc10:title     "SPARQL" .')
+    .add('_:d  dc11:title     "SPARQL (updated)" .');
+  var rdfA = rdf.clone().where('?book dc10:title ?title');
+  var rdfB = rdf.clone().where('?book dc11:title ?title');
+  var union = rdfA.add(rdfB);
+  equals(union.length, 4, "there should be four matches in the union");
+  union.where('?book dc10:creator ?author');
+  equals(union.length, 1, "there should be one match in the union");
+  equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
+  equals(union.bindings().get(0).author.value, "Alice");
+  union.add('_:c dc10:creator "Alex"');
+  equals(union.length, 2, "there should be two matches in the union");
+  equals(union.bindings().get(1).title.value, "SPARQL");
+  equals(union.bindings().get(1).author.value, "Alex");
+});
+
+test("adding a binding after filtering with two where clauses", function() {
+  var rdf = $.rdf()
+    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
+    .add('_:a  dc10:creator   "Alice" .')
+    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
+    .add('_:b  dc11:creator   "Bob" .')
+    .add('_:c  dc10:title     "SPARQL" .')
+    .add('_:d  dc11:title     "SPARQL (updated)" .')
+    .where('?book dc11:title ?title')
+    .where('?book dc10:creator ?author');
+  equals(rdf.length, 0, "there should be no matches");
+  rdf.add('_:c dc10:creator "Claire"');
+  equals(rdf.length, 0, "there should still be no matches");
+});
+
+test("filtering a union with a filter clause", function() {
+  var rdf = $.rdf()
+    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
+    .add('_:a  dc10:creator   "Alice" .')
+    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
+    .add('_:b  dc11:creator   "Bob" .')
+    .add('_:c  dc10:title     "SPARQL" .')
+    .add('_:c  dc11:title     "SPARQL (updated)" .');
+  var rdfA = rdf.clone().where('?book dc10:title ?title').where('?book dc10:creator ?author');
+  var rdfB = rdf.clone().where('?book dc11:title ?title').where('?book dc11:creator ?author');
+  var union = rdfA.add(rdfB);
+  equals(union.length, 2, "there should be two matches in the union");
+  union.filter('author', /^A/);
+  equals(union.length, 1, "there should be one match in the union");
+  equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
+  equals(union.bindings().get(0).author.value, "Alice");
+  union.add('_:c dc10:creator "Alex"');
+  equals(union.length, 2, "there should be two matches in the union");
+  equals(union.bindings().get(1).title.value, "SPARQL");
+  equals(union.bindings().get(1).author.value, "Alex");
+});
 
 module("Creating Triples");
 

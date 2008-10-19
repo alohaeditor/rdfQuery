@@ -265,11 +265,24 @@
         if (this.filters.length > 0) {
           return $.rdf([this, triple]);
         } else {
-          this.tripleStore = $.unique(this.tripleStore.concat(triple.tripleStore));
-          triple.tripleStore = this.tripleStore;
-          this.union.push(triple);
+          if (triple.filters.length > 0) {
+            this.union.push(triple);
+            Array.prototype.push.apply(this, $.makeArray(triple));
+          } else {
+            this.tripleStore = $.unique(this.tripleStore.concat(triple.tripleStore));
+            $.extend(this.namespaces, triple.namespaces);
+            $.extend(this.union, triple.union);
+          }
           return this;
         }
+      } else if (this.union.length > 0) {
+        matches = $.map(this.union, function (rdf) {
+          rdf.add(triple);
+          return $.makeArray(rdf);
+        });
+        this.length = 0;
+        Array.prototype.push.apply(this, matches);
+        return this;
       } else {
         if (typeof triple === 'string') {
           triple = $.rdf.triple(triple, { namespaces: namespaces, base: base });
@@ -302,7 +315,7 @@
                   if (m.length === 0) {
                     if (!f.optional) {
                       foundMatch = false;
-                      return false;
+                      return false; // break out of the $.each
                     }
                   } else {
                     for (k = 0; k < m.length; k += 1) {
@@ -315,7 +328,7 @@
                   }
                 }
               });
-              if (foundMatch = false) {
+              if (foundMatch === false) {
                 break; // break out of the while loop, not having added anything
               }
               otherFilters.splice(0, 1);
@@ -374,11 +387,18 @@
         namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {}),
         optional = (options && options.optional) || false,
         matches = [];
-      filter = parseFilter(filter, { namespaces: namespaces, base: base, optional: optional } );
-      this.filters.push(filter);
-      matches = findTriples(this.tripleStore, filter);
-      if (this.filters.length > 1) {
-        matches = mergeMatches(this, matches, optional);
+      if (this.union.length > 0) {
+        matches = $.map(this.union, function (rdf) {
+          rdf.where(filter, { namespaces: namespaces, base: base, optional: optional } );
+          return $.makeArray(rdf);
+        });
+      } else {
+        filter = parseFilter(filter, { namespaces: namespaces, base: base, optional: optional } );
+        this.filters.push(filter);
+        matches = findTriples(this.tripleStore, filter);
+        if (this.filters.length > 1) {
+          matches = mergeMatches(this, matches, optional);
+        }
       }
       this.length = 0;
       Array.prototype.push.apply(this, matches);
@@ -404,10 +424,17 @@
       } else {
         func = binding;
       }
-      this.filters.push(func);
-      matches = $.map(this, function (match) {
-        return func(match.bindings) ? match : null;
-      });
+      if (this.union.length > 0) {
+        matches = $.map(this.union, function (rdf) {
+          rdf.filter(func);
+          return $.makeArray(rdf);
+        });
+      } else {
+        this.filters.push(func);
+        matches = $.map(this, function (match) {
+          return func(match.bindings) ? match : null;
+        });
+      }
       this.length = 0;
       Array.prototype.push.apply(this, matches);
       return this;
