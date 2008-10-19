@@ -86,4 +86,10 @@ test("absolute URI", function() {
 	equals($('body').safeCurie(ns.dc + 'creator'), ns.dc + 'creator');
 });
 
+module("Generating CURIEs");
+
+test("creating a CURIE from an appropriate namespace declaration", function() {
+  equals($('body').createCurie(ns.foaf + 'img'), 'foaf:img');
+});
+
 })(jQuery);

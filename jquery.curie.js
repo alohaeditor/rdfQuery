@@ -53,6 +53,27 @@
 		var m = /^\[([^\]]+)\]$/.exec(safeCurie);
 		return m ? $.curie(m[1], options) : $.uri(safeCurie);
 	};
+	
+	$.createCurie = function (uri, options) {
+		var opts = $.extend({}, $.curie.defaults, options || {}),
+		  ns = opts.namespaces,
+		  curie;
+		uri = $.uri(uri).toString();
+		$.each(ns, function (prefix, namespace) {
+		  if (uri.substring(0, namespace.toString().length) === namespace.toString()) {
+		    curie = prefix + ':' + uri.substring(namespace.toString().length);
+		    return null;
+		  }
+		});
+		if (curie === undefined) {
+  		throw {
+  		  name: "NoNamespaceBinding",
+  		  message: "There's no appropriate namespace binding for generating a CURIE from " + uri
+  		};
+		} else {
+		  return curie;
+		}
+	};
 
 	$.fn.curie = function (curie, options) {
 		var opts = $.extend({}, $.fn.curie.defaults, { namespaces: this.xmlns() }, options || {});
@@ -62,6 +83,11 @@
 	$.fn.safeCurie = function (safeCurie, options) {
 		var opts = $.extend({}, $.fn.curie.defaults, { namespaces: this.xmlns() }, options || {});
 		return $.safeCurie(safeCurie, opts);
+	}
+	
+	$.fn.createCurie = function (uri, options) {
+		var opts = $.extend({}, $.fn.curie.defaults, { namespaces: this.xmlns() }, options || {});
+		return $.createCurie(uri, opts);
 	}
 
 	$.fn.curie.defaults = {
