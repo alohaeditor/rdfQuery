@@ -156,21 +156,15 @@
     },
     
     findTriples = function (triples, filter) {
-      var matches = [];
-      $.each(triples, function (i, triple) {
+      return $.map(triples, function (triple) {
         var bindings = testTriple(triple, filter);
-        if (bindings !== null) {
-          matches.push({ bindings: bindings, triples: [triple] });
-        }
+        return bindings === null ? null : { bindings: bindings, triples: [triple] };
       });
-      return matches;
     },
     
     mergeMatches = function (existingMs, newMs, optional) {
-      var matches = [];
-      $.each(existingMs, function (i, existingM) {
-        var compatibleMs = [];
-        $.each(newMs, function (j, newM) {
+      return $.map(existingMs, function (existingM) {
+        compatibleMs = $.map(newMs, function (newM) {
           // For newM to be compatible with existingM, all the bindings
           // in newM must either be the same as in existingM, or not
           // exist in existingM
@@ -182,22 +176,19 @@
               return false;
             }
           });
-          if (isCompatible) {
-            compatibleMs.push(newM);
-          }
+          return isCompatible ? newM : null;
         });
         if (compatibleMs.length > 0) {
-          $.each(compatibleMs, function (k, compatibleM) {
-            matches.push({ 
+          return $.map(compatibleMs, function (compatibleM) {
+            return {
               bindings: $.extend({}, existingM.bindings, compatibleM.bindings), 
               triples: $.unique(existingM.triples.concat(compatibleM.triples))
-            });
+            };
           });
-        } else if (optional) {
-          matches.push(existingM);
+        } else {
+          return optional ? existingM : null;
         }
       });
-      return matches;
     };
     
   $.typedValue.types['http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'] = {
@@ -245,10 +236,6 @@
         return this;
       }
     },
-  
-    size: function () {
-      return this.length;
-    },
     
     add: function (triple, options) {
       var 
@@ -276,6 +263,7 @@
           while (otherFilters.length > 0) {
             foundMatch = true;
             $.each(matchesA, function (j, match) {
+              matchesB = [];
               f = fillFilter(otherFilters[0], match.bindings);
               m = findTriples(rdf.tripleStore, f);
               if (m.length === 0) {
@@ -307,7 +295,7 @@
         // Have to worry about the possibility of an existing match being "completed" by the new triple.
         // The new match will have been found by the above code, so it's a matter of removing any
         // existing matches that have been completed
-        $.each(this, function (i, match) {
+        replacement = $.map(this, function (match) {
           var isCompleted = false;
           $.each(matches, function (j, newMatch) {
             var supersets = true;
@@ -322,9 +310,7 @@
               return false; // break out of the $.each()
             }
           });
-          if (!isCompleted) {
-            replacement.push(match);
-          }
+          return isCompleted ? null : match;
         });
         replacement = replacement.concat(matches);
         this.length = 0;
@@ -335,28 +321,16 @@
       return this;
     },
     
-    get: function (num) {
-      return (num === undefined) ? $.makeArray(this) : this[num];
-    },
-    
-    each: function (callback, args) {
-      return $.each(this, callback, args);
-    },
-    
     bindings: function () {
-      var bindings = [];
-      $.each(this, function (i, match) {
-        bindings.push(match.bindings);
-      });
-      return bindings;
+      return $($.map(this, function (match) {
+        return match.bindings;
+      }));
     },
     
     triples: function () {
-      var i, triples = [];
-      for (i = 0; i < this.length; i += 1) {
-        triples.push(this[i].triples);
-      }
-      return triples;
+      return $($.map(this, function (match) {
+        return [match.triples]; // effectively returning an array of the array because otherwise arrays get flattened
+      }));
     },
     
     where: function (filter, options) {
@@ -395,14 +369,34 @@
       } else {
         func = binding;
       }
-      $.each(this, function (i, match) {
-        if (func(match.bindings)) {
-          matches.push(match);
-        }
+      matches = $.map(this, function (match) {
+        return func(match.bindings) ? match : null;
       });
       this.length = 0;
       Array.prototype.push.apply(this, matches);
       return this;
+    },
+
+    size: function () {
+      return this.length;
+    },
+    
+    get: function (num) {
+      return (num === undefined) ? $.makeArray(this) : this[num];
+    },
+    
+    each: function (callback, args) {
+      return $.each(this, callback, args);
+    },
+    
+    map: function (callback) {
+      return $($.map(this, function (match, i) {
+  			return callback.call( match, i, match ); // in the callback, this is the match, and the arguments are swapped
+  		}));
+    },
+    
+    jquery: function () {
+      return $(this);
     }
   };
 

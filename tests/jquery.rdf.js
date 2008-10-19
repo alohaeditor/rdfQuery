@@ -157,6 +157,72 @@ test("using a callback function on each match", function() {
 	equals(photos[1].uri, $.uri('photo2.jpg'));
 });
 
+test("mapping each match to an array", function() {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .prefix('foaf', ns.foaf)
+		.add('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .')
+		.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .')
+		.where('?photo dc:creator ?creator')
+		.where('?creator foaf:img ?photo');
+	var photos = rdf.map(function () {
+	  return this.bindings.photo.uri;
+	});
+	equals(photos[0], $.uri('photo1.jpg'));
+	equals(photos[1], $.uri('photo2.jpg'));
+});
+
+test("using the result of bindings() as a jQuery object", function() {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .prefix('foaf', ns.foaf)
+		.add('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .')
+		.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .')
+		.where('?photo dc:creator ?creator')
+		.where('?creator foaf:img ?photo');
+	var photos = rdf.bindings().map(function () { return this.photo.uri });
+	equals(photos[0], $.uri('photo1.jpg'));
+	equals(photos[1], $.uri('photo2.jpg'));
+});
+
+test("using the result of triples() as a jQuery object", function() {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .prefix('foaf', ns.foaf)
+		.add('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .')
+		.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .')
+		.where('?photo dc:creator ?creator')
+		.where('?creator foaf:img ?photo');
+	var triples = rdf.triples().get(0);
+	equals(triples.length, 2, "there are two triples in the first match");
+	equals(triples[0].subject, $.rdf.resource('<photo1.jpg>'));
+	equals(triples[0].property, '<' + ns.dc + 'creator>');
+	equals(triples[0].object, '<http://www.blogger.com/profile/1109404>');
+	equals(triples[1].subject, '<http://www.blogger.com/profile/1109404>');
+	equals(triples[1].property, '<' + ns.foaf + 'img>');
+	equals(triples[1].object, $.rdf.resource('<photo1.jpg>'));
+});
+
+test("creating a jQuery object from the rdfQuery object", function() {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .prefix('foaf', ns.foaf)
+		.add('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .')
+		.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .')
+		.where('?photo dc:creator ?creator')
+		.where('?creator foaf:img ?photo');
+	var query = rdf.jquery();
+	equals(query.jquery, $(document).jquery);
+});
+
 test("filtering some results based on a regular expression", function() {
 	var namespaces = { namespaces: { dc: 'http://purl.org/dc/elements/1.1/', '': 'http://example.org/book/', ns: 'http://example.org/ns#'}};
 	var triples = [
@@ -258,6 +324,25 @@ test("adding a triple that satisfies an optional clause", function() {
   equals(rdf.length, 1, "there should be one match");
   equals(rdf.bindings()[0].name.value, "Alice");
   equals(rdf.bindings()[0].mbox.uri, 'mailto:alice@example.com');
+});
+
+test("multiple optional clauses", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .add('_:a  foaf:name       "Alice" .')
+    .add('_:a  foaf:homepage   <http://work.example.org/alice/> .')
+    .add('_:b  foaf:name       "Bob" .')
+    .add('_:b  foaf:mbox       <mailto:bob@work.example> .')
+    .where('?x foaf:name ?name')
+    .optional('?x foaf:mbox ?mbox')
+    .optional('?x foaf:homepage ?hpage');
+  equals(rdf.length, 2, "there should be two matches");
+  equals(rdf.bindings()[0].name.value, "Alice");
+  equals(rdf.bindings()[0].mbox, undefined);
+  equals(rdf.bindings()[0].hpage.uri, 'http://work.example.org/alice/');
+  equals(rdf.bindings()[1].name.value, "Bob");
+  equals(rdf.bindings()[1].mbox.uri, 'mailto:bob@work.example');
+  equals(rdf.bindings()[1].hpage, undefined);
 });
 
 module("Creating Triples");
