@@ -214,6 +214,8 @@
       this.baseURI = (options && options.base) || $.uri.base();
       this.namespaces = $.extend({}, (options && options.namespaces) || {});
       this.filters = [];
+      this.previousMatches = [];
+      this.outOfSync = false;
       this.union = [];
       triples = triples || [];
       for (i = 0; i < triples.length; i += 1) {
@@ -309,6 +311,9 @@
           }
         }
         this.tripleStore.push(triple);
+        if (this.previousMatches.length > 0) {
+          this.outOfSync = true;
+        }
         $.each(this.filters, function (i, filter) {
           var bindings, matchesA, matchesB, otherFilters, foundMatch, f, m, k;
           if (filter.optional) {
@@ -421,6 +426,7 @@
           matches = mergeMatches(this, matches, optional);
         }
       }
+      this.previousMatches.push($.makeArray(this));
       this.length = 0;
       Array.prototype.push.apply(this, matches);
       return this;
@@ -455,6 +461,50 @@
         matches = $.map(this, function (match) {
           return func(match.bindings) ? match : null;
         });
+      }
+      this.previousMatches.push($.makeArray(this));
+      this.length = 0;
+      Array.prototype.push.apply(this, matches);
+      return this;
+    },
+
+    reset: function () {
+      // retains the tripleStore, the baseURI and the namespace bindings only
+      this.union = [];
+      this.filters = [];
+      this.previousMatches = [];
+      this.outOfSync = false;
+      this.length = 0;
+    },
+
+    end: function () {
+      var rdf = this, matches = [];
+      if (this.union.length > 0) {
+        matches = $.map(this.union, function (rdf) {
+          rdf.end();
+          return $.makeArray(rdf);
+        });
+      } else {
+        this.filters.pop();
+        if (this.outOfSync) {
+          if (this.filters.length === 0) {
+            this.outOfSync = false;
+          } else {
+            $.each(this.filters, function (i, filter) {
+              var matchesFilter;
+              if ($.isFunction(filter)) {
+                matches = $.map(matches, function (match) {
+                  return filter(match.bindings) ? match : null;
+                });
+              } else {
+                matchesFilter = findTriples(rdf.tripleStore, filter);
+                matches = i > 1 ? mergeMatches(matches, matchesFilter) : matchesFilter;
+              }
+            });
+          }
+        } else {
+          matches = this.previousMatches.pop();
+        }
       }
       this.length = 0;
       Array.prototype.push.apply(this, matches);

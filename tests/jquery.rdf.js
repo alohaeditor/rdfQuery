@@ -557,7 +557,7 @@ test("filtering a union with a filter clause", function() {
   equals(union.bindings().get(1).author.value, "Alex");
 });
 
-test("creating new triples", function() {
+test("creating new triples based on a template", function() {
   var rdf = $.rdf()
     .prefix('foaf', ns.foaf)
     .add('_:a    foaf:givenname   "Alice" .')
@@ -576,6 +576,76 @@ test("creating new triples", function() {
     .add('?v vcard:givenname ?gname')
     .add('?v vcard:familyName ?fname');
   equals(rdf.tripleStore.length, 10, "should contain ten triples");
+});
+
+test("using end() to reset a filter", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('_:a    foaf:givenname   "Alice" .')
+    .add('_:a    foaf:family_name "Hacker" .')
+    .add('_:b    foaf:givenname   "Bob" .')
+    .add('_:b    foaf:family_name "Hacker" .')
+    .where('?person foaf:family_name "Hacker"');
+  equals(rdf.length, 2, "should have two matches");
+  rdf.where('?person foaf:givenname "Alice"');
+  equals(rdf.length, 1, "should have one match");
+  rdf.end();
+  equals(rdf.length, 2, "should have two matches again");
+  rdf.end();
+  equals(rdf.length, 0, "should have no matches");
+});
+
+test("using end() to reset a filter after adding something that matches the previous set of filters", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('_:a    foaf:givenname   "Alice" .')
+    .add('_:a    foaf:family_name "Hacker" .')
+    .add('_:b    foaf:givenname   "Bob" .')
+    .add('_:b    foaf:family_name "Hacker" .')
+    .where('?person foaf:family_name "Hacker"');
+  equals(rdf.length, 2, "should have two matches");
+  rdf.where('?person foaf:givenname "Alice"');
+  equals(rdf.length, 1, "should have one match");
+  rdf.add('_:c foaf:family_name "Hacker"');
+  equals(rdf.length, 1, "should have one match")
+  rdf.end();
+  equals(rdf.length, 3, "should have three matches now");
+  rdf.end();
+  equals(rdf.length, 0, "should have no matches");
+});
+
+test("using reset() to reset all filters completely", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('_:a    foaf:givenname   "Alice" .')
+    .add('_:a    foaf:family_name "Hacker" .')
+    .add('_:b    foaf:givenname   "Bob" .')
+    .add('_:b    foaf:family_name "Hacker" .')
+    .where('?person foaf:family_name "Hacker"')
+    .where('?person foaf:givenname "Alice"');
+  equals(rdf.length, 1, "should have one match");
+  rdf.reset();
+  equals(rdf.length, 0, "should have no matches");
+});
+
+test("using end with subsequent filters", function () {
+  var scottish = [];
+  var irish = [];
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .add('_:a foaf:surname "Jones" .')
+    .add('_:b foaf:surname "Macnamara" .')
+    .add('_:c foaf:surname "O\'Malley"')
+    .add('_:d foaf:surname "MacFee"')
+    .where('?person foaf:surname ?surname')
+      .filter('surname', /^Ma?c/)
+        .each(function () { scottish.push(this.bindings.surname.value); })
+      .end()
+      .filter('surname', /^O'/)
+        .each(function () { irish.push(this.bindings.surname.value); })
+      .end();
+  equals(scottish.length, 2, "there should be two scottish surnames");
+  equals(irish.length, 1, "there should be one irish surname");
 });
 
 module("Creating Triples");
