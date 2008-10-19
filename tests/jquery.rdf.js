@@ -52,6 +52,14 @@ test("creating a triple store from an array of strings", function() {
 	ok(rdf.tripleStore[1].object.resource, "the object of the first triple should be a resource");
 });
 
+test("adding duplicate triples to a triple store", function() {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .add('_:a dc:creator "Jeni" .')
+    .add('_:a dc:creator "Jeni" .');
+  equals(rdf.tripleStore.length, 1, "should only result in one triple being added");
+});
+
 test("selecting triples using a search pattern", function() {
 	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [

@@ -310,6 +310,9 @@
             triple = $.rdf.triple(template.subject, template.property, template.object);
           }
         }
+        if ($.inArray(triple, this.tripleStore) !== -1) {
+          return this;
+        }
         this.tripleStore.push(triple);
         if (this.previousMatches.length > 0) {
           this.outOfSync = true;
