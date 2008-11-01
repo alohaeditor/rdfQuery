@@ -38,10 +38,7 @@
           try {
             return $.rdf.blank(subject, opts);
           } catch (f) {
-            throw {
-              name: "BadTriple",
-              message: "Subject " + subject + " is not a resource: " + f.message
-            };
+            throw "Bad Triple: Subject " + subject + " is not a resource: " + f;
           }
         }
       } else {
@@ -56,10 +53,7 @@
         try {
           return $.rdf.resource(property, opts);
         } catch (e) {
-          throw {
-            name: "BadTriple",
-            message: "Property " + property + " is not a resource: " + e.message
-          };
+          throw "Bad Triple: Property " + property + " is not a resource: " + e;
         }
       } else {
         return property;
@@ -77,10 +71,7 @@
             try {
               return $.rdf.literal(object, opts);
             } catch (g) {
-              throw {
-                name: "BadTriple",
-                message: "Object " + object + " is not a resource or a literal: " + g.message
-              };
+              throw "Bad Triple: Object " + object + " is not a resource or a literal " + g;
             }
           }
         }
@@ -103,27 +94,25 @@
         o = o.substring(0, 1) === '?' ? o.substring(1) : object(o, options);
         return { subject: s, property: p, object: o, optional: optional };
       } else {
-        throw {
-          name: "MalformedFilter",
-          message: "The filter " + filter + " is not legal"
-        };
+        throw "Malformed Filter: The filter " + filter + " is not legal";
       }
     },
     
     fillFilter = function (filter, bindings) {
-      if (typeof filter.subject === 'string' &&
-          bindings[filter.subject]) {
-        filter.subject = bindings[filter.subject];
+      var f = $.extend({}, filter);
+      if (typeof f.subject === 'string' &&
+          bindings[f.subject]) {
+        f.subject = bindings[f.subject];
       }
-      if (typeof filter.property === 'string' &&
-          bindings[filter.property]) {
-        filter.property = bindings[filter.property];
+      if (typeof f.property === 'string' &&
+          bindings[f.property]) {
+        f.property = bindings[f.property];
       }
-      if (typeof filter.object === 'string' &&
-          bindings[filter.object]) {
-        filter.object = bindings[filter.object];
+      if (typeof f.object === 'string' &&
+          bindings[f.object]) {
+        f.object = bindings[f.object];
       }
-      return filter;
+      return f;
     },
     
     testResource = function (resource, filter, existing) {
@@ -164,7 +153,7 @@
     
     mergeMatches = function (existingMs, newMs, optional) {
       return $.map(existingMs, function (existingM) {
-        compatibleMs = $.map(newMs, function (newM) {
+        var compatibleMs = $.map(newMs, function (newM) {
           // For newM to be compatible with existingM, all the bindings
           // in newM must either be the same as in existingM, or not
           // exist in existingM
@@ -293,21 +282,19 @@
               typeof template.property === 'string' ||
               typeof template.object === 'string') {
             $.each(this, function (i, match) {
-              var f = fillFilter(template, match.bindings);
+              var t, f = fillFilter(template, match.bindings);
               if (typeof f.subject === 'string' ||
                   typeof f.property === 'string' ||
                   typeof f.object === 'string') {
-                throw {
-                  name: "MalformedTemplate",
-                  message: "Couldn't complete the template: " + f
-                };
+                throw "Malformed Template: Couldn't complete the template: " + f;
               } else {
-                rdf.add($.rdf.triple(f.subject, f.property, f.object));
+                t = $.rdf.triple(f.subject, f.property, f.object, { source: triple });
+                rdf.add(t);
               }
             });
             return this;
           } else {
-            triple = $.rdf.triple(template.subject, template.property, template.object);
+            triple = $.rdf.triple(template.subject, template.property, template.object, { source: triple });
           }
         }
         if ($.inArray(triple, this.tripleStore) !== -1) {
@@ -448,7 +435,7 @@
           };
         } else {
           func = function (bindings) {
-            return bindings[binding].value === condition;
+            return bindings[binding].literal ? bindings[binding].value === condition : bindings[binding] === condition;
           };
         }
       } else {
@@ -478,6 +465,7 @@
       this.previousMatches = [];
       this.outOfSync = false;
       this.length = 0;
+      return this;
     },
 
     end: function () {
@@ -523,7 +511,8 @@
     },
     
     each: function (callback, args) {
-      return $.each(this, callback, args);
+      $.each(this, callback, args);
+      return this;
     },
     
     map: function (callback) {
@@ -546,10 +535,10 @@
     for (i = 0; i < $(this).length; i += 1) {
       match = $(this).eq(i);
       for (j = 0; j < $.rdf.gleaners.length; j += 1) {
-        triples = triples.concat($.rdf.gleaners[j].call(match))
+        triples = triples.concat($.rdf.gleaners[j].call(match));
       }
     }
-    return $.rdf(triples);
+    return $.rdf(triples, { namespaces: $(this).xmlns() });
   };
 
 /*
@@ -567,10 +556,7 @@
         property = m[1];
         object = m[2];
       } else {
-        throw {
-          name: "BadTriple",
-          message: "Couldn't parse string: " + subject
-        };
+        throw "Bad Triple: Couldn't parse string " + subject;
       }
     }
     if (memTriple[subject] && memTriple[subject][property] && memTriple[subject][property][object]) {
@@ -594,16 +580,13 @@
   };
 
   $.rdf.triple.fn = $.rdf.triple.prototype = {
-    subject: undefined,
-    property: undefined,
-    object: undefined,
-    
     init: function (s, p, o, options) {
       var opts, m;
       opts = $.extend({}, $.rdf.triple.defaults, options);
       this.subject = subject(s, opts);
       this.property = property(p, opts);
       this.object = object(o, opts);
+      this.source = opts.source;
       return this;
     },
     
@@ -616,6 +599,7 @@
   
   $.rdf.triple.defaults = {
     base: $.uri.base(),
+    source: [document],
     namespaces: {}
   };
 
@@ -639,6 +623,7 @@
 
   $.rdf.resource.fn = $.rdf.resource.prototype = {
     resource: true,
+    literal: false,
     uri: undefined,
     blank: false,
     
@@ -652,10 +637,7 @@
         } else if (value.substring(0, 1) === ':') {
           uri = opts.namespaces[''];
           if (uri === undefined) {
-            throw {
-              name: "MalformedResource",
-              message: "No namespace binding for default namespace"
-            };
+            throw "Malformed Resource: No namespace binding for default namespace in " + value;
           } else {
             this.uri = $.uri.resolve(uri + value.substring(1));
           }
@@ -663,10 +645,7 @@
           prefix = value.substring(0, value.length - 1);
           uri = opts.namespaces[prefix];
           if (uri === undefined) {
-            throw {
-              name: "MalformedResource",
-              message: "No namespace binding for prefix " + prefix
-            };
+            throw "Malformed Resource: No namespace binding for prefix " + prefix + " in " + value;
           } else {
             this.uri = $.uri.resolve(uri);
           }
@@ -674,10 +653,7 @@
           try {
             this.uri = $.curie(value, { namespaces: opts.namespaces });
           } catch (e) {
-            throw {
-              name: "MalformedResource",
-              message: "Bad format for resource: " + e.message
-            };
+            throw "Malformed Resource: Bad format for resource " + e;
           }
         }
       } else {
@@ -698,7 +674,8 @@
     namespaces: {}
   };
 
-  $.rdf.type = $.rdf.resource('<' + rdfNs + 'type' + '>');
+  $.rdf.type = $.rdf.resource('<' + rdfNs + 'type>');
+  $.rdf.label = $.rdf.resource('<' + rdfNs + 'label>');
 
   $.rdf.blank = function (value, options) {
     var blank;
@@ -716,6 +693,7 @@
   
   $.rdf.blank.fn = $.rdf.blank.prototype = {
     resource: true,
+    literal: false,
     blank: true,
     id: undefined,
     
@@ -725,10 +703,7 @@
       } else if (value.substring(0, 2) === '_:') {
         this.id = value.substring(2);
       } else {
-        throw {
-          name: 'MalformedBlankNode',
-          message: value + " is not a legal format for a blank node"
-        };
+        throw "Malformed Blank Node: " + value + " is not a legal format for a blank node";
       }
       return this;
     },
@@ -756,6 +731,7 @@
 
   $.rdf.literal.fn = $.rdf.literal.prototype = {
     resource: false,
+    literal: true,
     blank: false,
     value: undefined,
     lang: undefined,
@@ -766,10 +742,7 @@
         m, datatype,
         opts = $.extend({}, $.rdf.literal.defaults, options);
       if (opts.lang !== undefined && opts.datatype !== undefined) {
-        throw {
-          name: "MalformedLiteral",
-          message: "Cannot define both a language and a datatype for a literal"
-        };
+        throw "Malformed Literal: Cannot define both a language and a datatype for a literal (" + value + ")";
       }
       if (opts.datatype !== undefined) {
         datatype = $.safeCurie(opts.datatype, { namespaces: opts.namespaces });
@@ -801,10 +774,7 @@
             this.lang = m[7];
           }
         } else {
-          throw {
-            name: "MalformedLiteral",
-            message: "Couldn't recognise the value " + value
-          };
+          throw "Malformed Literal: Couldn't recognise the value " + value;
         }
       }
       return this;
