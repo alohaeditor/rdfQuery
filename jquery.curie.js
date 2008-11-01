@@ -20,10 +20,7 @@
 			ns = opts.namespaces[prefix];
 		if (prefix) {
 			if (ns === undefined) {
-				throw {
-					name: "MalformedCURIE",
-					message: "No namespace binding for " + prefix
-				};
+				throw "Malformed CURIE: No namespace binding for " + prefix + " in CURIE " + curie;
 			} else {
 				return $.uri(ns + local);
 			}
@@ -33,10 +30,7 @@
 		} else if (opts.defaultNamespace === undefined) {
 			// the default namespace is provided by the application; it's not clear whether
 			// the default XML namespace should be used if there's a colon but no prefix
-			throw {
-				name: "MalformedCURIE",
-				message: "No prefix, and no default namespace for unprefixed values"
-			};
+			throw "Malformed CURIE: No prefix and no default namespace for unprefixed CURIE " + curie;
 		} else {
 			return $.uri(opts.defaultNamespace + local);
 		}
@@ -66,10 +60,7 @@
 		  }
 		});
 		if (curie === undefined) {
-  		throw {
-  		  name: "NoNamespaceBinding",
-  		  message: "There's no appropriate namespace binding for generating a CURIE from " + uri
-  		};
+  		throw "No Namespace Binding: There's no appropriate namespace binding for generating a CURIE from " + uri;
 		} else {
 		  return curie;
 		}
