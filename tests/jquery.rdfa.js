@@ -287,6 +287,18 @@ test("Test 0034", function() {
 
 module("Adding RDFa to elements");
 
+test("adding RDFa to an element", function() {
+  var eventFired = false;
+  setup('<p>This document is by <span>Jeni Tennison</span>.</p>');
+  var span = $('#main > p > span');
+  span.bind("rdfChange", function () {
+    eventFired = true;
+  });
+  span.rdfa('<> dc:creator "Jeni Tennison" .');
+  ok(eventFired, "should trigger any functions bound to the changeRDF event");
+  $('#main > p').remove();
+});
+
 test("adding RDFa to an element whose text matches the literal value of the RDFa", function() {
   setup('<p>This document is by <span>Jeni Tennison</span>.</p>');
   var span = $('#main > p > span');
@@ -305,7 +317,7 @@ test("adding RDFa to an element whose text does not match the literal value of t
   equals(span.attr('about'), undefined);
   equals(span.attr('property'), 'dc:creator');
   equals(span.attr('content'), 'Jeni Tennison');
-  equals(span.attr('datatype'), '');
+  equals(span.attr('datatype'), undefined);
   $('#main > p').remove();
 });
 
@@ -370,5 +382,146 @@ test("adding RDFa where the object is an XMLLiteral", function() {
   equals(span.children('em').text(), "Tennison");
   $('#main > p').remove();
 });
+
+test("adding RDFa where the subject is a resource and the object is an XMLLiteral", function() {
+	setup('<p>This photo was taken by <span class="author">Mark Birbeck</span>.</p>');
+  var span = $('#main > p > span');
+  span.rdfa('<photo1.jpg> dc:creator "Mark Birbeck" .');
+  equals(span.attr('about'), 'photo1.jpg');
+  equals(span.attr('property'), 'dc:creator');
+  equals(span.attr('content'), undefined);
+  equals(span.attr('datatype'), '');
+  $('#main > p').remove();
+});
+
+test("adding RDFa where the subject is a resource which is already referenced", function() {
+	setup('<p>This photo was taken by <a href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.</p>');
+  var a = $('#main > p > a');
+  a.rdfa('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .');
+  equals(a.attr('about'), 'photo1.jpg');
+  equals(a.attr('rel'), 'dc:creator');
+  equals(a.attr('href'), 'http://www.blogger.com/profile/1109404');
+  equals(a.attr('resource'), undefined);
+  $('#main > p').remove();
+});
+
+test("adding RDFa where the subject is a resource which is already referenced", function() {
+	setup('<p>This photo was taken by <a href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.</p>');
+  var a = $('#main > p > a');
+  a.rdfa('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .');
+  equals(a.attr('about'), 'photo1.jpg');
+  equals(a.attr('rel'), '');
+  equals(a.attr('rev'), 'foaf:img');
+  equals(a.attr('href'), 'http://www.blogger.com/profile/1109404');
+  equals(a.attr('resource'), undefined);
+  $('#main > p').remove();
+});
+
+test("adding RDFa where the subject and object are resource which are already referenced", function() {
+	setup('<p>This photo was taken by <a about="photo1.jpg" rel="dc:creator" href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.</p>');
+  var a = $('#main > p > a');
+  a.rdfa('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .');
+  equals(a.attr('about'), 'photo1.jpg');
+  equals(a.attr('rel'), 'dc:creator');
+  equals(a.attr('rev'), 'foaf:img');
+  equals(a.attr('href'), 'http://www.blogger.com/profile/1109404');
+  equals(a.attr('resource'), undefined);
+  $('#main > p').remove();
+});
+
+test("adding a triple with a literal, where the subject is already present", function() {
+	setup('<p>This photo was taken by <a about="photo1.jpg" rel="dc:creator" rev="foaf:img" href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.</p>');
+	var a = $('#main > p > a');
+	a.rdfa('<photo1.jpg> dc:title "Portrait of Mark" .');
+	equals(a.attr('about'), 'photo1.jpg');
+	equals(a.attr('property'), 'dc:title');
+	equals(a.attr('content'), 'Portrait of Mark');
+	equals(a.attr('datatype'), undefined);
+	$('#main > p').remove();
+});
+
+test("adding a triple whose subject is a blank node", function() {
+	setup('<p><span>Manu Sporny</span> <span>knows</span> <span about="[_:b]" property="foaf:name">Ralph Swick</span>.</p>');
+	var span1 = $('#main > p > span:eq(0)');
+	span1.rdfa('_:a foaf:name "Manu Sporny" .');
+	equals(span1.attr('about'), '[_:a]');
+	equals(span1.attr('property'), 'foaf:name');
+	var span2 = $('#main > p > span:eq(1)');
+	span2.rdfa('_:a foaf:knows _:b .');
+	equals(span2.attr('about'), '[_:a]');
+	equals(span2.attr('rel'), 'foaf:knows');
+	equals(span2.attr('resource'), '[_:b]');
+	$('#main > p').remove();
+});
+
+test("adding a triple whose object is a resource, when the element has a different href", function() {
+	setup('<p about="#wtw">The book <b>Weaving the Web</b> (hardcover) has the ISBN <a href="http://www.amazon.com/Weaving-Web-Tim-Berners-Lee/dp/0752820907">0752820907</a>.</p>');
+	var a = $('#main > p > a');
+	a.rdfa('<#wtw> dc:identifier <urn:ISBN:0752820907> .');
+	equals(a.attr('about'), undefined);
+	equals(a.attr('rel'), 'dc:identifier');
+	equals(a.attr('resource'), 'urn:ISBN:0752820907');
+	equals(a.attr('href'), 'http://www.amazon.com/Weaving-Web-Tim-Berners-Lee/dp/0752820907');
+	$('#main > p').remove();
+});
+
+test('adding a triple whose object is a literal, when the element\'s object is the triple\'s subject', function() {
+  setup('<p>This is <a rel="dc:creator" href="http://www.jenitennison.com/">Jeni\'s Home Page</a></p>');
+  var a = $('#main > p > a');
+  a.rdfa('<http://www.jenitennison.com/> dc:title "Jeni\'s XSLT Pages" .');
+  equals(a.attr('about'), undefined);
+  equals(a.attr('rel'), 'dc:creator');
+  equals(a.attr('href'), 'http://www.jenitennison.com/');
+  equals(a.attr('property'), undefined);
+  var span = a.children('span');
+  equals(span.attr('about'), undefined);
+  equals(span.attr('property'), 'dc:title');
+  equals(span.attr('content'), 'Jeni\'s XSLT Pages');
+  equals(span.attr('datatype'), undefined);
+  $('#main > p').remove();
+});
+
+test('adding a triple where the element already has the triple with a different value', function() {
+  setup('<p>This is about <span about="#SusannahDarwin" property="rdf:label">Susannah Darwin</span></p>');
+  var span = $('#main > p > span');
+  span.rdfa('<#SusannahDarwin> rdf:label "Susannah" .');
+  equals(span.attr('about'), '#SusannahDarwin');
+  equals(span.attr('property'), 'rdf:label');
+  equals(span.attr('content'), undefined);
+  span = span.children('span');
+  equals(span.attr('about'), undefined);
+  equals(span.attr('property'), 'rdf:label');
+  equals(span.attr('content'), 'Susannah');
+  equals(span.text(), 'Susannah Darwin');
+  $('#main > p').remove();
+});
+
+test('adding a triple where the element already has a triple with the same literal value', function() {
+  setup('<p>This is about <span about="#SusannahDarwin" property="rdf:label">Susannah Darwin</span></p>');
+  var span = $('#main > p > span');
+  span.rdfa('<#SusannahDarwin> foaf:name "Susannah Darwin" .');
+  equals(span.attr('about'), '#SusannahDarwin');
+  equals(span.attr('property'), 'rdf:label foaf:name');
+  equals(span.text(), 'Susannah Darwin');
+  ok(span.children('*').length === 0, 'the span doesn\'t have any child elements');
+  $('#main > p').remove();
+});
+
+test('adding a triple where the element already has the triple with a different object', function() {
+  setup('<p>This is about <span about="#SusannahDarwin" rel="foaf:son" resource="#CharlesDarwin">Susannah Darwin</span></p>');
+  var span = $('#main > p > span');
+  span.rdfa('<#SusannahDarwin> foaf:son <#ErasmusDarwin> .');
+  equals(span.attr('about'), '#SusannahDarwin');
+  equals(span.attr('rel'), 'foaf:son');
+  equals(span.attr('resource'), '#ErasmusDarwin');
+  span = span.children('span');
+  equals(span.attr('about'), '#SusannahDarwin');
+  equals(span.attr('rel'), 'foaf:son');
+  equals(span.attr('resource'), '#CharlesDarwin');
+  equals(span.text(), 'Susannah Darwin');
+  $('#main > p').remove();
+});
+
+
 
 })(jQuery);

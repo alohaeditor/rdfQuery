@@ -295,7 +295,7 @@ test("URI without a scheme", function() {
 	equals(result, $.uri.base().resolve('/foo'));
 });
 
-module("Base URI")
+module("Base URI");
 
 test("with no base specified", function() {
 	equals($.uri.base(), document.URL);
@@ -305,6 +305,82 @@ test("with a base specified", function() {
 	$('head').append('<base href="http://www.example.org/foo" />');
 	equals($.uri.base(), 'http://www.example.org/foo');
 	$('head > base').remove();
+});
+
+module("Creating relative URIs");
+
+var base = $.uri('http://a/b/c/d;p?q');
+
+test("g:h", function() {
+	equals(base.relative('g:h'), 'g:h');
+});
+
+test("http://a/b/c/g", function() {
+	equals(base.relative('http://a/b/c/g'), 'g');
+});
+
+test("http://a/b/c/g/", function() {
+	equals(base.relative('http://a/b/c/g/'), 'g/');
+});
+
+test("http://a/g", function() {
+	equals(base.relative('http://a/g'), '/g');
+});
+
+test("http://g", function() {
+	equals(base.relative('http://g'), 'http://g');
+});
+
+test("http://a/b/c/d;p?y", function() {
+	equals(base.relative('http://a/b/c/d;p?y'), '?y');
+});
+
+test("http://a/b/c/g?y", function() {
+	equals(base.relative('http://a/b/c/g?y'), 'g?y');
+});
+
+test("http://a/b/c/d;p?q#s", function() {
+	equals(base.relative('http://a/b/c/d;p?q#s'), '#s');
+});
+
+test("http://a/b/c/g#s", function() {
+	equals(base.relative('http://a/b/c/g#s'), 'g#s');
+});
+
+test("http://a/b/c/g?y#s", function() {
+	equals(base.relative('http://a/b/c/g?y#s'), 'g?y#s');
+});
+
+test("http://a/b/c/;x", function() {
+	equals(base.relative('http://a/b/c/;x'), ';x');
+});
+
+test("http://a/b/c/g;x", function() {
+	equals(base.relative('http://a/b/c/g;x'), 'g;x');
+});
+
+test("http://a/b/c/g;x?y#s", function() {
+	equals(base.relative('http://a/b/c/g;x?y#s'), 'g;x?y#s');
+});
+
+test("http://a/b/c/d;p?q", function() {
+	equals(base.relative('http://a/b/c/d;p?q'), '');
+});
+
+test("http://a/b/", function() {
+	equals(base.relative('http://a/b/'), '../');
+});
+
+test("http://a/b/g", function() {
+	equals(base.relative('http://a/b/g'), '../g');
+});
+
+test("http://a/", function() {
+	equals(base.relative('http://a/'), '/');
+});
+
+test("http://a/g", function() {
+	equals(base.relative('http://a/g'), '/g');
 });
 
 })(jQuery);
