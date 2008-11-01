@@ -202,6 +202,46 @@
 		resolve: function (relative) {
 			return $.uri(relative, this);
 		},
+		
+		relative: function (absolute) {
+		  var aPath, bPath, i = 0, j, resultPath = [], result = '';
+		  if (typeof absolute === 'string') {
+		    absolute = $.uri(absolute, {});
+		  }
+		  if (absolute.scheme !== this.scheme || 
+		      absolute.authority !== this.authority) {
+		    return absolute.toString();
+		  }
+		  if (absolute.path !== this.path) {
+		    aPath = absolute.path.split('/');
+		    bPath = this.path.split('/');
+		    if (aPath[1] !== bPath[1]) {
+		      result = absolute.path;
+		    } else {
+		      while (aPath[i] === bPath[i]) {
+		        i += 1;
+		      }
+		      j = i;
+		      for (i; i < bPath.length - 1; i += 1) {
+		        resultPath.push('..');
+		      }
+		      for (j; j < aPath.length; j += 1) {
+		        resultPath.push(aPath[j]);
+		      }
+		      result = resultPath.join('/');
+		    }
+		    result = absolute.query === undefined ? result : result + '?' + absolute.query;
+		    result = absolute.fragment === undefined ? result : result + '#' + absolute.fragment;
+		    return result;
+		  }
+		  if (absolute.query !== undefined && absolute.query !== this.query) {
+		    return '?' + absolute.query + (absolute.fragment === undefined ? '' : '#' + absolute.fragment);
+		  }
+		  if (absolute.fragment !== undefined && absolute.fragment !== this.fragment) {
+		    return '#' + absolute.fragment;
+		  }
+		  return '';
+		},
 	
 		toString: function () {
 			var result = '';
@@ -223,6 +263,10 @@
 
 	$.uri.resolve = function (relative, base) {
 		return $.uri(relative, base);
+	};
+	
+	$.uri.relative = function (absolute, base) {
+	  return $.uri(base, {}).relative(absolute);
 	};
 	
 	$.uri.base = function () {
