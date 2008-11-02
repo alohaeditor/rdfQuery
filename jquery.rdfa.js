@@ -47,32 +47,35 @@
 			return m ? resourceFromCurie(m[1], elem) : resourceFromUri($.uri(safeCurie));
 		},
 
-		getObjectResource = function (elem) {
-			var resource = elem.data('rdfa.objectResource');
-			if (resource === undefined) {
+		getObjectResource = function (elem, relation) {
+			var r, resource = elem.data('rdfa.objectResource');
+			if (resource === undefined || relation !== undefined) {
+  			r = relation === undefined ? hasAttribute(elem, 'rel') || hasAttribute(elem, 'rev') : relation;
 				if (hasAttribute(elem, 'resource')) {
 					resource = resourceFromSafeCurie(elem.attr('resource'), elem);
 				}	else if (hasAttribute(elem, 'href')) {
 					resource = resourceFromSafeCurie(elem.attr('href'), elem);
-				} else if (hasAttribute(elem, 'rel') || hasAttribute(elem, 'rev')) {
+				} else if (r) {
 					resource = $.rdf.blank('[]');
 				}
-				elem.data('rdfa.objectResource', resource);
+				if (relation === undefined) {
+  				elem.data('rdfa.objectResource', resource);
+				}
 			}
 			return resource;
 		},
 
-		getSubject = function (elem) {
-			var relation, subject = elem.data('rdfa.subject');
-			if (subject === undefined) {
-				relation = hasAttribute(elem, 'rel') || hasAttribute(elem, 'rev');
+		getSubject = function (elem, relation) {
+			var r, subject = elem.data('rdfa.subject');
+			if (subject === undefined || relation !== undefined) {
+  			r = relation === undefined ? hasAttribute(elem, 'rel') || hasAttribute(elem, 'rev') : relation;
 				if (hasAttribute(elem, 'about')) {
 					subject = resourceFromSafeCurie(elem.attr('about'), elem);
 				} else if (hasAttribute(elem, 'src')) {
 					subject = resourceFromSafeCurie(elem.attr('src'), elem);
-				} else if (!relation && hasAttribute(elem, 'resource')) {
+				} else if (!r && hasAttribute(elem, 'resource')) {
 					subject = resourceFromSafeCurie(elem.attr('resource'), elem);
-				} else if (!relation && hasAttribute(elem, 'href')) {
+				} else if (!r && hasAttribute(elem, 'href')) {
 					subject = resourceFromSafeCurie(elem.attr('href'), elem);
 				} else if (elem.is('head') || elem.is('body')) {
 					subject = $.rdf.resource('<>');
@@ -83,7 +86,9 @@
 				} else {
 					subject = $.rdf.resource('<>');
 				}
-				elem.data('rdfa.subject', subject);
+				if (relation === undefined) {
+  				elem.data('rdfa.subject', subject);
+				}
 			}
 			return subject;
 		},
@@ -251,7 +256,7 @@
   		    nsCounter += 1;
 		    }
 		  }
-		  elem.attr(attr, curie);
+  		elem.attr(attr, hasAttribute(elem, attr) ? elem.attr(attr) + ' ' + curie : curie);
 		},
 		
 		createResourceAttr = function (elem, attr, resource) {
@@ -288,12 +293,13 @@
 		},
 		
 		addRDFa = function (triple) {
-		  var hasContent, span,
+		  var hasContent, hasRelation, hasRDFa, overridableObject, span,
 		    subject, sameSubject,
 		    object, sameObject,
 		    lang, 
 		    i, 
 		    ns = this.xmlns();
+		  span = this;
       if (typeof triple === 'string') {
         triple = $.rdf.triple(triple, { namespaces: ns, base: $.uri.base() });
       } else if (triple.rdfquery) {
@@ -305,96 +311,154 @@
         }
         return this;
       }
-      subject = getSubject(this);
-      object = getObjectResource(this);
-      sameSubject = subject === triple.subject;
+      hasRelation = hasAttribute(this, 'rel') || hasAttribute(this, 'rev');
+      hasRDFa = hasRelation || hasAttribute(this, 'property') || hasAttribute(this, 'typeof');
       if (triple.object.resource) {
-        if (this.attr('rel')) {
-          sameObject = object === triple.object;
-          if (sameSubject && sameObject) {
-            createCurieAttr(this, 'rel', triple.property.uri);
-            return this;
+        subject = getSubject(this, true);
+        object = getObjectResource(this, true);
+        overridableObject = !hasRDFa && !hasAttribute(this, 'resource');
+        sameSubject = subject === triple.subject;
+        sameObject = object === triple.object;
+        if (triple.property === $.rdf.type) {
+          if (sameSubject) {
+            createCurieAttr(this, 'typeof', triple.object.uri);
+          } else if (hasRDFa) {
+            span = this.wrapInner('<span />').children('span');
+            createCurieAttr(span, 'typeof', triple.object.uri);
+            if (object !== triple.subject) {
+              createSubjectAttr(span, triple.subject);
+            }
           } else {
-            this.wrap('<span />');
-            span = this.children('span');
-            span.attr('rel', this.attr('rel'));
-            createSubjectAttr(span, subject);
-            createObjectAttr(span, object);
-            createCurieAttr(this, 'rel', triple.property.uri);
-            createObjectAttr(this, triple.object.uri);
+            createCurieAttr(this, 'typeof', triple.object.uri);
+            createSubjectAttr(this, triple.subject);
           }
-        } else if (this.attr('rev')) {
-          sameObject = getSubject(this) === triple.object;
-        }
-        if ($.uri(this.attr('href')) === triple.object.uri) {
-          createCurieAttr(this, 'rel', triple.property.uri);
-          createSubjectAttr(this, triple.subject);
-        } else if ($.uri(this.attr('about')) === triple.object.uri ||
-                   $.uri(this.attr('href')) === triple.subject.uri) {
-          createCurieAttr(this, 'rev', triple.property.uri);
-          createObjectAttr(this, triple.subject);
-          createSubjectAttr(this, triple.object);
-        } else if (triple.property === $.rdf.type) {
-          createCurieAttr(this, 'typeof', triple.object.uri);
-          createSubjectAttr(this, triple.subject);
+        } else if (sameSubject) {
+          // use a rel
+          if (sameObject) {
+            createCurieAttr(this, 'rel', triple.property.uri);
+          } else if (overridableObject || !hasRDFa) {
+            createCurieAttr(this, 'rel', triple.property.uri);
+            createObjectAttr(this, triple.object);
+          } else {
+            span = this.wrap('<span />').parent();
+            createCurieAttr(span, 'rev', triple.property.uri)
+            createSubjectAttr(span, triple.object);
+          }
+        } else if (subject === triple.object) {
+          if (object === triple.subject) {
+            // use a rev
+            createCurieAttr(this, 'rev', triple.property.uri);
+          } else if (overridableObject || !hasRDFa) {
+            createCurieAttr(this, 'rev', triple.property.uri);
+            createObjectAttr(this, triple.subject);
+          } else {
+            // wrap in a span with a rel
+            span = this.wrap('<span />').parent();
+            createCurieAttr(span, 'rel', triple.property.uri);
+            createSubjectAttr(span, triple.subject);
+          }
+        } else if (sameObject) {
+          if (hasRDFa) {
+            // use a rev on a nested span
+            span = this.wrapInner('<span />').children('span');
+            createCurieAttr(span, 'rev', triple.property.uri);
+            createObjectAttr(span, triple.subject);
+            span = span.wrapInner('<span />').children('span');
+            createSubjectAttr(span, triple.object);
+            span = this;
+          } else {
+            createSubjectAttr(this, triple.subject);
+            createCurieAttr(this, 'rel', triple.property.uri);
+          }
+        } else if (object === triple.subject) {
+          if (hasRDFa) {
+            // wrap the contents in a span and use a rel
+            span = this.wrapInner('<span />').children('span');
+            createCurieAttr(span, 'rel', this.property.uri);
+            createObjectAttr(span, triple.object);
+            span = span.wrapInner('<span />').children('span');
+            createSubjectAttr(span, object);
+            span = this;
+          } else {
+            // use a rev on this element
+            createSubjectAttr(this, triple.object);
+            createCurieAttr(this, 'rev', triple.property.uri);
+          }
+        } else if (hasRDFa) {
+          span = this.wrapInner('<span />').children('span');
+          createCurieAttr(span, 'rel', triple.property.uri);
+          createSubjectAttr(span, triple.subject);
+          createObjectAttr(span, triple.object);
+          if (span.children('*').length > 0) {
+            span = this.wrapInner('<span />').children('span');
+            createSubjectAttr(span, subject);
+          }
+          span = this;
         } else {
-          createCurieAttr(this, 'rel', triple.property.uri);
+          createCurieAttr(span, 'rel', triple.property.uri);
           createSubjectAttr(this, triple.subject);
           createObjectAttr(this, triple.object);
+          if (this.children('*').length > 0) {
+            span = this.wrapInner('<span />').children('span');
+            createSubjectAttr(span, subject);
+            span = this;
+          }
         }
       } else {
+        subject = getSubject(this);
+        object = getObjectResource(this);
+        sameSubject = subject === triple.subject;
         hasContent = this.text() !== triple.object.value;
-        if (this.attr('property')) {
-          sameObject = this.attr('content') === undefined ? !hasContent : this.attr('content') !== triple.object.value
+        if (hasAttribute(this, 'property')) {
+          sameObject = hasAttribute(this, 'content') ? this.attr('content') === triple.object.value : !hasContent;
           if (sameSubject && sameObject) {
             createCurieAttr(this, 'property', triple.property.uri);
-            return this;
           } else {
-            this.wrapInner('<span />');
-            return addRDFa.call(this.children('span'), triple);
+            span = this.wrapInner('<span />').children('span');
+            return addRDFa.call(span, triple);
           }
-        }
-        object = getObjectResource(this);
-        if (object === triple.subject) {
-          this.wrapInner('<span />');
-          return addRDFa.call(this.children('span'), triple);
-        }
-        createCurieAttr(this, 'property', triple.property.uri);
-        createSubjectAttr(this, triple.subject);
-        if (hasContent) {
-          if (triple.object.datatype && triple.object.datatype.toString() === rdfXMLLiteral) {
-            this.html(triple.object.value);
-          } else {
-            this.attr('content', triple.object.value);
+        } else {
+          if (object === triple.subject) {
+            span = this.wrapInner('<span />').children('span');
+            return addRDFa.call(span, triple);
           }
-        }
-        lang = getLang(this);
-        if (triple.object.lang) {
-          if (lang !== triple.object.lang) {
-            this.attr('lang', triple.object.lang);
-            if (hasContent) {
-              resetLang(this, lang);
+          createCurieAttr(this, 'property', triple.property.uri);
+          createSubjectAttr(this, triple.subject);
+          if (hasContent) {
+            if (triple.object.datatype && triple.object.datatype.toString() === rdfXMLLiteral) {
+              this.html(triple.object.value);
+            } else {
+              this.attr('content', triple.object.value);
             }
           }
-        } else if (triple.object.datatype) {
-          createCurieAttr(this, 'datatype', triple.object.datatype);
-        } else {
-          // the empty datatype ensures that any child elements that might be added won't mess up this triple
-          if (!hasContent) {
-            this.attr('datatype', '');
-          }
-          // the empty lang ensures that a language won't be assigned to the literal
-          if (lang !== undefined) {
-            this.attr('lang', '');
-            if (hasContent) {
-              resetLang(this, lang);
+          lang = getLang(this);
+          if (triple.object.lang) {
+            if (lang !== triple.object.lang) {
+              this.attr('lang', triple.object.lang);
+              if (hasContent) {
+                resetLang(this, lang);
+              }
+            }
+          } else if (triple.object.datatype) {
+            createCurieAttr(this, 'datatype', triple.object.datatype);
+          } else {
+            // the empty datatype ensures that any child elements that might be added won't mess up this triple
+            if (!hasContent) {
+              this.attr('datatype', '');
+            }
+            // the empty lang ensures that a language won't be assigned to the literal
+            if (lang !== undefined) {
+              this.attr('lang', '');
+              if (hasContent) {
+                resetLang(this, lang);
+              }
             }
           }
         }
       }
       this.parents().andSelf().removeData('rdfa.triples');
       this.parents().andSelf().trigger("rdfChange");
-      return this;
+      return span;
 		};
 
   $.fn.rdfa = function (triple) {

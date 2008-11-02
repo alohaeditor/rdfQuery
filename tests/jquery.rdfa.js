@@ -394,7 +394,7 @@ test("adding RDFa where the subject is a resource and the object is an XMLLitera
   $('#main > p').remove();
 });
 
-test("adding RDFa where the subject is a resource which is already referenced", function() {
+test("adding RDFa where the object is a resource which is already referenced", function() {
 	setup('<p>This photo was taken by <a href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.</p>');
   var a = $('#main > p > a');
   a.rdfa('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .');
@@ -513,12 +513,11 @@ test('adding a triple where the element already has the triple with a different 
   span.rdfa('<#SusannahDarwin> foaf:son <#ErasmusDarwin> .');
   equals(span.attr('about'), '#SusannahDarwin');
   equals(span.attr('rel'), 'foaf:son');
-  equals(span.attr('resource'), '#ErasmusDarwin');
-  span = span.children('span');
-  equals(span.attr('about'), '#SusannahDarwin');
-  equals(span.attr('rel'), 'foaf:son');
   equals(span.attr('resource'), '#CharlesDarwin');
-  equals(span.text(), 'Susannah Darwin');
+  span = span.parent();
+  equals(span.attr('about'), '#ErasmusDarwin');
+  equals(span.attr('rev'), 'foaf:son');
+  equals(span.attr('resource'), undefined);
   $('#main > p').remove();
 });
 
