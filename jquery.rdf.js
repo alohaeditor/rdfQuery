@@ -152,7 +152,7 @@
     },
     
     mergeMatches = function (existingMs, newMs, optional) {
-      return $.map(existingMs, function (existingM) {
+      return $.map(existingMs, function (existingM, i) {
         var compatibleMs = $.map(newMs, function (newM) {
           // For newM to be compatible with existingM, all the bindings
           // in newM must either be the same as in existingM, or not
@@ -278,7 +278,7 @@
         if (query.top || query.parent.top) {
           newMatches = [match];
         } else {
-          newMatches = mergeMatches(query.parent, [match], false);
+          newMatches = mergeMatches(query.parent.matches, [match], false);
         }
         updateQuery(query, newMatches);
       }
@@ -287,19 +287,21 @@
     leftActivate = function (query, matches) {
       var newMatches;
       if (query.union === undefined) {
-        matches = matches || query.parent;
         if (query.top || query.parent.top) {
           newMatches = query.alphaMemory;
-        } else if ($.isFunction(query.filterExp)) {
-          newMatches = $.map(matches, function (match) {
-            return query.filterExp(match.bindings) ? match : null;
-          });
         } else {
-          newMatches = mergeMatches(matches, query.alphaMemory, query.filterExp.optional);
-        }        
+          matches = matches || query.parent.matches;
+          if ($.isFunction(query.filterExp)) {
+            newMatches = $.map(matches, function (match) {
+              return query.filterExp.call(match.bindings, match.bindings) ? match : null;
+            });
+          } else {
+            newMatches = mergeMatches(matches, query.alphaMemory, query.filterExp.optional);
+          }
+        }
       } else {
         newMatches = $.map(query.union, function (q) {
-          return q.get();
+          return q.matches;
         });
       }
       updateQuery(query, newMatches);
@@ -313,12 +315,16 @@
         $.each(query.partOf, function (i, union) {
           updateQuery(union, matches);
         });
-        Array.prototype.push.apply(query, matches);
+        $.each(matches, function (i, match) {
+          query.matches.push(match);
+          Array.prototype.push.call(query, match.bindings);
+        });
       }
     },
     
     resetQuery = function (query) {
       query.length = 0;
+      query.matches = [];
       $.each(query.children, function (i, child) {
         resetQuery(child);
       });
@@ -349,11 +355,7 @@
       /* must specify either a parent or a union, otherwise it's the top */
       this.parent = options.parent;
       this.union = options.union;
-      if (this.parent === undefined && this.union === undefined) {
-        this.top = true;
-      } else {
-        this.top = false;
-      }
+      this.top = this.parent === undefined && this.union === undefined;
       if (this.union === undefined) {
         if (options.databank === undefined) {
           this.databank = this.parent === undefined ? $.rdf.databank(options.triples, options) : this.parent.databank;
@@ -375,6 +377,7 @@
       this.partOf = [];
       this.filterExp = options.filter;
       this.alphaMemory = [];
+      this.matches = [];
       this.length = 0;
       if (this.filterExp !== undefined) {
         if (!$.isFunction(this.filterExp)) {
@@ -431,8 +434,8 @@
             typeof triple.property === 'string' ||
             typeof triple.object === 'string') {
           query = this;
-          this.bindings().each(function (i, bindings) {
-            var t = fillFilter(triple, bindings);
+          this.each(function (i, data) {
+            var t = fillFilter(triple, data);
             if (typeof t.subject !== 'string' &&
                 typeof t.property !== 'string' &&
                 typeof t.object !== 'string') {
@@ -446,18 +449,6 @@
         this.databank.add(triple, options);
       }
       return this;
-    },
-    
-    bindings: function () {
-      return $($.map(this, function (match) {
-        return match.bindings;
-      }));
-    },
-    
-    triples: function () {
-      return $($.map(this, function (match) {
-        return [match.triples]; // effectively returning an array of the array because otherwise arrays get flattened
-      }));
     },
     
     where: function (filter, options) {
@@ -478,20 +469,20 @@
       return this.where(filter, $.extend({}, options || {}, { optional: true }));
     },
     
-    filter: function (binding, condition) {
+    filter: function (property, condition) {
       var func, query;
-      if (typeof binding === 'string') {
+      if (typeof property === 'string') {
         if (condition.constructor === RegExp) {
-          func = function (bindings) {
-            return condition.test(bindings[binding].value);
+          func = function (data) {
+            return condition.test(data[property].value);
           };
         } else {
-          func = function (bindings) {
-            return bindings[binding].literal ? bindings[binding].value === condition : bindings[binding] === condition;
+          func = function (data) {
+            return data[property].literal ? data[property].value === condition : data[property] === condition;
           };
         }
       } else {
-        func = binding;
+        func = property;
       }
       query = $.rdf({ parent: this, filter: func });
       this.children.push(query);
@@ -514,6 +505,13 @@
       return this.length;
     },
     
+    sources: function () {
+      return $($.map(this.matches, function (match) {
+        // return an array-of-an-array because arrays automatically get expanded by $.map()
+        return [match.triples];
+      }));
+    },
+    
     get: function (num) {
       return (num === undefined) ? $.makeArray(this) : this[num];
     },
@@ -524,8 +522,9 @@
     },
     
     map: function (callback) {
-      return $($.map(this, function (match, i) {
-  			return callback.call( match, i, match ); // in the callback, this is the match, and the arguments are swapped
+      return $($.map(this, function (bindings, i) {
+        // in the callback, "this" is the bindings, and the arguments are swapped from $.map()
+        return callback.call(bindings, i, bindings); 
   		}));
     },
     
