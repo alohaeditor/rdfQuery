@@ -180,75 +180,75 @@
       });
     },
     
-    registerQuery = function (tripleStore, query) {
+    registerQuery = function (databank, query) {
       var s, p, o;
       if (query.filterExp !== undefined && !$.isFunction(query.filterExp)) {
-        if (tripleStore.union === undefined) {
+        if (databank.union === undefined) {
           s = typeof query.filterExp.subject === 'string' ? '' : query.filterExp.subject;
           p = typeof query.filterExp.property === 'string' ? '' : query.filterExp.property;
           o = typeof query.filterExp.object === 'string' ? '' : query.filterExp.object;
-          if (tripleStore.queries[s] === undefined) {
-            tripleStore.queries[s] = {};
+          if (databank.queries[s] === undefined) {
+            databank.queries[s] = {};
           }
-          if (tripleStore.queries[s][p] === undefined) {
-            tripleStore.queries[s][p] = {};
+          if (databank.queries[s][p] === undefined) {
+            databank.queries[s][p] = {};
           }
-          if (tripleStore.queries[s][p][o] === undefined) {
-            tripleStore.queries[s][p][o] = [];
+          if (databank.queries[s][p][o] === undefined) {
+            databank.queries[s][p][o] = [];
           }
-          tripleStore.queries[s][p][o].push(query);
+          databank.queries[s][p][o].push(query);
         } else {
-          $.each(tripleStore.union, function (i, databank) {
+          $.each(databank.union, function (i, databank) {
             registerQuery(databank, query);
           });
         }
       }
     },
     
-    addToTripleStoreQueries = function (tripleStore, triple) {
+    addToDatabankQueries = function (databank, triple) {
       var s = triple.subject,
         p = triple.property,
         o = triple.object;
-      if (tripleStore.union === undefined) {
-        if (tripleStore.queries[s] !== undefined) {
-          if (tripleStore.queries[s][p] !== undefined) {
-            if (tripleStore.queries[s][p][o] !== undefined) {
-              addToQueries(tripleStore.queries[s][p][o], triple);
+      if (databank.union === undefined) {
+        if (databank.queries[s] !== undefined) {
+          if (databank.queries[s][p] !== undefined) {
+            if (databank.queries[s][p][o] !== undefined) {
+              addToQueries(databank.queries[s][p][o], triple);
             }
-            if (tripleStore.queries[s][p][''] !== undefined) {
-              addToQueries(tripleStore.queries[s][p][''], triple);
+            if (databank.queries[s][p][''] !== undefined) {
+              addToQueries(databank.queries[s][p][''], triple);
             }
           }
-          if (tripleStore.queries[s][''] !== undefined) {
-            if (tripleStore.queries[s][''][o] !== undefined) {
-              addToQueries(tripleStore.queries[s][''][o], triple);
+          if (databank.queries[s][''] !== undefined) {
+            if (databank.queries[s][''][o] !== undefined) {
+              addToQueries(databank.queries[s][''][o], triple);
             }
-            if (tripleStore.queries[s][''][''] !== undefined) {
-              addToQueries(tripleStore.queries[s][''][''], triple);
+            if (databank.queries[s][''][''] !== undefined) {
+              addToQueries(databank.queries[s][''][''], triple);
             }
           }
         }
-        if (tripleStore.queries[''] !== undefined) {
-          if (tripleStore.queries[''][p] !== undefined) {
-            if (tripleStore.queries[''][p][o] !== undefined) {
-              addToQueries(tripleStore.queries[''][p][o], triple);
+        if (databank.queries[''] !== undefined) {
+          if (databank.queries[''][p] !== undefined) {
+            if (databank.queries[''][p][o] !== undefined) {
+              addToQueries(databank.queries[''][p][o], triple);
             }
-            if (tripleStore.queries[''][p][''] !== undefined) {
-              addToQueries(tripleStore.queries[''][p][''], triple);
+            if (databank.queries[''][p][''] !== undefined) {
+              addToQueries(databank.queries[''][p][''], triple);
             }
           }
-          if (tripleStore.queries[''][''] !== undefined) {
-            if (tripleStore.queries[''][''][o] !== undefined) {
-              addToQueries(tripleStore.queries[''][''][o], triple);
+          if (databank.queries[''][''] !== undefined) {
+            if (databank.queries[''][''][o] !== undefined) {
+              addToQueries(databank.queries[''][''][o], triple);
             }
-            if (tripleStore.queries[''][''][''] !== undefined) {
-              addToQueries(tripleStore.queries[''][''][''], triple);
+            if (databank.queries[''][''][''] !== undefined) {
+              addToQueries(databank.queries[''][''][''], triple);
             }
           }
         }
       } else {
-        $.each(tripleStore.union, function (i, databank) {
-          addToTripleStoreQueries(databank, triple);
+        $.each(databank.union, function (i, databank) {
+          addToDatabankQueries(databank, triple);
         });
       }
     },
@@ -355,20 +355,20 @@
         this.top = false;
       }
       if (this.union === undefined) {
-        if (options.tripleStore === undefined) {
-          this.tripleStore = this.parent === undefined ? $.rdf.databank(options.triples, options) : this.parent.tripleStore;
+        if (options.databank === undefined) {
+          this.databank = this.parent === undefined ? $.rdf.databank(options.triples, options) : this.parent.databank;
         } else {
-          this.tripleStore = options.tripleStore;
+          this.databank = options.databank;
         }
       } else {
         databanks = $.map(this.union, function (query) {
-          return query.tripleStore;
+          return query.databank;
         });
         databanks = $.unique(databanks);
         if (databanks[1] !== undefined) {
-          this.tripleStore = $.rdf.databank(undefined, { union: databanks });
+          this.databank = $.rdf.databank(undefined, { union: databanks });
         } else {
-          this.tripleStore = databanks[0];
+          this.databank = databanks[0];
         }
       }
       this.children = [];
@@ -378,8 +378,8 @@
       this.length = 0;
       if (this.filterExp !== undefined) {
         if (!$.isFunction(this.filterExp)) {
-          registerQuery(this.tripleStore, this);
-          this.alphaMemory = findMatches(this.tripleStore.triples(), this.filterExp);
+          registerQuery(this.databank, this);
+          this.alphaMemory = findMatches(this.databank.triples(), this.filterExp);
         }
       }
       leftActivate(this);
@@ -388,18 +388,18 @@
     
     base: function (base) {
       if (base === undefined) {
-        return this.tripleStore.base();
+        return this.databank.base();
       } else {
-        this.tripleStore.base(base);
+        this.databank.base(base);
         return this;
       }
     },
     
     prefix: function (prefix, namespace) {
       if (namespace === undefined) {
-        return this.tripleStore.prefix(prefix);
+        return this.databank.prefix(prefix);
       } else {
-        this.tripleStore.prefix(prefix, namespace);
+        this.databank.prefix(prefix, namespace);
         return this;
       }
     },
@@ -408,12 +408,12 @@
       var query, databank;
       if (triple.rdfquery !== undefined) {
         if (triple.top) {
-          databank = this.tripleStore.add(triple.tripleStore);
-          query = $.rdf({ parent: this.parent, tripleStore: databank });
+          databank = this.databank.add(triple.databank);
+          query = $.rdf({ parent: this.parent, databank: databank });
           return query;
         } else if (this.top) {
-          databank = triple.tripleStore.add(this.tripleStore);
-          query = $.rdf({ parent: triple.parent, tripleStore: databank })
+          databank = triple.databank.add(this.databank);
+          query = $.rdf({ parent: triple.parent, databank: databank })
           return query;
         } else if (this.union === undefined) {
           query = $.rdf({ union: [this, triple] });
@@ -436,14 +436,14 @@
             if (typeof t.subject !== 'string' &&
                 typeof t.property !== 'string' &&
                 typeof t.object !== 'string') {
-              query.tripleStore.add($.rdf.triple(t.subject, t.property, t.object, options), options);
+              query.databank.add($.rdf.triple(t.subject, t.property, t.object, options), options);
             }
           });
         } else {
-          this.tripleStore.add($.rdf.triple(triple.subject, triple.property, triple.object, options), options);
+          this.databank.add($.rdf.triple(triple.subject, triple.property, triple.object, options), options);
         }
       } else {
-        this.tripleStore.add(triple, options);
+        this.databank.add(triple, options);
       }
       return this;
     },
@@ -647,7 +647,7 @@
           }
           if ($.inArray(triple, this.tripleStore[triple.subject]) === -1) {
             this.tripleStore[triple.subject].push(triple);
-            addToTripleStoreQueries(this, triple);
+            addToDatabankQueries(this, triple);
           }
         } else {
           $.each(this.union, function (i, databank) {

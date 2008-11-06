@@ -16,7 +16,7 @@ module("Triplestore Tests");
 
 test("creating an empty triple store", function() {
 	var rdf = $.rdf();
-	equals(rdf.tripleStore.size(), 0, "the length of the triple store should be zero");
+	equals(rdf.databank.size(), 0, "the length of the triple store should be zero");
 	equals(rdf.length, 0, "the length of the matches should be zero")
 	equals(rdf.size(), 0, "the size of the matches should be zero");
 });
@@ -28,10 +28,10 @@ test("creating a triple store from an array of $.rdf.triple objects", function()
 		$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .', { namespaces: namespaces })
 	];
 	var rdf = $.rdf({ triples: triples });
-	equals(rdf.tripleStore.size(), 2, "the length of the tripleStore should be two");
+	equals(rdf.databank.size(), 2, "the length of the databank should be two");
 	equals(rdf.length, 0, "the length of the matches should be zero");
-	equals(rdf.tripleStore.triples()[0], triples[0]);
-	equals(rdf.tripleStore.triples()[1], triples[1]);
+	equals(rdf.databank.triples()[0], triples[0]);
+	equals(rdf.databank.triples()[1], triples[1]);
 });
 
 test("creating a triple store from an array of strings", function() {
@@ -41,10 +41,10 @@ test("creating a triple store from an array of strings", function() {
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .'
 	];
 	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
-	equals(rdf.tripleStore.size(), 2, "the length of the triple store should be two");
+	equals(rdf.databank.size(), 2, "the length of the triple store should be two");
 	equals(rdf.length, 0, "the length should be two");
 	equals(rdf.size(), 0, "the size should be two");
-	var triples = rdf.tripleStore.triples();
+	var triples = rdf.databank.triples();
 	ok(triples[0].subject.resource, "the subject of the first triple should be a resource");
 	ok(triples[0].property.resource, "the property of the first triple should be a resource");
 	ok(triples[0].object.resource, "the object of the first triple should be a resource");
@@ -58,7 +58,7 @@ test("adding duplicate triples to a triple store", function() {
     .prefix('dc', ns.dc)
     .add('_:a dc:creator "Jeni" .')
     .add('_:a dc:creator "Jeni" .');
-  equals(rdf.tripleStore.size(), 1, "should only result in one triple being added");
+  equals(rdf.databank.size(), 1, "should only result in one triple being added");
 });
 
 test("selecting triples using a search pattern", function() {
@@ -279,8 +279,8 @@ test("creating a namespace binding explicitly, not while creating the triples", 
 	try {
 		rdf.add(':book1 dc:title "SPARQL Tutorial"');
 		ok(true, "should not generate an error");
-		equals(rdf.tripleStore.triples()[0].subject, '<http://example.org/book/book1>');
-		equals(rdf.tripleStore.triples()[0].property, '<http://purl.org/dc/elements/1.1/title>');
+		equals(rdf.databank.triples()[0].subject, '<http://example.org/book/book1>');
+		equals(rdf.databank.triples()[0].property, '<http://purl.org/dc/elements/1.1/title>');
 	} catch (e) {
 		ok(false, "should not generate the error " + e.message);
 	}
@@ -291,7 +291,7 @@ test("creating a base URI explicitly, not while creating the triples", function(
 		.prefix('dc', 'http://purl.org/dc/elements/1.1/')
 		.base('http://www.example.org/images/')
 		.add('<photo1.jpg> dc:creator "Jeni"');
-	equals(rdf.tripleStore.triples()[0].subject, '<http://www.example.org/images/photo1.jpg>');
+	equals(rdf.databank.triples()[0].subject, '<http://www.example.org/images/photo1.jpg>');
 });
 
 test("creating an optional clause", function() {
@@ -388,7 +388,7 @@ test("creating a union from two sets of triples", function() {
     .add('<photo1.jpg> foaf:depicts "Jane"');
   var rdf = rdfA.add(rdfB);
   equals(rdf.union, undefined, "it shouldn't create a query union");
-  equals(rdf.tripleStore.union.length, 2, "the tripleStore should be a union");
+  equals(rdf.databank.union.length, 2, "the databank should be a union");
   equals(rdf.prefix('dc'), ns.dc);
   equals(rdf.prefix('foaf'), ns.foaf);
   rdf = rdf
@@ -573,17 +573,17 @@ test("creating new triples based on a template", function() {
     .add('_:b    foaf:family_name "Hacker" .')
     .where('?person foaf:givenname ?gname')
     .where('?person foaf:family_name ?fname');
-  equals(rdf.tripleStore.size(), 4, "should contain four triples");
+  equals(rdf.databank.size(), 4, "should contain four triples");
   equals(rdf.length, 2, "should have two matches");
   rdf = rdf.prefix('vcard', ns.vcard)
     .add('?person vcard:N []');
-  equals(rdf.tripleStore.size(), 6, "should contain six triples");
+  equals(rdf.databank.size(), 6, "should contain six triples");
   equals(rdf.length, 2, "should have two matches");
   /*
   rdf.where('?person vcard:N ?v')
     .add('?v vcard:givenname ?gname')
     .add('?v vcard:familyName ?fname');
-  equals(rdf.tripleStore.length, 10, "should contain ten triples");
+  equals(rdf.databank.length, 10, "should contain ten triples");
   */
 });
 
