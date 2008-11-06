@@ -16,7 +16,7 @@ module("Triplestore Tests");
 
 test("creating an empty triple store", function() {
 	var rdf = $.rdf();
-	equals(rdf.tripleStore.length, 0, "the length of the triple store should be zero");
+	equals(rdf.tripleStore.size(), 0, "the length of the triple store should be zero");
 	equals(rdf.length, 0, "the length of the matches should be zero")
 	equals(rdf.size(), 0, "the size of the matches should be zero");
 });
@@ -27,11 +27,11 @@ test("creating a triple store from an array of $.rdf.triple objects", function()
 		$.rdf.triple('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .', { namespaces: namespaces }),
 		$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .', { namespaces: namespaces })
 	];
-	var rdf = $.rdf(triples);
-	equals(rdf.tripleStore.length, 2, "the length of the tripleStore should be two");
+	var rdf = $.rdf({ triples: triples });
+	equals(rdf.tripleStore.size(), 2, "the length of the tripleStore should be two");
 	equals(rdf.length, 0, "the length of the matches should be zero");
-	equals(rdf.tripleStore[0], triples[0]);
-	equals(rdf.tripleStore[1], triples[1]);
+	equals(rdf.tripleStore.triples()[0], triples[0]);
+	equals(rdf.tripleStore.triples()[1], triples[1]);
 });
 
 test("creating a triple store from an array of strings", function() {
@@ -40,16 +40,17 @@ test("creating a triple store from an array of strings", function() {
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .'
 	];
-	var rdf = $.rdf(triples, { namespaces: namespaces });
-	equals(rdf.tripleStore.length, 2, "the length of the triple store should be two");
+	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
+	equals(rdf.tripleStore.size(), 2, "the length of the triple store should be two");
 	equals(rdf.length, 0, "the length should be two");
 	equals(rdf.size(), 0, "the size should be two");
-	ok(rdf.tripleStore[0].subject.resource, "the subject of the first triple should be a resource");
-	ok(rdf.tripleStore[0].property.resource, "the property of the first triple should be a resource");
-	ok(rdf.tripleStore[0].object.resource, "the object of the first triple should be a resource");
-	ok(rdf.tripleStore[1].subject.resource, "the subject of the first triple should be a resource");
-	ok(rdf.tripleStore[1].property.resource, "the property of the first triple should be a resource");
-	ok(rdf.tripleStore[1].object.resource, "the object of the first triple should be a resource");
+	var triples = rdf.tripleStore.triples();
+	ok(triples[0].subject.resource, "the subject of the first triple should be a resource");
+	ok(triples[0].property.resource, "the property of the first triple should be a resource");
+	ok(triples[0].object.resource, "the object of the first triple should be a resource");
+	ok(triples[1].subject.resource, "the subject of the first triple should be a resource");
+	ok(triples[1].property.resource, "the property of the first triple should be a resource");
+	ok(triples[1].object.resource, "the object of the first triple should be a resource");
 });
 
 test("adding duplicate triples to a triple store", function() {
@@ -57,7 +58,7 @@ test("adding duplicate triples to a triple store", function() {
     .prefix('dc', ns.dc)
     .add('_:a dc:creator "Jeni" .')
     .add('_:a dc:creator "Jeni" .');
-  equals(rdf.tripleStore.length, 1, "should only result in one triple being added");
+  equals(rdf.tripleStore.size(), 1, "should only result in one triple being added");
 });
 
 test("selecting triples using a search pattern", function() {
@@ -67,8 +68,8 @@ test("selecting triples using a search pattern", function() {
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
 		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 	];
-	var rdf = $.rdf(triples, { namespaces: namespaces });
-	var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>', { namespaces: namespaces });
+	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
+	var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>');
 	equals(filtered.length, 2, "number of items after filtering");
 	equals(filtered[0].bindings.photo.uri, $.uri('photo1.jpg'));
 	equals(filtered[1].bindings.photo.uri, $.uri('photo2.jpg'));
@@ -81,7 +82,7 @@ test("creating triples and specifying options should helpfully bind prefixes", f
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
 		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 	];
-	var rdf = $.rdf(triples, { namespaces: namespaces });
+	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
 	try {
 		var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>');
 		ok(true, "should not raise an error");
@@ -93,70 +94,69 @@ test("creating triples and specifying options should helpfully bind prefixes", f
 });
 
 test("selecting triples using a search pattern, then adding another triple that matches the search pattern", function() {
-	var namespaces = { namespaces: { dc: ns.dc, foaf: ns.foaf } };
-	var triples = [
-		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
-		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .'
-	];
-	var rdf = $.rdf(triples, namespaces);
-	var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>', namespaces);
+	var rdf = $.rdf()
+	  .prefix('dc', ns.dc)
+	  .prefix('foaf', ns.foaf)
+	  .add('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+	  .add('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .');
+	var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>');
 	equals(filtered.length, 1, "number of items after filtering");
 	equals(filtered[0].bindings.photo.uri, $.uri('photo1.jpg'));
-	var added = rdf.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .', namespaces);
+	var added = filtered.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .');
 	equals(filtered.length, 2, "number of items after filtering");
 	equals(filtered[1].bindings.photo.uri, $.uri('photo2.jpg'));
 });
 
 test("selecting triples using two search patterns", function() {
-	var namespaces = { namespaces: { dc: ns.dc, foaf: ns.foaf } };
+	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
 		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 	];
-	var rdf = $.rdf(triples, namespaces);
+	var rdf = $.rdf({triples: triples, namespaces: namespaces});
 	var filtered = rdf
-		.where('?photo dc:creator ?creator', namespaces)
-		.where('?creator foaf:img ?photo', namespaces);
+		.where('?photo dc:creator ?creator')
+		.where('?creator foaf:img ?photo');
 	equals(filtered.length, 1, "number of items after filtering");
 	equals(filtered[0].bindings.photo.uri, $.uri('photo1.jpg'));
 	equals(filtered[0].bindings.creator.uri, $.uri('http://www.blogger.com/profile/1109404'));
-	equals(filtered[0].triples[0], $.rdf.triple(triples[0], namespaces));
-	equals(filtered[0].triples[1], $.rdf.triple(triples[1], namespaces));
+	equals(filtered[0].triples[0], $.rdf.triple(triples[0], {namespaces: namespaces}));
+	equals(filtered[0].triples[1], $.rdf.triple(triples[1], {namespaces: namespaces}));
 	equals(filtered.bindings()[0].photo.uri, $.uri('photo1.jpg'));
 	equals(filtered.bindings()[0].creator.uri, $.uri('http://www.blogger.com/profile/1109404'))
 });
 
 test("selecting triples using two search patterns, then adding a triple", function() {
-	var namespaces = { namespaces: { dc: ns.dc, foaf: ns.foaf } };
+	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
 		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 	];
-	var rdf = $.rdf(triples, namespaces);
+	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
 	var filtered = rdf
-		.where('?photo dc:creator ?creator', namespaces)
-		.where('?creator foaf:img ?photo', namespaces);
+		.where('?photo dc:creator ?creator')
+		.where('?creator foaf:img ?photo');
 	equals(filtered.length, 1, "number of items after filtering");
 	equals(filtered[0].bindings.photo.uri, $.uri('photo1.jpg'));
-	var added = rdf.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .', namespaces);
+	var added = rdf.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .');
 	equals(filtered.length, 2, "number of items after adding a new triple");
 	equals(filtered[1].bindings.photo.uri, $.uri('photo2.jpg'));
 });
 
 test("using a callback function on each match", function() {
 	var count = 0, photos = [];
-	var namespaces = { namespaces: { dc: ns.dc, foaf: ns.foaf } };
+	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
 		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .',
 	];
-	var rdf = $.rdf(triples, namespaces)
-		.where('?photo dc:creator ?creator', namespaces)
-		.where('?creator foaf:img ?photo', namespaces);
+	var rdf = $.rdf({ triples: triples, namespaces: namespaces })
+		.where('?photo dc:creator ?creator')
+		.where('?creator foaf:img ?photo');
 	rdf.each(function (index, match) {
 		count += 1;
 		photos.push(match.bindings.photo);
@@ -233,19 +233,19 @@ test("creating a jQuery object from the rdfQuery object", function() {
 });
 
 test("filtering some results based on a regular expression", function() {
-	var namespaces = { namespaces: { dc: 'http://purl.org/dc/elements/1.1/', '': 'http://example.org/book/', ns: 'http://example.org/ns#'}};
+	var namespaces = { dc: 'http://purl.org/dc/elements/1.1/', '': 'http://example.org/book/', ns: 'http://example.org/ns#'};
 	var triples = [
 		':book1  dc:title  "SPARQL Tutorial" .',
 		':book1  ns:price  42 .',
 		':book2  dc:title  "The Semantic Web" .',
 		':book2  ns:price  23 .'
 	];
-	var rdf = $.rdf(triples, namespaces)
-		.where('?x dc:title ?title', namespaces);
+	var rdf = $.rdf({ triples: triples, namespaces: namespaces })
+		.where('?x dc:title ?title');
 	equals(rdf.length, 2, "should have two items before filtering");
-	rdf.filter('title', /^SPARQL/);
-	equals(rdf.length, 1, "should have one item after filtering");
-	equals(rdf.bindings()[0].title.value, "SPARQL Tutorial");
+	var filtered = rdf.filter('title', /^SPARQL/);
+	equals(filtered.length, 1, "should have one item after filtering");
+	equals(filtered.bindings()[0].title.value, "SPARQL Tutorial");
 });
 
 test("filtering some results, then adding a new matching triple", function() {
@@ -279,8 +279,8 @@ test("creating a namespace binding explicitly, not while creating the triples", 
 	try {
 		rdf.add(':book1 dc:title "SPARQL Tutorial"');
 		ok(true, "should not generate an error");
-		equals(rdf.tripleStore[0].subject, '<http://example.org/book/book1>');
-		equals(rdf.tripleStore[0].property, '<http://purl.org/dc/elements/1.1/title>');
+		equals(rdf.tripleStore.triples()[0].subject, '<http://example.org/book/book1>');
+		equals(rdf.tripleStore.triples()[0].property, '<http://purl.org/dc/elements/1.1/title>');
 	} catch (e) {
 		ok(false, "should not generate the error " + e.message);
 	}
@@ -291,7 +291,7 @@ test("creating a base URI explicitly, not while creating the triples", function(
 		.prefix('dc', 'http://purl.org/dc/elements/1.1/')
 		.base('http://www.example.org/images/')
 		.add('<photo1.jpg> dc:creator "Jeni"');
-	equals(rdf.tripleStore[0].subject, '<http://www.example.org/images/photo1.jpg>');
+	equals(rdf.tripleStore.triples()[0].subject, '<http://www.example.org/images/photo1.jpg>');
 });
 
 test("creating an optional clause", function() {
@@ -349,11 +349,12 @@ test("adding a triple that should cause the creation of two matches", function()
 test("adding a triple that satisfies an optional clause", function() {
   var rdf = $.rdf()
     .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
-    .add('_:a  foaf:name       "Alice" .')
+    .add('_:a foaf:name "Alice" .')
     .where('?x foaf:name ?name')
-    .optional('?x foaf:mbox ?mbox');
   equals(rdf.length, 1, "there should be one match");
-  rdf.add('_:a foaf:mbox <mailto:alice@example.com> .')
+  rdf = rdf.optional('?x foaf:mbox ?mbox');
+  equals(rdf.length, 1, "there should be one match");
+  rdf = rdf.add('_:a foaf:mbox <mailto:alice@example.com> .')
   equals(rdf.length, 1, "there should be one match");
   equals(rdf.bindings()[0].name.value, "Alice");
   equals(rdf.bindings()[0].mbox.uri, 'mailto:alice@example.com');
@@ -378,23 +379,6 @@ test("multiple optional clauses", function() {
   equals(rdf.bindings()[1].hpage, undefined);
 });
 
-test("creating a copy", function() {
-  var rdf = $.rdf()
-    .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
-    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
-    .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
-    .add('_:a  dc10:creator   "Alice" .')
-    .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
-    .add('_:b  dc11:creator   "Bob" .')
-    .add('_:c  dc10:title     "SPARQL" .')
-    .add('_:c  dc11:title     "SPARQL (updated)" .')
-    .where('?x dc10:title ?title')
-  var copy = rdf.clone();
-  ok(copy.tripleStore.length === rdf.tripleStore.length, "the triplestores should be the same length");
-  ok(copy.tripleStore !== rdf.tripleStore, "the triplestores should not be the same object");
-  ok(copy.length === rdf.length, "there should be the same number of matches");
-});
-
 test("creating a union from two sets of triples", function() {
   var rdfA = $.rdf()
     .prefix('dc', ns.dc)
@@ -403,11 +387,17 @@ test("creating a union from two sets of triples", function() {
     .prefix('foaf', ns.foaf)
     .add('<photo1.jpg> foaf:depicts "Jane"');
   var rdf = rdfA.add(rdfB);
-  equals(rdf.tripleStore.length, 2, "it should contain two triples");
-  equals(rdf.union.length, 0, "it shouldn't create a proper union");
+  equals(rdf.union, undefined, "it shouldn't create a query union");
+  equals(rdf.tripleStore.union.length, 2, "the tripleStore should be a union");
   equals(rdf.prefix('dc'), ns.dc);
   equals(rdf.prefix('foaf'), ns.foaf);
-  rdf.where('?photo dc:creator ?person').where('?photo foaf:depicts ?person');
+  rdf = rdf
+    .where('?photo dc:creator ?person');
+  equals(rdf.length, 1, "it should contain one match");
+  equals(rdf.bindings().get(0).photo.uri, $.uri('photo1.jpg'));
+  equals(rdf.bindings().get(0).person.value, "Jane");
+  rdf = rdf
+    .where('?photo foaf:depicts ?person');
   equals(rdf.length, 1, "it should contain one match");
   equals(rdf.bindings().get(0).photo.uri, $.uri('photo1.jpg'));
   equals(rdf.bindings().get(0).person.value, "Jane");
@@ -423,12 +413,11 @@ test("creating a union from two differently filtered sets of triples", function(
     .add('_:b  dc11:creator   "Bob" .')
     .add('_:c  dc10:title     "SPARQL" .')
     .add('_:c  dc11:title     "SPARQL (updated)" .');
-  var rdfA = rdf.clone().where('?book dc10:title ?title');
+  var rdfA = rdf.where('?book dc10:title ?title');
   equals(rdfA.length, 2, "there should be two matches in the first group");
-  var rdfB = rdf.clone().where('?book dc11:title ?title');
+  var rdfB = rdf.where('?book dc11:title ?title');
   equals(rdfB.length, 2, "there should be two matches in the second group");
   var union = rdfA.add(rdfB);
-  equals(union.tripleStore.length, 0, "the union shouldn't contain a triple store itself");
   equals(union.length, 4, "there should be four matches in the union");
   equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
   equals(union.bindings().get(1).title.value, "SPARQL");
@@ -446,8 +435,8 @@ test("creating a union with different bindings", function() {
     .add('_:b  dc11:creator   "Bob" .')
     .add('_:c  dc10:title     "SPARQL" .')
     .add('_:c  dc11:title     "SPARQL (updated)" .');
-  var rdfA = rdf.clone().where('?book dc10:title ?x');
-  var rdfB = rdf.clone().where('?book dc11:title ?y');
+  var rdfA = rdf.where('?book dc10:title ?x');
+  var rdfB = rdf.where('?book dc11:title ?y');
   var union = rdfA.add(rdfB);
   equals(union.length, 4, "there should be four matches in the union");
   equals(union.bindings().get(0).x.value, "SPARQL Query Language Tutorial");
@@ -466,8 +455,8 @@ test("creating a union where several filters have been applied", function() {
     .add('_:b  dc11:creator   "Bob" .')
     .add('_:c  dc10:title     "SPARQL" .')
     .add('_:c  dc11:title     "SPARQL (updated)" .');
-  var rdfA = rdf.clone().where('?book dc10:title ?title').where('?book dc10:creator ?author');
-  var rdfB = rdf.clone().where('?book dc11:title ?title').where('?book dc11:creator ?author');
+  var rdfA = rdf.where('?book dc10:title ?title').where('?book dc10:creator ?author');
+  var rdfB = rdf.where('?book dc11:title ?title').where('?book dc11:creator ?author');
   var union = rdfA.add(rdfB);
   equals(union.length, 2, "there should be two matches in the union");
   equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
@@ -486,39 +475,39 @@ test("adding a triple to a union", function() {
     .add('_:b  dc11:creator   "Bob" .')
     .add('_:c  dc10:title     "SPARQL" .')
     .add('_:c  dc11:title     "SPARQL (updated)" .');
-  var rdfA = rdf.clone().where('?book dc10:title ?title').where('?book dc10:creator ?author');
-  var rdfB = rdf.clone().where('?book dc11:title ?title').where('?book dc11:creator ?author');
+  var rdfA = rdf.where('?book dc10:title ?title').where('?book dc10:creator ?author');
+  var rdfB = rdf.where('?book dc11:title ?title').where('?book dc11:creator ?author');
   var union = rdfA.add(rdfB);
   equals(union.length, 2, "there should be two matches in the union");
-  union.add('_:c dc10:creator "Claire"');
+  union = union.add('_:c dc10:creator "Claire"');
   equals(union.length, 3, "there should be three matches in the union");
   equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
   equals(union.bindings().get(0).author.value, "Alice");
-  equals(union.bindings().get(1).title.value, "SPARQL");
-  equals(union.bindings().get(1).author.value, "Claire");
-  equals(union.bindings().get(2).title.value, "SPARQL Protocol Tutorial");
-  equals(union.bindings().get(2).author.value, "Bob");
+  equals(union.bindings().get(1).title.value, "SPARQL Protocol Tutorial");
+  equals(union.bindings().get(1).author.value, "Bob");
+  equals(union.bindings().get(2).title.value, "SPARQL");
+  equals(union.bindings().get(2).author.value, "Claire");
 });
 
 test("filtering a union with a where clause", function() {
   var rdf = $.rdf()
     .prefix('dc10', 'http://purl.org/dc/elements/1.0/')
-    .prefix('dc11', 'http://purl.org/dc/elements/1.1/>')
+    .prefix('dc11', 'http://purl.org/dc/elements/1.1/')
     .add('_:a  dc10:title     "SPARQL Query Language Tutorial" .')
     .add('_:a  dc10:creator   "Alice" .')
     .add('_:b  dc11:title     "SPARQL Protocol Tutorial" .')
     .add('_:b  dc11:creator   "Bob" .')
     .add('_:c  dc10:title     "SPARQL" .')
     .add('_:d  dc11:title     "SPARQL (updated)" .');
-  var rdfA = rdf.clone().where('?book dc10:title ?title');
-  var rdfB = rdf.clone().where('?book dc11:title ?title');
+  var rdfA = rdf.where('?book dc10:title ?title');
+  var rdfB = rdf.where('?book dc11:title ?title');
   var union = rdfA.add(rdfB);
   equals(union.length, 4, "there should be four matches in the union");
-  union.where('?book dc10:creator ?author');
+  union = union.where('?book dc10:creator ?author');
   equals(union.length, 1, "there should be one match in the union");
-  equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
   equals(union.bindings().get(0).author.value, "Alice");
-  union.add('_:c dc10:creator "Alex"');
+  equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
+  union = union.add('_:c dc10:creator "Alex"');
   equals(union.length, 2, "there should be two matches in the union");
   equals(union.bindings().get(1).title.value, "SPARQL");
   equals(union.bindings().get(1).author.value, "Alex");
@@ -537,7 +526,7 @@ test("adding a binding after filtering with two where clauses", function() {
     .where('?book dc11:title ?title')
     .where('?book dc10:creator ?author');
   equals(rdf.length, 0, "there should be no matches");
-  rdf.add('_:c dc10:creator "Claire"');
+  rdf = rdf.add('_:c dc10:creator "Claire"');
   equals(rdf.length, 0, "there should still be no matches");
 });
 
@@ -551,16 +540,26 @@ test("filtering a union with a filter clause", function() {
     .add('_:b  dc11:creator   "Bob" .')
     .add('_:c  dc10:title     "SPARQL" .')
     .add('_:c  dc11:title     "SPARQL (updated)" .');
-  var rdfA = rdf.clone().where('?book dc10:title ?title').where('?book dc10:creator ?author');
-  var rdfB = rdf.clone().where('?book dc11:title ?title').where('?book dc11:creator ?author');
+  var rdfA = rdf.where('?book dc10:title ?title').where('?book dc10:creator ?author');
+  equals(rdfA.length, 1, "there should be one match in the first query");
+  equals(rdfA.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
+  equals(rdfA.bindings().get(0).author.value, "Alice");
+  var rdfB = rdf.where('?book dc11:title ?title').where('?book dc11:creator ?author');
+  equals(rdfB.length, 1, "there should be one match in the second query");
+  equals(rdfB.bindings().get(0).title.value, "SPARQL Protocol Tutorial");
+  equals(rdfB.bindings().get(0).author.value, "Bob");
   var union = rdfA.add(rdfB);
   equals(union.length, 2, "there should be two matches in the union");
-  union.filter('author', /^A/);
+  union = union.filter('author', /^A/);
+  ok(true, "...after filtering...")
   equals(union.length, 1, "there should be one match in the union");
   equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
   equals(union.bindings().get(0).author.value, "Alice");
-  union.add('_:c dc10:creator "Alex"');
+  union = union.add('_:c dc10:creator "Alex"');
+  ok(true, "...after adding a triple...")
   equals(union.length, 2, "there should be two matches in the union");
+  equals(union.bindings().get(0).title.value, "SPARQL Query Language Tutorial");
+  equals(union.bindings().get(0).author.value, "Alice");
   equals(union.bindings().get(1).title.value, "SPARQL");
   equals(union.bindings().get(1).author.value, "Alex");
 });
@@ -574,11 +573,11 @@ test("creating new triples based on a template", function() {
     .add('_:b    foaf:family_name "Hacker" .')
     .where('?person foaf:givenname ?gname')
     .where('?person foaf:family_name ?fname');
-  equals(rdf.tripleStore.length, 4, "should contain four triples");
+  equals(rdf.tripleStore.size(), 4, "should contain four triples");
   equals(rdf.length, 2, "should have two matches");
-  rdf.prefix('vcard', ns.vcard)
+  rdf = rdf.prefix('vcard', ns.vcard)
     .add('?person vcard:N []');
-  equals(rdf.tripleStore.length, 6, "should contain six triples");
+  equals(rdf.tripleStore.size(), 6, "should contain six triples");
   equals(rdf.length, 2, "should have two matches");
   /*
   rdf.where('?person vcard:N ?v')
@@ -597,11 +596,11 @@ test("using end() to reset a filter", function() {
     .add('_:b    foaf:family_name "Hacker" .')
     .where('?person foaf:family_name "Hacker"');
   equals(rdf.length, 2, "should have two matches");
-  rdf.where('?person foaf:givenname "Alice"');
+  rdf = rdf.where('?person foaf:givenname "Alice"');
   equals(rdf.length, 1, "should have one match");
-  rdf.end();
+  rdf = rdf.end();
   equals(rdf.length, 2, "should have two matches again");
-  rdf.end();
+  rdf = rdf.end();
   equals(rdf.length, 0, "should have no matches");
 });
 
@@ -614,13 +613,13 @@ test("using end() to reset a filter after adding something that matches the prev
     .add('_:b    foaf:family_name "Hacker" .')
     .where('?person foaf:family_name "Hacker"');
   equals(rdf.length, 2, "should have two matches");
-  rdf.where('?person foaf:givenname "Alice"');
+  rdf = rdf.where('?person foaf:givenname "Alice"');
   equals(rdf.length, 1, "should have one match");
-  rdf.add('_:c foaf:family_name "Hacker"');
+  rdf = rdf.add('_:c foaf:family_name "Hacker"');
   equals(rdf.length, 1, "should have one match")
-  rdf.end();
+  rdf = rdf.end();
   equals(rdf.length, 3, "should have three matches now");
-  rdf.end();
+  rdf = rdf.end();
   equals(rdf.length, 0, "should have no matches");
 });
 
@@ -634,7 +633,7 @@ test("using reset() to reset all filters completely", function() {
     .where('?person foaf:family_name "Hacker"')
     .where('?person foaf:givenname "Alice"');
   equals(rdf.length, 1, "should have one match");
-  rdf.reset();
+  rdf = rdf.reset();
   equals(rdf.length, 0, "should have no matches");
 });
 
@@ -657,6 +656,34 @@ test("using end with subsequent filters", function () {
   equals(scottish.length, 2, "there should be two scottish surnames");
   equals(irish.length, 1, "there should be one irish surname");
 });
+
+module("Creating Databanks");
+
+test("creating a new databank", function() {
+	var namespaces = { dc: ns.dc, foaf: ns.foaf };
+	var triples = [
+		$.rdf.triple('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .', { namespaces: namespaces }),
+		$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .', { namespaces: namespaces })
+	];
+	var data = $.rdf.databank(triples);
+	equals(data.tripleStore[triples[0].subject].length, 1);
+	equals(data.tripleStore[triples[0].subject][0], triples[0]);
+	equals(data.tripleStore[triples[1].subject].length, 1);
+	equals(data.tripleStore[triples[1].subject][0], triples[1]);
+	equals(data.size(), 2);
+});
+
+test("getting the triples from a databank", function() {
+	var namespaces = { dc: ns.dc, foaf: ns.foaf };
+	var triples = [
+		$.rdf.triple('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .', { namespaces: namespaces }),
+		$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .', { namespaces: namespaces })
+	];
+	var data = $.rdf.databank(triples);
+	equals(data.triples()[0], triples[0]);
+	equals(data.triples()[1], triples[1]);
+});
+
 
 module("Creating Triples");
 

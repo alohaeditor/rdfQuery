@@ -144,7 +144,7 @@
       return binding;
     },
     
-    findTriples = function (triples, filter) {
+    findMatches = function (triples, filter) {
       return $.map(triples, function (triple) {
         var bindings = testTriple(triple, filter);
         return bindings === null ? null : { bindings: bindings, triples: [triple] };
@@ -178,6 +178,153 @@
           return optional ? existingM : null;
         }
       });
+    },
+    
+    registerQuery = function (tripleStore, query) {
+      var s, p, o;
+      if (query.filterExp !== undefined && !$.isFunction(query.filterExp)) {
+        if (tripleStore.union === undefined) {
+          s = typeof query.filterExp.subject === 'string' ? '' : query.filterExp.subject;
+          p = typeof query.filterExp.property === 'string' ? '' : query.filterExp.property;
+          o = typeof query.filterExp.object === 'string' ? '' : query.filterExp.object;
+          if (tripleStore.queries[s] === undefined) {
+            tripleStore.queries[s] = {};
+          }
+          if (tripleStore.queries[s][p] === undefined) {
+            tripleStore.queries[s][p] = {};
+          }
+          if (tripleStore.queries[s][p][o] === undefined) {
+            tripleStore.queries[s][p][o] = [];
+          }
+          tripleStore.queries[s][p][o].push(query);
+        } else {
+          $.each(tripleStore.union, function (i, databank) {
+            registerQuery(databank, query);
+          });
+        }
+      }
+    },
+    
+    addToTripleStoreQueries = function (tripleStore, triple) {
+      var s = triple.subject,
+        p = triple.property,
+        o = triple.object;
+      if (tripleStore.union === undefined) {
+        if (tripleStore.queries[s] !== undefined) {
+          if (tripleStore.queries[s][p] !== undefined) {
+            if (tripleStore.queries[s][p][o] !== undefined) {
+              addToQueries(tripleStore.queries[s][p][o], triple);
+            }
+            if (tripleStore.queries[s][p][''] !== undefined) {
+              addToQueries(tripleStore.queries[s][p][''], triple);
+            }
+          }
+          if (tripleStore.queries[s][''] !== undefined) {
+            if (tripleStore.queries[s][''][o] !== undefined) {
+              addToQueries(tripleStore.queries[s][''][o], triple);
+            }
+            if (tripleStore.queries[s][''][''] !== undefined) {
+              addToQueries(tripleStore.queries[s][''][''], triple);
+            }
+          }
+        }
+        if (tripleStore.queries[''] !== undefined) {
+          if (tripleStore.queries[''][p] !== undefined) {
+            if (tripleStore.queries[''][p][o] !== undefined) {
+              addToQueries(tripleStore.queries[''][p][o], triple);
+            }
+            if (tripleStore.queries[''][p][''] !== undefined) {
+              addToQueries(tripleStore.queries[''][p][''], triple);
+            }
+          }
+          if (tripleStore.queries[''][''] !== undefined) {
+            if (tripleStore.queries[''][''][o] !== undefined) {
+              addToQueries(tripleStore.queries[''][''][o], triple);
+            }
+            if (tripleStore.queries[''][''][''] !== undefined) {
+              addToQueries(tripleStore.queries[''][''][''], triple);
+            }
+          }
+        }
+      } else {
+        $.each(tripleStore.union, function (i, databank) {
+          addToTripleStoreQueries(databank, triple);
+        });
+      }
+    },
+    
+    addToQueries = function (queries, triple) {
+      $.each(queries, function (i, query) {
+        addToQuery(query, triple);
+      });
+    },
+    
+    addToQuery = function (query, triple) {
+      var match, 
+        bindings = testTriple(triple, query.filterExp);
+      if (bindings !== null) {
+        match = { triples: [triple], bindings: bindings };
+        query.alphaMemory.push(match);
+        rightActivate(query, match);
+      }
+    },
+    
+    rightActivate = function (query, match) {
+      var newMatches;
+      if (query.filterExp.optional) {
+        resetQuery(query);
+        leftActivate(query);
+      } else {
+        if (query.top || query.parent.top) {
+          newMatches = [match];
+        } else {
+          newMatches = mergeMatches(query.parent, [match], false);
+        }
+        updateQuery(query, newMatches);
+      }
+    },
+    
+    leftActivate = function (query, matches) {
+      var newMatches;
+      if (query.union === undefined) {
+        matches = matches || query.parent;
+        if (query.top || query.parent.top) {
+          newMatches = query.alphaMemory;
+        } else if ($.isFunction(query.filterExp)) {
+          newMatches = $.map(matches, function (match) {
+            return query.filterExp(match.bindings) ? match : null;
+          });
+        } else {
+          newMatches = mergeMatches(matches, query.alphaMemory, query.filterExp.optional);
+        }        
+      } else {
+        newMatches = $.map(query.union, function (q) {
+          return q.get();
+        });
+      }
+      updateQuery(query, newMatches);
+    },
+    
+    updateQuery = function (query, matches) {
+      if (matches.length > 0) {
+        $.each(query.children, function (i, child) {
+          leftActivate(child, matches);
+        });
+        $.each(query.partOf, function (i, union) {
+          updateQuery(union, matches);
+        });
+        Array.prototype.push.apply(query, matches);
+      }
+    },
+    
+    resetQuery = function (query) {
+      query.length = 0;
+      $.each(query.children, function (i, child) {
+        resetQuery(child);
+      });
+      $.each(query.partOf, function (i, union) {
+        resetQuery(union);
+      });
     };
     
   $.typedValue.types['http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'] = {
@@ -189,200 +336,116 @@
   };
 
   // Trying to follow jQuery's general pattern, to get the same effect
-  $.rdf = function (triples, options) {
-    return new $.rdf.fn.init(triples, options);
+  $.rdf = function (options) {
+    return new $.rdf.fn.init(options);
   };
 
   $.rdf.fn = $.rdf.prototype = {
-    rdfquery: '0.1',
+    rdfquery: '0.2',
     
-    init: function (triples, options) {
-      var i;
-      this.length = 0;
-      this.tripleStore = [];
-      this.baseURI = (options && options.base) || $.uri.base();
-      this.namespaces = $.extend({}, (options && options.namespaces) || {});
-      this.filters = [];
-      this.previousMatches = [];
-      this.outOfSync = false;
-      this.union = [];
-      triples = triples || [];
-      for (i = 0; i < triples.length; i += 1) {
-        this.add(triples[i]);
+    init: function (options) {
+      var base, namespaces, optional, databanks, query = this;
+      options = options || {};
+      /* must specify either a parent or a union, otherwise it's the top */
+      this.parent = options.parent;
+      this.union = options.union;
+      if (this.parent === undefined && this.union === undefined) {
+        this.top = true;
+      } else {
+        this.top = false;
       }
+      if (this.union === undefined) {
+        if (options.tripleStore === undefined) {
+          this.tripleStore = this.parent === undefined ? $.rdf.databank(options.triples, options) : this.parent.tripleStore;
+        } else {
+          this.tripleStore = options.tripleStore;
+        }
+      } else {
+        databanks = $.map(this.union, function (query) {
+          return query.tripleStore;
+        });
+        databanks = $.unique(databanks);
+        if (databanks[1] !== undefined) {
+          this.tripleStore = $.rdf.databank(undefined, { union: databanks });
+        } else {
+          this.tripleStore = databanks[0];
+        }
+      }
+      this.children = [];
+      this.partOf = [];
+      this.filterExp = options.filter;
+      this.alphaMemory = [];
+      this.length = 0;
+      if (this.filterExp !== undefined) {
+        if (!$.isFunction(this.filterExp)) {
+          registerQuery(this.tripleStore, this);
+          this.alphaMemory = findMatches(this.tripleStore.triples(), this.filterExp);
+        }
+      }
+      leftActivate(this);
       return this;
     },
-
-    clone: function () {
-      var clone = new $.rdf();
-      clone.tripleStore = $.makeArray(this.tripleStore);
-      clone.baseURI = this.baseURI;
-      clone.namespaces = $.extend({}, this.namespaces);
-      clone.filters = $.makeArray(this.filters);
-      clone.union = $.makeArray(this.union);
-      clone.length = 0;
-      Array.prototype.push.apply(clone, $.makeArray(this));
-      return clone;
-    },
-
+    
     base: function (base) {
       if (base === undefined) {
-        return this.baseURI;
+        return this.tripleStore.base();
       } else {
-        this.baseURI = base;
+        this.tripleStore.base(base);
         return this;
       }
     },
-  
-    prefix: function (prefix, uri) {
-      if (uri === undefined) {
-        return this.namespaces[prefix];
+    
+    prefix: function (prefix, namespace) {
+      if (namespace === undefined) {
+        return this.tripleStore.prefix(prefix);
       } else {
-        this.namespaces[prefix] = uri;
+        this.tripleStore.prefix(prefix, namespace);
         return this;
       }
     },
     
     add: function (triple, options) {
-      var 
-        rdf = this,
-        template,
-        includesOptionalFilter = false;
-        base = (options && options.base) || this.baseURI,
-        namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {}),
-        replacement = [],
-        matches = [];
-       if (triple.rdfquery !== undefined) {
-        // create a union
-        if (this.filters.length > 0) {
-          return $.rdf([this, triple]);
+      var query, databank;
+      if (triple.rdfquery !== undefined) {
+        if (triple.top) {
+          databank = this.tripleStore.add(triple.tripleStore);
+          query = $.rdf({ parent: this.parent, tripleStore: databank });
+          return query;
+        } else if (this.top) {
+          databank = triple.tripleStore.add(this.tripleStore);
+          query = $.rdf({ parent: triple.parent, tripleStore: databank })
+          return query;
+        } else if (this.union === undefined) {
+          query = $.rdf({ union: [this, triple] });
+          this.partOf.push(query);
+          triple.partOf.push(query);
+          return query;
         } else {
-          if (triple.filters.length > 0) {
-            this.union.push(triple);
-            Array.prototype.push.apply(this, $.makeArray(triple));
-          } else {
-            this.tripleStore = $.unique(this.tripleStore.concat(triple.tripleStore));
-            $.extend(this.namespaces, triple.namespaces);
-            $.extend(this.union, triple.union);
-          }
-          return this;
+          this.union.push(triple);
+          triple.partOf.push(this);
         }
-      } else if (this.union.length > 0) {
-        matches = $.map(this.union, function (rdf) {
-          rdf.add(triple);
-          return $.makeArray(rdf);
-        });
-        this.length = 0;
-        Array.prototype.push.apply(this, matches);
-        return this;
-      } else {
-        if (typeof triple === 'string') {
-          template = parseFilter(triple, { namespaces: namespaces, base: base });
-          if (typeof template.subject === 'string' ||
-              typeof template.property === 'string' ||
-              typeof template.object === 'string') {
-            $.each(this, function (i, match) {
-              var t, f = fillFilter(template, match.bindings);
-              if (typeof f.subject === 'string' ||
-                  typeof f.property === 'string' ||
-                  typeof f.object === 'string') {
-                throw "Malformed Template: Couldn't complete the template: " + f;
-              } else {
-                t = $.rdf.triple(f.subject, f.property, f.object, { source: triple });
-                rdf.add(t);
-              }
-            });
-            return this;
-          } else {
-            triple = $.rdf.triple(template.subject, template.property, template.object, { source: triple });
-          }
-        }
-        if ($.inArray(triple, this.tripleStore) !== -1) {
-          return this;
-        }
-        this.tripleStore.push(triple);
-        if (this.previousMatches.length > 0) {
-          this.outOfSync = true;
-        }
-        $.each(this.filters, function (i, filter) {
-          var bindings, matchesA, matchesB, otherFilters, foundMatch, f, m, k;
-          if (filter.optional) {
-            includesOptionalFilter = true;
-          }
-          bindings = testTriple(triple, filter);
-          if (bindings !== null) {
-            matchesA = [{ bindings: bindings, triples: [triple] }];
-            matchesB = [];
-            otherFilters = rdf.filters.slice();
-            otherFilters.splice(i, 1); // remove the matching filter from the set of filters
-            while (otherFilters.length > 0) {
-              foundMatch = true;
-              $.each(matchesA, function (j, match) {
-                matchesB = [];
-                if ($.isFunction(otherFilters[0])) {
-                  f = otherFilters[0];
-                  if (f(match.bindings)) {
-                    matchesB.push(match);
-                  }
-                  matchesA = matchesB;
-                } else {
-                  f = fillFilter(otherFilters[0], match.bindings);
-                  m = findTriples(rdf.tripleStore, f);
-                  if (m.length === 0) {
-                    if (!f.optional) {
-                      foundMatch = false;
-                      return false; // break out of the $.each
-                    }
-                  } else {
-                    for (k = 0; k < m.length; k += 1) {
-                      matchesB.push({ 
-                        bindings: $.extend({}, match.bindings, m[k].bindings), 
-                        triples: match.triples.concat(m[k].triples)
-                      });
-                    }
-                    matchesA = matchesB;
-                  }
-                }
-              });
-              if (foundMatch === false) {
-                break; // break out of the while loop, not having added anything
-              }
-              otherFilters.splice(0, 1);
+      } else if (typeof triple === 'string') {
+        options = $.extend({}, { base: this.base(), namespaces: this.prefix(), source: triple }, options);
+        triple = parseFilter(triple, options);
+        if (typeof triple.subject === 'string' ||
+            typeof triple.property === 'string' ||
+            typeof triple.object === 'string') {
+          query = this;
+          this.bindings().each(function (i, bindings) {
+            var t = fillFilter(triple, bindings);
+            if (typeof t.subject !== 'string' &&
+                typeof t.property !== 'string' &&
+                typeof t.object !== 'string') {
+              query.tripleStore.add($.rdf.triple(t.subject, t.property, t.object, options), options);
             }
-            if (otherFilters.length === 0) {
-              matches = matches.concat(matchesA);
-            }
-          }
-        });
-        if (includesOptionalFilter) {
-          // Have to worry about the possibility of an existing match being "completed" by the new triple.
-          // The new match will have been found by the above code, so it's a matter of removing any
-          // existing matches that have been completed
-          replacement = $.map(this, function (match) {
-            var isCompleted = false;
-            $.each(matches, function (j, newMatch) {
-              var supersets = true;
-              for (b in newMatch.bindings) {
-                if (match.bindings[b] !== newMatch.bindings[b] && match.bindings[b] !== undefined) {
-                  supersets = false;
-                  break;
-                }
-              }
-              if (supersets) {
-                isCompleted = true;
-                return false; // break out of the $.each()
-              }
-            });
-            return isCompleted ? null : match;
           });
-          replacement = replacement.concat(matches);
-          this.length = 0;
-          Array.prototype.push.apply(this, replacement);
         } else {
-          Array.prototype.push.apply(this, matches);
+          this.tripleStore.add($.rdf.triple(triple.subject, triple.property, triple.object, options), options);
         }
-        return this;
+      } else {
+        this.tripleStore.add(triple, options);
       }
+      return this;
     },
     
     bindings: function () {
@@ -398,28 +461,17 @@
     },
     
     where: function (filter, options) {
-      var 
-        base = (options && options.base) || this.baseURI,
-        namespaces = $.extend({}, this.namespaces, (options && options.namespaces) || {}),
-        optional = (options && options.optional) || false,
-        matches = [];
-      if (this.union.length > 0) {
-        matches = $.map(this.union, function (rdf) {
-          rdf.where(filter, { namespaces: namespaces, base: base, optional: optional } );
-          return $.makeArray(rdf);
-        });
-      } else {
+      var query;
+      options = options || {};
+      if (typeof filter === 'string') {
+        base = options.base || this.base();
+        namespaces = $.extend({}, this.prefix(), options.namespaces || {}),
+        optional = options.optional || false;
         filter = parseFilter(filter, { namespaces: namespaces, base: base, optional: optional } );
-        this.filters.push(filter);
-        matches = findTriples(this.tripleStore, filter);
-        if (this.filters.length > 1) {
-          matches = mergeMatches(this, matches, optional);
-        }
       }
-      this.previousMatches.push($.makeArray(this));
-      this.length = 0;
-      Array.prototype.push.apply(this, matches);
-      return this;
+      query = $.rdf($.extend({}, options, { parent: this, filter: filter }));
+      this.children.push(query);
+      return query;
     },
     
     optional: function (filter, options) {
@@ -427,7 +479,7 @@
     },
     
     filter: function (binding, condition) {
-      var func, matches = [];
+      var func, query;
       if (typeof binding === 'string') {
         if (condition.constructor === RegExp) {
           func = function (bindings) {
@@ -441,65 +493,21 @@
       } else {
         func = binding;
       }
-      if (this.union.length > 0) {
-        matches = $.map(this.union, function (rdf) {
-          rdf.filter(func);
-          return $.makeArray(rdf);
-        });
-      } else {
-        this.filters.push(func);
-        matches = $.map(this, function (match) {
-          return func(match.bindings) ? match : null;
-        });
-      }
-      this.previousMatches.push($.makeArray(this));
-      this.length = 0;
-      Array.prototype.push.apply(this, matches);
-      return this;
+      query = $.rdf({ parent: this, filter: func });
+      this.children.push(query);
+      return query;
     },
 
     reset: function () {
-      // retains the tripleStore, the baseURI and the namespace bindings only
-      this.union = [];
-      this.filters = [];
-      this.previousMatches = [];
-      this.outOfSync = false;
-      this.length = 0;
-      return this;
+      var query = this;
+      while (query.parent !== undefined) {
+        query = query.parent;
+      }
+      return query;
     },
 
     end: function () {
-      var rdf = this, matches = [];
-      if (this.union.length > 0) {
-        matches = $.map(this.union, function (rdf) {
-          rdf.end();
-          return $.makeArray(rdf);
-        });
-      } else {
-        this.filters.pop();
-        if (this.outOfSync) {
-          if (this.filters.length === 0) {
-            this.outOfSync = false;
-          } else {
-            $.each(this.filters, function (i, filter) {
-              var matchesFilter;
-              if ($.isFunction(filter)) {
-                matches = $.map(matches, function (match) {
-                  return filter(match.bindings) ? match : null;
-                });
-              } else {
-                matchesFilter = findTriples(rdf.tripleStore, filter);
-                matches = i > 1 ? mergeMatches(matches, matchesFilter) : matchesFilter;
-              }
-            });
-          }
-        } else {
-          matches = this.previousMatches.pop();
-        }
-      }
-      this.length = 0;
-      Array.prototype.push.apply(this, matches);
-      return this;
+      return this.parent;
     },
 
     size: function () {
@@ -540,6 +548,142 @@
     }
     return $.rdf(triples, { namespaces: $(this).xmlns() });
   };
+
+/*
+ * Triplestores aka Databanks
+ */
+
+  $.rdf.databank = function (triples, options) {
+    return new $.rdf.databank.fn.init(triples, options);
+  };
+
+  $.rdf.databank.fn = $.rdf.databank.prototype = {
+    init: function (triples, options) {
+      var i;
+      triples = triples || [];
+      options = options || {};
+      if (options.union === undefined) {
+        this.queries = {};
+        this.tripleStore = {};
+        this.baseURI = options.base || $.uri.base();
+        this.namespaces = $.extend({}, options.namespaces || {});
+        for (i = 0; i < triples.length; i += 1) {
+          this.add(triples[i]);
+        }        
+      } else {
+        this.union = options.union;
+      }
+      return this;
+    },
+    
+    base: function (base) {
+      if (this.union === undefined) {
+        if (base === undefined) {
+          return this.baseURI;
+        } else {
+          this.baseURI = base;
+          return this;
+        }
+      } else if (base === undefined) {
+        return this.union[0].base();
+      } else {
+        $.each(this.union, function (i, databank) {
+          databank.base(base);
+        });
+        return this;
+      }
+    },
+  
+    prefix: function (prefix, uri) {
+      var namespaces = {};
+      if (this.union === undefined) {
+        if (prefix === undefined) {
+          return this.namespaces;
+        } else if (uri === undefined) {
+          return this.namespaces[prefix];
+        } else {
+          this.namespaces[prefix] = uri;
+          return this;
+        }
+      } else if (uri === undefined) {
+        $.each(this.union, function (i, databank) {
+          $.extend(namespaces, databank.prefix());
+        });
+        if (prefix === undefined) {
+          return namespaces;
+        } else {
+          return namespaces[prefix];
+        }
+      } else {
+        $.each(this.union, function (i, databank) {
+          databank.prefix(prefix, namespace);
+        });
+        return this;
+      }
+    },
+
+    add: function (triple, options) {
+      var base = (options && options.base) || this.base(),
+        namespaces = $.extend({}, this.prefix(), (options && options.namespaces) || {}),
+        databank, triples, i;
+      if (triple === this) {
+        return this;
+      } else if (triple.tripleStore !== undefined) {
+        // merging two databanks
+        if (this.union === undefined) {
+          databank = $.rdf.databank(undefined, { union: [this, triple] });
+          return databank;
+        } else {
+          this.union.push(triple);
+          return this;
+        }
+      } else {
+        if (typeof triple === 'string') {
+          triple = $.rdf.triple(triple, { namespaces: namespaces, base: base, source: triple });
+        }
+        if (this.union === undefined) {
+          if (this.tripleStore[triple.subject] === undefined) {
+            this.tripleStore[triple.subject] = [];
+          }
+          if ($.inArray(triple, this.tripleStore[triple.subject]) === -1) {
+            this.tripleStore[triple.subject].push(triple);
+            addToTripleStoreQueries(this, triple);
+          }
+        } else {
+          $.each(this.union, function (i, databank) {
+            databank.add(triple);
+          });
+        }
+        return this;
+      }
+    },
+    
+    triples: function () {
+      var triples = [];
+      if (this.union === undefined) {
+        $.each(this.tripleStore, function (s, t) {
+          triples = triples.concat(t);
+        });
+      } else {
+        $.each(this.union, function (i, databank) {
+          triples = triples.concat(databank.triples().get());
+        });
+        triples = $.unique(triples);
+      }
+      return $(triples);
+    },
+    
+    size: function () {
+      return this.triples().length;
+    },
+    
+    toString: function () {
+      return '[Databank with ' + this.size() + ' triples]';
+    }
+  }
+  
+  $.rdf.databank.fn.init.prototype = $.rdf.databank.fn;
+
 
 /*
  * Triples
