@@ -242,7 +242,7 @@
 		nsCounter = 1,
 		
 		createCurieAttr = function (elem, attr, uri) {
-		  var m, curie;
+		  var m, curie, value;
 		  try {
 		    curie = elem.createCurie(uri);
 		  } catch (e) {
@@ -256,7 +256,14 @@
   		    nsCounter += 1;
 		    }
 		  }
-  		elem.attr(attr, hasAttribute(elem, attr) ? elem.attr(attr) + ' ' + curie : curie);
+		  if (hasAttribute(elem, attr)) {
+		    value = elem.attr(attr);
+		    if ($.inArray(curie, value.split(/\s+/)) === -1) {
+		      elem.attr(attr, value + ' ' + curie);
+		    }
+		  } else {
+    		elem.attr(attr, curie);
+		  }
 		},
 		
 		createResourceAttr = function (elem, attr, resource) {
@@ -303,7 +310,7 @@
       if (typeof triple === 'string') {
         triple = $.rdf.triple(triple, { namespaces: ns, base: $.uri.base() });
       } else if (triple.rdfquery) {
-        addRDFa.call(this, triple.get(0).triples);
+        addRDFa.call(this, triple.sources().get(0));
         return this;
       } else if (triple.length) {
         for (i = 0; i < triple.length; i += 1) {

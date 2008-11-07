@@ -522,19 +522,14 @@ test('adding a triple where the element already has the triple with a different 
   $('#main > p').remove();
 });
 
-test('adding a triple where the element is a child of an element that already has a triple', function () {
-  setup('<p>This is about <span about="#CharlesDarwin"><span property="foaf:firstName"><span>Charles</span></span> Darwin</span></p>');
-  var span = $('#main > p > span > span > span');
-  span.rdfa('<#CharlesDarwin> rdf:label "Charles" .');
-  equals(span.attr('about'), undefined);
+test('adding a repeat of a triple', function () {
+  setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="#CharlesRobertDarwin"><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span>');
+  var span = $('#main > p > span');
+  span.rdfa('<#CharlesRobertDarwin> rdf:label "Charles Robert Darwin" .');
+  equals(span.attr('about'), '#CharlesRobertDarwin');
+  equals(span.attr('typeof'), 'foaf:Person');
   equals(span.attr('property'), 'rdf:label');
   equals(span.attr('datatype'), '');
-  equals(span.attr('content'), undefined);
-  span = span.parent();
-  equals(span.attr('about'), undefined);
-  equals(span.attr('property'), 'foaf:firstName');
-  equals(span.attr('datatype'), '');
-  equals(span.attr('content'), undefined);
   $('#main > p').remove();
 });
 
