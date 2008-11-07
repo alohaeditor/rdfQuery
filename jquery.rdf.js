@@ -469,6 +469,10 @@
       return this.where(filter, $.extend({}, options || {}, { optional: true }));
     },
     
+    about: function (resource, options) {
+      return this.where(resource + ' ?property ?object', options);
+    },
+    
     filter: function (property, condition) {
       var func, query;
       if (typeof property === 'string') {

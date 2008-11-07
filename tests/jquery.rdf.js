@@ -657,6 +657,22 @@ test("using end with subsequent filters", function () {
   equals(irish.length, 1, "there should be one irish surname");
 });
 
+test("getting all the data about a particular resource", function () {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .prefix('foaf', ns.foaf)
+  	.add('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+  	.add('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .')
+  	.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+  	.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .')
+    .about('<http://www.blogger.com/profile/1109404>');
+  equals(rdf.length, 2, "there are two triples about <http://www.blogger.com/profile/1109404>");
+  equals(rdf[0].property.uri, ns.foaf + 'img');
+  equals(rdf[0].object.uri, $.uri('photo1.jpg'));
+  equals(rdf[1].property.uri, ns.foaf + 'img');
+  equals(rdf[1].object.uri, $.uri('photo2.jpg'));
+});
+
 module("Creating Databanks");
 
 test("creating a new databank", function() {
