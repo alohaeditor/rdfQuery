@@ -521,14 +521,16 @@
     },
     
     each: function (callback, args) {
-      $.each(this, callback, args);
+      $.each(this.matches, function (i, match) {
+        callback.call(match.bindings, i, match.bindings, match.triples);
+      });
       return this;
     },
     
     map: function (callback) {
-      return $($.map(this, function (bindings, i) {
+      return $($.map(this.matches, function (match, i) {
         // in the callback, "this" is the bindings, and the arguments are swapped from $.map()
-        return callback.call(bindings, i, bindings); 
+        return callback.call(match.bindings, i, match.bindings, match.triples); 
   		}));
     },
     

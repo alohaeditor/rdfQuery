@@ -166,6 +166,27 @@ test("using a callback function on each match", function() {
 	equals(photos[1].uri, $.uri('photo2.jpg'));
 });
 
+test("using three arguments with each() to get the source triples", function() {
+	var sources = [];
+	var namespaces = { dc: ns.dc, foaf: ns.foaf };
+	var triples = [
+		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
+		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+		'<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .',
+	];
+	var rdf = $.rdf({ triples: triples, namespaces: namespaces })
+		.where('?photo dc:creator ?creator')
+		.where('?creator foaf:img ?photo');
+	rdf.each(function (index, match, source) {
+		sources.push(source);
+	});
+	equals(sources[0][0], $.rdf.triple(triples[0], { namespaces: namespaces }));
+	equals(sources[0][1], $.rdf.triple(triples[1], { namespaces: namespaces }));
+	equals(sources[1][0], $.rdf.triple(triples[2], { namespaces: namespaces }));
+	equals(sources[1][1], $.rdf.triple(triples[3], { namespaces: namespaces }));
+});
+
 test("mapping each match to an array", function() {
   var rdf = $.rdf()
     .prefix('dc', ns.dc)
