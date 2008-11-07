@@ -549,7 +549,7 @@
         triples = triples.concat($.rdf.gleaners[j].call(match));
       }
     }
-    return $.rdf(triples, { namespaces: $(this).xmlns() });
+    return $.rdf({ triples: triples, namespaces: $(this).xmlns() });
   };
 
 /*

@@ -16,10 +16,10 @@ function setup(rdfa) {
 };
 
 function testTriples (received, expected) {
-	var i;
-	equals(received.tripleStore.length, expected.length, 'there should be ' + expected.length + ' triples');
+	var i, triples = received.databank.triples();
+	equals(triples.length, expected.length, 'there should be ' + expected.length + ' triples');
 	for (i = 0; i < expected.length; i += 1) {
-		equals(received.tripleStore[i], expected[i]);
+		equals(triples[i], expected[i]);
 	}
 };
 
@@ -250,28 +250,29 @@ test("Test 0032", function() {
 });
 
 test("Test 0033", function() {
-	var rdf, triple;
+	var rdf, triple, triples;
 	setup('<p>This paper was written by <span rel="dc:creator"><span property="foaf:name">Ben Adida</span>.</span></p>');
 	rdf = $('#main > p > span > span').rdfa();
-	triple = rdf.tripleStore[0];
+	triple = rdf.databank.triples()[0];
 	ok(triple.subject.blank, "the subject of the foaf:name triple should be blank");
 	equals(triple.property, $.rdf.resource('foaf:name', ns));
 	equals(triple.object, $.rdf.literal('"Ben Adida"'));
 	
 	rdf = $('#main > p > span').rdfa();
-	equals(rdf.tripleStore.length, 2, 'the span should return two triples');
-	triple = rdf.tripleStore[0];
+	equals(rdf.databank.size(), 2, 'the span should return two triples');
+	triples = rdf.databank.triples();
+	triple = triples[0];
 	if (triple !== undefined) {
 		equals(triple.subject, $.rdf.resource('<>'));
 		equals(triple.property, $.rdf.resource('dc:creator', ns));
 		ok(triple.object.blank, "the object of the dc:creator triple should be blank");
 	}
-	triple = rdf.tripleStore[1];
+	triple = triples[1];
 	if (triple !== undefined) {
 		ok(triple.subject.blank, "the subject of the foaf:name triple should be blank");
 		equals(triple.property, $.rdf.resource('foaf:name', ns));
 		equals(triple.object, $.rdf.literal('"Ben Adida"'));
-		ok(rdf.tripleStore[0].object === rdf.tripleStore[1].subject, "the object of the first triple should be the same as the subject of the second triple");
+		ok(triples[0].object === triples[1].subject, "the object of the first triple should be the same as the subject of the second triple");
 	}
 	
 	$('#main > p').remove();

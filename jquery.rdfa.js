@@ -466,7 +466,7 @@
       var triples = $.map($(this), function (elem) {
         return rdfa.call($(elem));
       });
-      return $.rdf(triples);
+      return $.rdf({ triples: triples });
     } else {
       $(this).each(function () {
         addRDFa.call($(this), triple);
