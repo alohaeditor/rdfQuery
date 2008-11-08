@@ -292,8 +292,8 @@
         } else {
           matches = matches || query.parent.matches;
           if ($.isFunction(query.filterExp)) {
-            newMatches = $.map(matches, function (match) {
-              return query.filterExp.call(match.bindings, match.bindings) ? match : null;
+            newMatches = $.map(matches, function (match, i) {
+              return query.filterExp.call(match.bindings, i, match.bindings, match.triples) ? match : null;
             });
           } else {
             newMatches = mergeMatches(matches, query.alphaMemory, query.filterExp.optional);
@@ -470,19 +470,19 @@
     },
     
     about: function (resource, options) {
-      return this.where(resource + ' ?property ?object', options);
+      return this.where(resource + ' ?property ?value', options);
     },
     
     filter: function (property, condition) {
       var func, query;
       if (typeof property === 'string') {
         if (condition.constructor === RegExp) {
-          func = function (data) {
-            return condition.test(data[property].value);
+          func = function () {
+            return condition.test(this[property].value);
           };
         } else {
-          func = function (data) {
-            return data[property].literal ? data[property].value === condition : data[property] === condition;
+          func = function () {
+            return this[property].literal ? this[property].value === condition : this[property] === condition;
           };
         }
       } else {

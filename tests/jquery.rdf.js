@@ -689,9 +689,9 @@ test("getting all the data about a particular resource", function () {
     .about('<http://www.blogger.com/profile/1109404>');
   equals(rdf.length, 2, "there are two triples about <http://www.blogger.com/profile/1109404>");
   equals(rdf[0].property.uri, ns.foaf + 'img');
-  equals(rdf[0].object.uri, $.uri('photo1.jpg'));
+  equals(rdf[0].value.uri, $.uri('photo1.jpg'));
   equals(rdf[1].property.uri, ns.foaf + 'img');
-  equals(rdf[1].object.uri, $.uri('photo2.jpg'));
+  equals(rdf[1].value.uri, $.uri('photo2.jpg'));
 });
 
 module("Creating Databanks");
