@@ -8,7 +8,8 @@ var ns = { namespaces: {
 	xsd: "http://www.w3.org/2001/XMLSchema#",
 	dc: "http://purl.org/dc/elements/1.1/",
 	foaf: "http://xmlns.com/foaf/0.1/",
-	cc: "http://creativecommons.org/ns#"
+	cc: "http://creativecommons.org/ns#",
+	ex: "http://example.org/"
 }};
 
 function setup(rdfa) {
@@ -523,13 +524,56 @@ test('adding a triple where the element already has the triple with a different 
 });
 
 test('adding a repeat of a triple', function () {
-  setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="#CharlesRobertDarwin"><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span>');
+  setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="#CharlesRobertDarwin"><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span></p>');
   var span = $('#main > p > span');
   span.rdfa('<#CharlesRobertDarwin> rdf:label "Charles Robert Darwin" .');
   equals(span.attr('about'), '#CharlesRobertDarwin');
   equals(span.attr('typeof'), 'foaf:Person');
   equals(span.attr('property'), 'rdf:label');
   equals(span.attr('datatype'), '');
+  $('#main > p').remove();
+});
+
+module("Testing Selectors");
+
+test('selecting nodes with a particular subject', function () {
+  setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="#CharlesRobertDarwin"><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span> and his mother <span about="#SusannahDarwin" property="rdf:label">Susannah Darwin</span></p>');
+  var spans = $('#main > p span');
+  var darwin = $("#main span:about('#CharlesRobertDarwin')");
+  equals(darwin.length, 3, "there should be three spans about #CharlesRobertDarwin");
+  equals(darwin[0], spans[0]);
+  equals(darwin[1], spans[1]);
+  equals(darwin[2], spans[2]);
+  $('#main > p').remove();
+});
+
+test('selecting nodes with any subject', function () {
+  setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="#CharlesRobertDarwin"><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span> and his mother <span about="#SusannahDarwin" property="rdf:label">Susannah Darwin</span></p>');
+  var spans = $('#main > p span');
+  var darwin = $("#main span:about");
+  equals(darwin.length, 3, "there should be three spans about #CharlesRobertDarwin");
+  equals(darwin[0], spans[0]);
+  equals(darwin[1], spans[1]);
+  equals(darwin[2], spans[2]);
+  $('#main > p').remove();
+});
+
+test('selecting nodes with a CURIE subject', function () {
+  setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="[ex:Someone]">someone</span> and <span about="[ex:SomeoneElse]">someone else</span></p>');
+  var spans = $('#main > p span');
+  var darwin = $("#main span:about('[ex:Someone]')");
+  equals(darwin.length, 1, "there should be one span about [ex:Someone]");
+  equals(darwin[0], spans[0]);
+  $('#main > p').remove();
+});
+
+test('selecting nodes that represent a particular type of thing', function () {
+  setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="#CharlesRobertDarwin"><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span> and his mother <span about="#SusannahDarwin" typeof="foaf:Person" property="rdf:label">Susannah Darwin</span></p>');
+  var spans = $('#main > p span');
+  var darwin = $("#main span:type('foaf:Person')");
+  equals(darwin.length, 2, "there should be two spans whose type is a person");
+  equals(darwin[0], spans[0]);
+  equals(darwin[1], spans[3]);
   $('#main > p').remove();
 });
 

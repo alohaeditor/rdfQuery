@@ -484,4 +484,17 @@
 
 	$.rdf.gleaners.push(rdfa);
 
+  $.extend($.expr[':'], {
+    
+    about: function (a, i, m) {
+      return getSubject($(a)) === $.rdf.resource('<' + $(a).safeCurie(m[3]) + '>');
+    },
+    
+    type: function (a, i, m) {
+      var j = $(a);
+      return j.attr('typeof') && j.curie(j.attr('typeof')) === j.curie(m[3]);
+    }
+    
+  });
+
 })(jQuery);
