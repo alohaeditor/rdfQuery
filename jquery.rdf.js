@@ -20,6 +20,7 @@
     memTriple = {},
     xsdNs = "http://www.w3.org/2001/XMLSchema#",
     rdfNs = "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    rdfsNs = "http://www.w3.org/2000/01/rdf-schema#",
     uriRegex = /^<(([^>]|\\>)*)>$/,
     literalRegex = /^("""((\\"|[^"])*)"""|"((\\"|[^"])*)")(@([a-z]+(-[a-z0-9]+)*)|\^\^(.+))?$/,
     tripleRegex = /(("""((\\"|[^"])*)""")|("(\\"|[^"]|)*")|(<(\\>|[^>])*>)|\S)+/g,
@@ -824,7 +825,7 @@
   };
 
   $.rdf.type = $.rdf.resource('<' + rdfNs + 'type>');
-  $.rdf.label = $.rdf.resource('<' + rdfNs + 'label>');
+  $.rdf.label = $.rdf.resource('<' + rdfsNs + 'label>');
 
   $.rdf.blank = function (value, options) {
     var blank;
