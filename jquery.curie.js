@@ -19,21 +19,20 @@
 			local = m[3],
 			ns = opts.namespaces[prefix];
 		if (prefix) {
-			if (ns === undefined) {
-				throw "Malformed CURIE: No namespace binding for " + prefix + " in CURIE " + curie;
-			} else {
-				return $.uri(ns + local);
-			}
+		  if (ns === undefined) {
+  			throw "Malformed CURIE: No namespace binding for " + prefix + " in CURIE " + curie;
+		  }
 		} else if (opts.reserved.length && $.inArray(curie, opts.reserved) >= 0) {
-			// this looks at the curie as a whole; :alternate wouldn't count as a reserved word
-			return $.uri(opts.reservedNamespace + curie);
-		} else if (opts.defaultNamespace === undefined) {
+		  ns = opts.reservedNamespace;
+		  local = curie;
+    } else if (opts.defaultNamespace === undefined) {
 			// the default namespace is provided by the application; it's not clear whether
 			// the default XML namespace should be used if there's a colon but no prefix
 			throw "Malformed CURIE: No prefix and no default namespace for unprefixed CURIE " + curie;
 		} else {
-			return $.uri(opts.defaultNamespace + local);
+		  ns = opts.defaultNamespace;
 		}
+	  return $.uri(ns + local);
 	};
 	
 	$.curie.defaults = {

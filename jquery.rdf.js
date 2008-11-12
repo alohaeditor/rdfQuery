@@ -545,15 +545,45 @@
   $.rdf.gleaners = [];
 
   $.fn.rdf = function () {
-    var i, j, match, triples = [];
-    for (i = 0; i < $(this).length; i += 1) {
-      match = $(this).eq(i);
-      for (j = 0; j < $.rdf.gleaners.length; j += 1) {
-        triples = triples.concat($.rdf.gleaners[j].call(match));
-      }
-    }
+    var j, match, triples = [];
+    triples = $(this).map(function (i, elem) {
+      return $.map($.rdf.gleaners, function (gleaner) {
+        return gleaner.call($(elem));
+      });
+    });
     return $.rdf({ triples: triples, namespaces: $(this).xmlns() });
   };
+
+  $.extend($.expr[':'], {
+    
+    about: function (a, i, m) {
+      var j = $(a),
+        resource = m[3] ? j.safeCurie(m[3]) : null,
+        isAbout = false;
+      $.each($.rdf.gleaners, function (i, gleaner) {
+        isAbout = gleaner.call(j, { about: resource });
+        if (isAbout) {
+          return null;
+        }
+      });
+      return isAbout;
+    },
+    
+    type: function (a, i, m) {
+      var j = $(a),
+        type = m[3] ? j.curie(m[3]) : null,
+        isType = false;
+      $.each($.rdf.gleaners, function (i, gleaner) {
+        if (gleaner.call(j, { type: type })) {
+          isType = true;
+          return null;
+        }
+      });
+      return isType;
+    }
+    
+  });
+
 
 /*
  * Triplestores aka Databanks

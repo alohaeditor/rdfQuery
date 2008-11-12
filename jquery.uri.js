@@ -10,21 +10,36 @@
 
 	var
 		mem = {},
+		uriRegex = /^(?:([a-z][\-a-z0-9+\.]*):)?(?:\/\/([^\/?#]+))?([^?#]*)?(?:\?([^#]*))?(?:#(.*))?$/i,
 		schemeRegex = /^([a-z][\-a-z0-9+\.]*):(.+)$/i,
 		authorityRegex = /^\/\/([^\/?#]+)(.*)$/,
 		pathRegex = /^([^?#]*)(.*)$/,
 		queryRegex = /^\?([^#]*)(.*)$/,
 		fragmentRegex = /^#(.*)$/,
+		docURI,
+
+    parseURI = function (u) {
+      var m = u.match(uriRegex);
+      if (m === null) {
+        throw "Malformed URI: " + u;
+      }
+      return {
+        scheme: m[1] ? m[1].toLowerCase() : undefined,
+        authority: m[2],
+        path: m[3] || '',
+        query: m[4],
+        fragment: m[5]
+      };
+    },
 
 		scheme = function (u) {
-			var m = [];
-			if (!schemeRegex.test(u)) {
+			var m = schemeRegex.exec(u);
+			if (m === null) {
 				throw {
 					name: 'MalformedURI',
 					message: 'Bad scheme in "' + u + '"'
 				};
 			}
-			m = schemeRegex.exec(u);
 			return {
 				scheme: m[1].toLowerCase(),
 				rest: m[2]
@@ -32,18 +47,16 @@
 		},
 
 		authority = function (u) {
-			var m = [];
-			if (authorityRegex.test(u)) {
-				m = u.match(authorityRegex);
-				return {
-					authority: m[1],
-					rest: m[2]
-				};
-			} else {
+			var m = authorityRegex.exec(u);
+			if (m === null) {
 				return {
 					rest: u
 				};
 			}
+			return {
+				authority: m[1],
+				rest: m[2]
+			};
 		},
 
 		path = function (u) {
@@ -62,51 +75,48 @@
 		},
 
 		query = function (u) {
-			var m = [];
-			if (queryRegex.test(u)) {
-				m = u.match(queryRegex);
-				return {
-					query: m[1],
-					rest: m[2]
-				};
-			} else {
+			var m = queryRegex.exec(u);
+			if (m === null) {
 				return {
 					rest: u
 				};
 			}
+			return {
+				query: m[1],
+				rest: m[2]
+			};
 		},
 
 		fragment = function (u) {
-			var m = [];
-			if (fragmentRegex.test(u)) {
-				m = u.match(fragmentRegex);
-				return m[1];
-			} else {
-				return undefined;
-			}
+			var m = fragmentRegex.exec(u);
+			return m === null ? undefined : m[1];
 		},
 
 		removeDotSegments = function (u) {
 			var r = '', m = [];
-			while (u !== undefined && u !== '') {
-				if (u === '.' || u === '..') {
-					u = '';
-				} else if (/^\.\.\//.test(u)) { // starts with ../
-					u = u.substring(3);
-				} else if (/^\.\//.test(u)) { // starts with ./
-					u = u.substring(2);
-				} else if (/^\/\.(\/|$)/.test(u)) { // starts with /./ or consists of /.
-					u = '/' + u.substring(3);
-				} else if (/^\/\.\.(\/|$)/.test(u)) { // starts with /../ or consists of /..
-					u = '/' + u.substring(4);
-					r = r.replace(/\/?[^\/]+$/, '');
-				} else {
-					m = u.match(/^(\/?[^\/]*)(\/.*)?$/);
-					u = m[2];
-					r = r + m[1];
-				}
+			if (/\./.test(u)) {
+  			while (u !== undefined && u !== '') {
+  				if (u === '.' || u === '..') {
+  					u = '';
+  				} else if (/^\.\.\//.test(u)) { // starts with ../
+  					u = u.substring(3);
+  				} else if (/^\.\//.test(u)) { // starts with ./
+  					u = u.substring(2);
+  				} else if (/^\/\.(\/|$)/.test(u)) { // starts with /./ or consists of /.
+  					u = '/' + u.substring(3);
+  				} else if (/^\/\.\.(\/|$)/.test(u)) { // starts with /../ or consists of /..
+  					u = '/' + u.substring(4);
+  					r = r.replace(/\/?[^\/]+$/, '');
+  				} else {
+  					m = u.match(/^(\/?[^\/]*)(\/.*)?$/);
+  					u = m[2];
+  					r = r + m[1];
+  				}
+  			}
+  			return r;
+			} else {
+			  return u;
 			}
-			return r;
 		},
 
 		merge = function (b, r) {
@@ -118,6 +128,7 @@
 		};
 
 	$.uri = function (relative, base) {
+	  var uri;
 		relative = relative || '';
 		if (mem[relative]) {
 			return mem[relative];
@@ -139,62 +150,28 @@
 		init: function (relative, base) {
 			var r = {};
 			base = base || {};
-			try {
-				r = scheme(relative);
-				this.scheme = r.scheme;
-				r = authority(r.rest);
-				this.authority = r.authority;
-				r = path(r.rest);
-				this.path = removeDotSegments(r.path);
-				r = query(r.rest);
-				this.query = r.query;
-				r = fragment(r.rest);
-				this.fragment = r;
-			} catch (e) {
-				if (e.name === 'MalformedURI') { // this is what we get when the URI has no scheme
-					this.scheme = base.scheme;
-					r = authority(relative);
-					if (r.authority !== undefined) {
-						this.authority = r.authority;
-						r = path(r.rest);
-						this.path = removeDotSegments(r.path);
-						r = query(r.rest);
-						this.query = r.query;
-						r = fragment(r.rest);
-						this.fragment = r;
-					} else {
-						this.authority = base.authority;
-						r = path(r.rest);
-						if (r.path === '') {
-							this.path = base.path;
-							r = query(r.rest);
-							if (r.query !== undefined) {
-								this.query = r.query;
-							} else {
-								this.query = base.query;
-							}
-						} else {
-							if (/^\//.test(r.path)) {
-								this.path = removeDotSegments(r.path);
-							} else {
-								this.path = merge(base, r.path);
-								this.path = removeDotSegments(this.path);
-							}
-							r = query(r.rest);
-							this.query = r.query;
-						}
-						r = fragment(r.rest);
-						this.fragment = r;
-					}
+			$.extend(this, parseURI(relative));
+			if (this.scheme === undefined) {
+				this.scheme = base.scheme;
+				if (this.authority !== undefined) {
+					this.path = removeDotSegments(this.path);
 				} else {
-					throw e;
+					this.authority = base.authority;
+					if (this.path === '') {
+						this.path = base.path;
+						if (this.query === undefined) {
+							this.query = base.query;
+						}
+					} else {
+						if (!/^\//.test(this.path)) {
+							this.path = merge(base, this.path);
+						}
+						this.path = removeDotSegments(this.path);
+					}
 				}
 			}
 			if (this.scheme === undefined) {
-				throw {
-					name: "MalformedURI",
-					message: "URI is not an absolute URI and no base supplied: " + uri
-				};
+				throw "Malformed URI: URI is not an absolute URI and no base supplied: " + relative;
 			}
 			return this;
 		},
@@ -222,10 +199,10 @@
 		        i += 1;
 		      }
 		      j = i;
-		      for (i; i < bPath.length - 1; i += 1) {
+		      for (; i < bPath.length - 1; i += 1) {
 		        resultPath.push('..');
 		      }
-		      for (j; j < aPath.length; j += 1) {
+		      for (; j < aPath.length; j += 1) {
 		        resultPath.push(aPath[j]);
 		      }
 		      result = resultPath.join('/');
@@ -269,9 +246,11 @@
 	  return $.uri(base, {}).relative(absolute);
 	};
 	
+	docURI = $.uri.absolute(document.URL);
+	
 	$.uri.base = function () {
-		var base = $('head > base').attr('href');
-		return base === undefined ? $.uri.absolute(document.URL) : $.uri(base, document.URL);
-	}
+	  var base = $('head > base').attr('href');
+  	return base === undefined ? docURI : $.uri(base, docURI);
+	};
 
 })(jQuery);
