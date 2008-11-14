@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:dcterms="http://purl.org/dc/terms/"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:vcard="http://www.w3.org/2006/vcard/ns#"
+  xmlns:biografr="http://biografr.com/ontology#">
+  <head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <title>Mark it up!</title>
+    <link rel="stylesheet" type="text/css" href="markup.css" />
+    <script type="text/javascript" src="../jquery-1.2.6.min.js"></script>
+    <script type="text/javascript" src="../../jquery.uri.js"></script>
+    <script type="text/javascript" src="../../jquery.xmlns.js"></script>
+    <script type="text/javascript" src="../../jquery.curie.js"></script>
+    <script type="text/javascript" src="../../jquery.datatype.js"></script>
+    <script type="text/javascript" src="../../jquery.rdf.js"></script>
+    <script type="text/javascript" src="../../jquery.rdfa.js"></script>
+    <script type="text/javascript" src="markup.js"></script>
+  </head>
+  <body>
+    <div id="body">
+      <div id="content">
+        <div id="meta">
+        </div>
+        <p>
+          <span about="#CharlesRobertDarwin" typeof="foaf:Person" property="rdfs:label" datatype=""><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span> was <span about="#CharlesRobertDarwin" rel="biografr:hasBirthPlace">born in <span about="#Shrewsbury" typeof="vcard:Address" property="rdfs:label" datatype=""><span property="vcard:locality">Shrewsbury</span>, <span property="vcard:region">Shropshire</span>, <span property="vcard:country">England</span></span></span> on <span about="#CharlesRobertDarwin" property="biografr:bornOn" content="1809-02-12" datatype="xsd:date">12 February 1809</span> at his family home, the Mount. He was the fifth of six children of wealthy society doctor and financier <span about="#CharlesRobertDarwin" rel="biografr:hasFather"><span about="#RobertDarwin" typeof="foaf:Person"><span property="rdfs:label" datatype="">Robert Darwin</span></span></span>, and Susannah Darwin (née Wedgwood). He was the grandson of Erasmus Darwin on his father’s side, and of Josiah Wedgwood on his mother’s side. Both families were largely Unitarian, though the Wedgwoods were adopting Anglicanism. Robert Darwin, himself quietly a freethinker, made a nod toward convention by having baby Charles baptised in the Anglican Church. Nonetheless, Charles and his siblings attended the Unitarian chapel with their mother, and in 1817, Charles joined the day school, run by its preacher. In July of that year, when Charles was eight years old, his mother died. From September 1818, he joined his older brother Erasmus attending the nearby Anglican Shrewsbury School as a boarder.
+        </p>
+        <p>
+          Darwin spent the summer of 1825 as an apprentice doctor, helping his father treat the poor of Shropshire. In the autumn, he went with Erasmus to the University of Edinburgh to study medicine, but was revolted by the brutality of surgery and neglected his medical studies. He learned taxidermy from John Edmonstone, a freed black slave who told him exciting tales of the South American rainforest. This experience gave him evidence that “Negroes and Europeans” were closely related despite superficial differences in appearance.
+        </p>
+      </div>
+      <div id="data">
+        <form id="notes" action="" method="post">
+          <p>
+            Note:
+            <input id="statement" />
+          </p>
+          <p>
+            <textarea id="source" rows="5" cols="80">
+            </textarea>
+          </p>
+        </form>
+      </div>
+    </div>
+    <div id="summary">
+      <ul class="classes">
+        <li id="people" class="open">
+          <h2>People</h2>
+          <ul class="individuals">
+          </ul>
+        </li>
+        <li id="places" class="open">
+          <h2>Places</h2>
+          <ul class="individuals">
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

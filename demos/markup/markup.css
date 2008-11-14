@@ -1,0 +1,143 @@
+/* Colours:
+Oranges:
+base: #E6A173
+dark: #805940
+light: #E6D8CF
+bright: #BF6930
+
+Greens:
+base: #4F9E81
+dark: #408068
+light: #CFE6DD
+bright: #30BF8A
+
+Blues:
+base: #4F7F9E
+dark: #406680
+light: #CFDCE6
+bright: #3086BF
+*/
+
+body {
+	font-family: Optima, "Trebuchet MS", sans-serif;
+}
+
+h1 {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 5%;
+}
+
+#summary {
+	position: relative;
+	width: 25%;
+	margin-right: 2%;
+}
+#summary > ul {
+  -webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+}
+#summary ul {
+  margin: 0;
+  padding: 0;  
+}
+#summary li {
+  display: block;
+  margin: 5px;
+  -webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+  border: 1px #E6D8CF solid;
+}
+#summary h2,
+#summary h3 {
+	margin: 0;
+	padding: 0.2em 5% 0.1em;
+	font-size: 1em;
+  -webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+}
+#summary .open h2,
+#summary .individuals li.open h3 {
+	-webkit-border-bottom-left-radius: 0;
+	-webkit-border-bottom-right-radius: 0;
+	-moz-border-radius-bottomright: 0;
+	-moz-border-radius-bottomleft: 0;
+}
+#summary h2 {
+  background-color: #E6A173;
+}
+#summary h3 {
+	background-color: #E6D8CF;
+  font-weight: normal;
+}
+#summary .individuals,
+#summary .properties {
+  display: none;
+}
+#summary li.open .individuals,
+#summary .individuals li.open .properties {
+  display: block;
+}
+#summary .properties li {
+  display: block;
+  border: none;
+  margin-left: 1em;
+  font-size: 0.8em;
+}
+#summary .properties li.auto {
+  color: #BF6930;
+}
+
+#body {
+	position: fixed;
+	overflow: auto;
+	left: 27%;
+	height: 95%;
+	width: 73%;
+}
+#content {
+	position: absolute;
+	height: 66%;
+	overflow: auto;
+}
+#content span[typeof] {
+	-webkit-border-radius: 0.5em;
+	-moz-border-radius: 0.5em;
+	padding: 0 0.2em;	
+	border-style: solid;
+	border-width: 1px;
+	border-color: #E6A173;
+}
+#content span[property^='foaf']:hover,
+#content span[property^='vcard']:hover,
+#content span[property^='biografr']:hover {
+  color: #E6A173;
+}
+
+#content .highlight {
+  background-color: #E6A173;
+}
+
+#meta {
+  display: none;
+}
+
+#data {
+	position: absolute;
+	top: 66%;
+	height: 33%;
+	width: 100%;
+}
+#data p {
+	width: 80%;
+}
+#data input,
+#data textarea {
+	width: 120%;
+	font-size: 1em;
+}
+
+#data input.error {
+	border: 2px solid #BF6930;
+}
