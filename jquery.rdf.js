@@ -452,6 +452,10 @@
       return this;
     },
     
+    except: function (query) {
+      return $.rdf({ databank: this.databank.except(query.databank) });
+    },
+    
     where: function (filter, options) {
       var query;
       options = options || {};
@@ -692,6 +696,24 @@
         }
         return this;
       }
+    },
+    
+    except: function (data) {
+      var store = data.tripleStore,
+        diff = [];
+      $.each(this.tripleStore, function (s, ts) {
+        ots = store[s];
+        if (ots === undefined) {
+          diff = diff.concat(ts);
+        } else {
+          $.each(ts, function (i, t) {
+            if ($.inArray(t, ots) === -1) {
+              diff.push(t);
+            }
+          });
+        }
+      });
+      return $.rdf.databank(diff);
     },
     
     triples: function () {

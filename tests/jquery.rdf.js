@@ -694,6 +694,23 @@ test("getting all the data about a particular resource", function () {
   equals(rdf[1].value.uri, $.uri('photo2.jpg'));
 });
 
+test("getting the difference between two top-level queries", function () {
+  var r1 = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('_:a foaf:knows _:b')
+    .add('_:a foaf:surname "Smith"');
+  var r2 = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('_:a foaf:knows _:b')
+    .add('_:b foaf:surname "Jones"');
+  var diff1 = r1.except(r2);
+  equals(diff1.databank.size(), 1);
+  equals(diff1.databank.triples()[0], $.rdf.triple('_:a foaf:surname "Smith"', { namespaces: { foaf: ns.foaf }}));
+  var diff2 = r2.except(r1);
+  equals(diff2.databank.size(), 1);
+  equals(diff2.databank.triples()[0], $.rdf.triple('_:b foaf:surname "Jones"', { namespaces: { foaf: ns.foaf }}));
+});
+
 module("Creating Databanks");
 
 test("creating a new databank", function() {
@@ -721,6 +738,22 @@ test("getting the triples from a databank", function() {
 	equals(data.triples()[1], triples[1]);
 });
 
+test("getting the difference between two databanks", function () {
+  var d1 = $.rdf.databank()
+    .prefix('foaf', ns.foaf)
+    .add('_:a foaf:knows _:b')
+    .add('_:a foaf:surname "Smith"');
+  var d2 = $.rdf.databank()
+    .prefix('foaf', ns.foaf)
+    .add('_:a foaf:knows _:b')
+    .add('_:b foaf:surname "Jones"');
+  var diff1 = d1.except(d2);
+  equals(diff1.size(), 1);
+  equals(diff1.triples()[0], $.rdf.triple('_:a foaf:surname "Smith"', { namespaces: { foaf: ns.foaf }}));
+  var diff2 = d2.except(d1);
+  equals(diff2.size(), 1);
+  equals(diff2.triples()[0], $.rdf.triple('_:b foaf:surname "Jones"', { namespaces: { foaf: ns.foaf }}));
+});
 
 module("Creating Triples");
 
