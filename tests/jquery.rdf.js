@@ -204,7 +204,7 @@ test("mapping each match to an array", function() {
 	equals(photos[1], $.uri('photo2.jpg'));
 });
 
-test("using the result of bindings() as a jQuery object", function() {
+test("using the result of bindings() as a jQuery objectct", function() {
   var rdf = $.rdf()
     .prefix('dc', ns.dc)
     .prefix('foaf', ns.foaf)
@@ -753,6 +753,14 @@ test("getting the difference between two databanks", function () {
   var diff2 = d2.except(d1);
   equals(diff2.size(), 1);
   equals(diff2.triples()[0], $.rdf.triple('_:b foaf:surname "Jones"', { namespaces: { foaf: ns.foaf }}));
+});
+
+module("Creating Patterns");
+
+test("two identical patterns", function() {
+  var p1 = $.rdf.pattern('<a> <b> ?c');
+  var p2 = $.rdf.pattern('<a> <b> ?c');
+  ok(p1 === p2, "should be identical");
 });
 
 module("Creating Triples");

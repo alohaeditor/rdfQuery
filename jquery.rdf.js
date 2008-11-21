@@ -18,6 +18,7 @@
     memBlank = {},
     memLiteral = {},
     memTriple = {},
+    memPattern = {},
     xsdNs = "http://www.w3.org/2001/XMLSchema#",
     rdfNs = "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     rdfsNs = "http://www.w3.org/2000/01/rdf-schema#",
@@ -81,47 +82,14 @@
       }
     },
     
-    parseFilter = function (filter, options) {
-      var
-         s, p, o,
-         optional = options.optional || false,
-        m = filter.match(tripleRegex);
-      if (m.length === 3 || (m.length === 4) && m[3] === '.') {
-        s = m[0];
-        p = m[1];
-        o = m[2];
-        s = s.substring(0, 1) === '?' ? s.substring(1) : subject(s, options);
-        p = p.substring(0, 1) === '?' ? p.substring(1) : property(p, options);
-        o = o.substring(0, 1) === '?' ? o.substring(1) : object(o, options);
-        return { subject: s, property: p, object: o, optional: optional };
-      } else {
-        throw "Malformed Filter: The filter " + filter + " is not legal";
-      }
-    },
-    
-    fillFilter = function (filter, bindings) {
-      var f = $.extend({}, filter);
-      if (typeof f.subject === 'string' &&
-          bindings[f.subject]) {
-        f.subject = bindings[f.subject];
-      }
-      if (typeof f.property === 'string' &&
-          bindings[f.property]) {
-        f.property = bindings[f.property];
-      }
-      if (typeof f.object === 'string' &&
-          bindings[f.object]) {
-        f.object = bindings[f.object];
-      }
-      return f;
-    },
-    
     testResource = function (resource, filter, existing) {
+      var variable;
       if (typeof filter === 'string') {
-        if (existing[filter] && existing[filter] !== resource) {
+        variable = filter.substring(1);
+        if (existing[variable] && existing[variable] !== resource) {
           return null;
         } else {
-          existing[filter] = resource;
+          existing[variable] = resource;
           return existing;
         }
       } else if (filter === resource) {
@@ -131,23 +99,9 @@
       }
     },
     
-    testTriple = function (triple, filter) {
-      var binding = {};
-      binding = testResource(triple.subject, filter.subject, binding);
-      if (binding === null) {
-        return null;
-      }
-      binding = testResource(triple.property, filter.property, binding);
-      if (binding === null) {
-        return null;
-      }
-      binding = testResource(triple.object, filter.object, binding);
-      return binding;
-    },
-    
-    findMatches = function (triples, filter) {
+    findMatches = function (triples, pattern) {
       return $.map(triples, function (triple) {
-        var bindings = testTriple(triple, filter);
+        var bindings = pattern.exec(triple);
         return bindings === null ? null : { bindings: bindings, triples: [triple] };
       });
     },
@@ -262,7 +216,7 @@
     
     addToQuery = function (query, triple) {
       var match, 
-        bindings = testTriple(triple, query.filterExp);
+        bindings = query.filterExp.exec(triple);
       if (bindings !== null) {
         match = { triples: [triple], bindings: bindings };
         query.alphaMemory.push(match);
@@ -430,16 +384,12 @@
         }
       } else if (typeof triple === 'string') {
         options = $.extend({}, { base: this.base(), namespaces: this.prefix(), source: triple }, options);
-        triple = parseFilter(triple, options);
-        if (typeof triple.subject === 'string' ||
-            typeof triple.property === 'string' ||
-            typeof triple.object === 'string') {
+        triple = $.rdf.pattern(triple, options);
+        if (!triple.isFixed()) {
           query = this;
           this.each(function (i, data) {
-            var t = fillFilter(triple, data);
-            if (typeof t.subject !== 'string' &&
-                typeof t.property !== 'string' &&
-                typeof t.object !== 'string') {
+            var t = triple.fill(data);
+            if (t.isFixed()) {
               query.databank.add($.rdf.triple(t.subject, t.property, t.object, options), options);
             }
           });
@@ -463,7 +413,7 @@
         base = options.base || this.base();
         namespaces = $.extend({}, this.prefix(), options.namespaces || {}),
         optional = options.optional || false;
-        filter = parseFilter(filter, { namespaces: namespaces, base: base, optional: optional } );
+        filter = $.rdf.pattern(filter, { namespaces: namespaces, base: base, optional: optional } );
       }
       query = $.rdf($.extend({}, options, { parent: this, filter: filter }));
       this.children.push(query);
@@ -738,10 +688,113 @@
     toString: function () {
       return '[Databank with ' + this.size() + ' triples]';
     }
-  }
+  };
   
   $.rdf.databank.fn.init.prototype = $.rdf.databank.fn;
 
+/*
+ * Patterns
+ */
+
+  $.rdf.pattern = function (subject, property, object, options) {
+    var pattern, m;
+    // using a two-argument version; first argument is a Turtle statement string
+    if (object === undefined) { 
+      options = property;
+      m = $.trim(subject).match(tripleRegex);
+      if (m.length === 3 || (m.length === 4 && m[3] === '.')) {
+        subject = m[0];
+        property = m[1];
+        object = m[2];
+      } else {
+        throw "Bad Pattern: Couldn't parse string " + subject;
+      }
+    }
+    if (memPattern[subject] && memPattern[subject][property] && memPattern[subject][property][object]) {
+      return memPattern[subject][property][object];
+    }
+    pattern = new $.rdf.pattern.fn.init(subject, property, object, options);
+    if (memPattern[pattern.subject] && 
+        memPattern[pattern.subject][pattern.property] && 
+        memPattern[pattern.subject][pattern.property][pattern.object]) {
+      return memPattern[pattern.subject][pattern.property][pattern.object];
+    } else {
+      if (memPattern[pattern.subject] === undefined) {
+        memPattern[pattern.subject] = {};
+      }
+      if (memPattern[pattern.subject][pattern.property] === undefined) {
+        memPattern[pattern.subject][pattern.property] = {};
+      }
+      memPattern[pattern.subject][pattern.property][pattern.object] = pattern;
+      return pattern;
+    }
+  };
+
+  $.rdf.pattern.fn = $.rdf.pattern.prototype = {
+    init: function (s, p, o, options) {
+      var opts = $.extend({}, $.rdf.pattern.defaults, options);
+      this.subject = s.toString().substring(0, 1) === '?' ? s : subject(s, opts);
+      this.property = p.toString().substring(0, 1) === '?' ? p : property(p, opts);
+      this.object = o.toString().substring(0, 1) === '?' ? o : object(o, opts);
+      this.optional = opts.optional;
+      return this;
+    },
+    
+    fill: function (bindings) {
+      var s = this.subject,
+        p = this.property,
+        o = this.object;
+      if (typeof s === 'string' && bindings[s.substring(1)]) {
+        s = bindings[s.substring(1)];
+      }
+      if (typeof p === 'string' && bindings[p.substring(1)]) {
+        p = bindings[p.substring(1)];
+      }
+      if (typeof o === 'string' && bindings[o.substring(1)]) {
+        o = bindings[o.substring(1)];
+      }
+      return $.rdf.pattern(s, p, o, { optional: this.optional });
+    },
+    
+    exec: function (triple) {
+      var binding = {};
+      binding = testResource(triple.subject, this.subject, binding);
+      if (binding === null) {
+        return null;
+      }
+      binding = testResource(triple.property, this.property, binding);
+      if (binding === null) {
+        return null;
+      }
+      binding = testResource(triple.object, this.object, binding);
+      return binding;
+    },
+    
+    
+    isFixed: function () {
+      return typeof this.subject !== 'string' && 
+        typeof this.property !== 'string' && 
+        typeof this.object !== 'string';
+    },
+    
+    toString: function () {
+      var str = '';
+      str += typeof this.subject === 'string' ? '?' + this.subject : this.subject;
+      str += ' ';
+      str += typeof this.property === 'string' ? '?' + this.property : this.property;
+      str += ' ';
+      str += typeof this.object === 'string' ? '?' + this.object : this.object;
+      return str;
+    }
+  };
+
+  $.rdf.pattern.fn.init.prototype = $.rdf.pattern.fn;
+
+  $.rdf.pattern.defaults = {
+    base: $.uri.base(),
+    namespaces: {},
+    optional: false
+  };
 
 /*
  * Triples
