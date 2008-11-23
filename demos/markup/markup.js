@@ -390,10 +390,11 @@ $(document).ready(function(){
     },
     
     addDescription = function (resource) {
-      var list = $('#' + resource.uri.fragment),
-        rdf = $('#content').rdf();
-      if (list.hasClass('open')) {
-        list = list.children('ul');
+      var ind = $('#' + resource.uri.fragment),
+        label = ind.children('h3').text(),
+        list, rdf = $('#content').rdf();
+      if (ind.hasClass('open')) {
+        list = ind.children('ul');
         list.empty();
         rdf = reason(rdf);
         rdf
@@ -403,26 +404,28 @@ $(document).ready(function(){
             var p = this.property, pLabel,
               o = this.value, oLabel, li,
               triple = triples[0];
-            pLabel = ontology[p] === undefined ? p.uri.fragment : ontology[p].aliases[0];
-            if (o.literal) {
-              oLabel = o.value;
-            } else if (ontology[o] !== undefined) {
-              oLabel = ontology[o].aliases[0];
-            } else {
-              oLabel = resourceLabel(o);
-            }
-            li = list
-              .append('<li />')
-              .children('li:last')
-                .attr('class', typeof(triple.source) === 'string' ? 'auto' : 'manual')
-                .html(pLabel + ': ' + oLabel);
-            if (o.resource && ontology[o] === undefined && o.uri.fragment !== undefined) {
-              li
-                .bind('click', function () {
-                  $(this).parent().parent().removeClass('open');
-                  $('#' + o.uri.fragment).addClass('open');
-                  addDescription(o);
-                });
+            if (!(p === $.rdf.label && o.literal && o.value === label)) {
+              pLabel = ontology[p] === undefined ? p.uri.fragment : ontology[p].aliases[0];
+              if (o.literal) {
+                oLabel = o.value;
+              } else if (ontology[o] !== undefined) {
+                oLabel = ontology[o].aliases[0];
+              } else {
+                oLabel = resourceLabel(o);
+              }
+              li = list
+                .append('<li />')
+                .children('li:last')
+                  .attr('class', typeof(triple.source) === 'string' ? 'auto' : 'manual')
+                  .html(pLabel + ': ' + oLabel);
+              if (o.resource && ontology[o] === undefined && o.uri.fragment !== undefined) {
+                li
+                  .bind('click', function () {
+                    $(this).parent().parent().removeClass('open');
+                    $('#' + o.uri.fragment).addClass('open');
+                    addDescription(o);
+                  });
+              }
             }
           });
       }
