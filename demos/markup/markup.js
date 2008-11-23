@@ -373,7 +373,7 @@ $(document).ready(function(){
     addIndividual = function (list, resource, label) {
       var li;
       if (label === undefined) {
-        label = resourceLabel(resource);        
+        label = resourceLabel(resource);
       }
       li = list
         .append("\n")
@@ -392,7 +392,7 @@ $(document).ready(function(){
     addDescription = function (resource) {
       var ind = $('#' + resource.uri.fragment),
         label = ind.children('h3').text(),
-        list, rdf = $('#content').rdf();
+        list, empty = true, rdf = $('#content').rdf();
       if (ind.hasClass('open')) {
         list = ind.children('ul');
         list.empty();
@@ -404,7 +404,9 @@ $(document).ready(function(){
             var p = this.property, pLabel,
               o = this.value, oLabel, li,
               triple = triples[0];
-            if (!(p === $.rdf.label && o.literal && o.value === label)) {
+            if (!((p === $.rdf.label && o.literal && o.value === label) ||
+                  (p === $.rdf.type && ontology[o] !== undefined))) {
+              empty = false;
               pLabel = ontology[p] === undefined ? p.uri.fragment : ontology[p].aliases[0];
               if (o.literal) {
                 oLabel = o.value;
@@ -428,6 +430,9 @@ $(document).ready(function(){
               }
             }
           });
+        if (empty) {
+          ind.removeClass('open');
+        }
       }
     },
     
