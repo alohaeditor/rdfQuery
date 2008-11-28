@@ -20,6 +20,7 @@
     foafPersonClass = $.rdf.resource('<' + foaf + 'Person>'),
     foafKnowsProp = $.rdf.resource('<' + foaf + 'knows>'),
     foafWeblogProp = $.rdf.resource('<' + foaf + 'weblog>'),
+    person1Bnode = $.rdf.blank("[]"),
     meRegex = /(?:^|\s)me(?:\s|$)/,
 
     gleaner = function (options) {
@@ -27,7 +28,6 @@
         var rel = this.attr('rel'),
         href = this.attr('href'),
         m = meRegex.exec(rel),
-        person1Bnode = $.rdf.blank("[]"),
         person2Bnode = $.rdf.blank("[]");
 
         if (href !== undefined && m === null) {
