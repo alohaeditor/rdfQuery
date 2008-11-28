@@ -7,9 +7,7 @@
     foaf = $.uri("http://xmlns.com/foaf/0.1/"),
     foafPersonClass = $.rdf.resource('<' + foaf + 'Person>'),
     foafKnowsProp = $.rdf.resource('<' + foaf + 'knows>'),
-    foafWeblogProp = $.rdf.resource('<' + foaf + 'weblog>'),
-    person1Bnode = $.rdf.blank("[]"),
-    person2Bnode = $.rdf.blank("[]");
+    foafWeblogProp = $.rdf.resource('<' + foaf + 'weblog>');
 
 	function setup(content) {
 		$('#main').html(content);
@@ -45,28 +43,36 @@
 	test("from an element with a rel='friend'", function () {
 		setup('<p>Friend: <a href="http://example.com/" rel="friend">Test Person2</a></p>');
 		var work = '<' + $.uri.base() + '>';
-
-		testTriples($('#main > p > a').rdf(), [
-			$.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
-			$.rdf.triple(person1Bnode, foafWeblogProp, work),
-			$.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
-			$.rdf.triple(person2Bnode, foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
-		]);
+		var q = $('#main > p > a').rdf();
+		equals(q.databank.size(), 5, "there should be five triples");
+		q = q.where('?person a foaf:Person');
+		equals(q.length, 2, "there should be two people");
+		q = q.where('?person foaf:weblog ?work');
+		equals(q.length, 2, "they should each have a weblog");
+		q = q.where('?person foaf:knows ?personB');
+		equals(q.length, 1, "one of them should know the other");
+		q = q.where('?person foaf:weblog ' + work);
+		equals(q.length, 1, "the first person should have this document as their weblog");
+		q = q.where('?personB foaf:weblog <http://example.com/>');
+		equals(q.length, 1, "the second person should have http://example.com/ as their weblog");
 		teardown();
 	});
-
 
 	test("from an element with a rel='friend met'", function () {
 		setup('<p>Friend and met: <a href="http://example.com/" rel="friend met">Test Person3</a></p>');
 		var work = '<' + $.uri.base() + '>';
-		testTriples($('#main > p > a').rdf(), [
-			$.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
-			$.rdf.triple(person1Bnode, foafWeblogProp, work),
-			$.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
-			$.rdf.triple(person2Bnode, foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
-		]);
+		var q = $('#main > p > a').rdf();
+		equals(q.databank.size(), 5, "there should be five triples");
+		q = q.where('?person a foaf:Person');
+		equals(q.length, 2, "there should be two people");
+		q = q.where('?person foaf:weblog ?work');
+		equals(q.length, 2, "they should each have a weblog");
+		q = q.where('?person foaf:knows ?personB');
+		equals(q.length, 1, "one of them should know the other");
+		q = q.where('?person foaf:weblog ' + work);
+		equals(q.length, 1, "the first person should have this document as their weblog");
+		q = q.where('?personB foaf:weblog <http://example.com/>');
+		equals(q.length, 1, "the second person should have http://example.com/ as their weblog");
 		teardown();
 	});
 
@@ -88,28 +94,38 @@
 	test("from an element with a rel='friend'", function () {
 		setup('<p>Friend: <a href="http://example.com/" rel="friend">Test Person2</a></p>');
 		var work = '<' + $.uri.base() + '>';
-		testTriples($('#main > p > a').xfn(), [
-			$.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
-			$.rdf.triple(person1Bnode, foafWeblogProp, work),
-			$.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
-			$.rdf.triple(person2Bnode, foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
-
-		]);
+		var q = $('#main > p > a').xfn();
+		q.prefix('foaf', foaf);
+		equals(q.databank.size(), 5, "there should be five triples");
+		q = q.where('?person a foaf:Person');
+		equals(q.length, 2, "there should be two people");
+		q = q.where('?person foaf:weblog ?work');
+		equals(q.length, 2, "they should each have a weblog");
+		q = q.where('?person foaf:knows ?personB');
+		equals(q.length, 1, "one of them should know the other");
+		q = q.where('?person foaf:weblog ' + work);
+		equals(q.length, 1, "the first person should have this document as their weblog");
+		q = q.where('?personB foaf:weblog <http://example.com/>');
+		equals(q.length, 1, "the second person should have http://example.com/ as their weblog");
 		teardown();
 	});
 
 	test("from an element with a rel='friend met'", function () {
 		setup('<p>Friend and met: <a href="http://example.com/" rel="friend met">Test Person3</a></p>');
 		var work = '<' + $.uri.base() + '>';
-		testTriples($('#main > p > a').xfn(), [
-			$.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
-			$.rdf.triple(person1Bnode, foafWeblogProp, work),
-			$.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
-			$.rdf.triple(person2Bnode, foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
-
-		]);
+		var q = $('#main > p > a').xfn();
+		q.prefix('foaf', foaf);
+		equals(q.databank.size(), 5, "there should be five triples");
+		q = q.where('?person a foaf:Person');
+		equals(q.length, 2, "there should be two people");
+		q = q.where('?person foaf:weblog ?work');
+		equals(q.length, 2, "they should each have a weblog");
+		q = q.where('?person foaf:knows ?personB');
+		equals(q.length, 1, "one of them should know the other");
+		q = q.where('?person foaf:weblog ' + work);
+		equals(q.length, 1, "the first person should have this document as their weblog");
+		q = q.where('?personB foaf:weblog <http://example.com/>');
+		equals(q.length, 1, "the second person should have http://example.com/ as their weblog");
 		teardown();
 	});
 
