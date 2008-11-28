@@ -20,13 +20,15 @@
     foafPersonClass = $.rdf.resource('<' + foaf + 'Person>'),
     foafKnowsProp = $.rdf.resource('<' + foaf + 'knows>'),
     foafWeblogProp = $.rdf.resource('<' + foaf + 'weblog>'),
-    meRegex = /(?:^|\s)(?:(\S+):)?me(?:\s|$)/,
+    meRegex = /(?:^|\s)me(?:\s|$)/,
 
     gleaner = function (options) {
 
         var rel = this.attr('rel'),
         href = this.attr('href'),
-        m = meRegex.exec(rel);
+        m = meRegex.exec(rel),
+        person1Bnode = $.rdf.blank("[]"),
+        person2Bnode = $.rdf.blank("[]");
 
         if (href !== undefined && m === null) {
 
@@ -42,13 +44,13 @@
                 } else {
                     return options.type === foafPersonClass.uri;
                 }
-            } else if (m === null) {
+            } else {
                 return [
-                    $.rdf.triple('_:person1', $.rdf.type, foafPersonClass),
-                    $.rdf.triple('_:person1', foafWeblogProp, work),
-                    $.rdf.triple('_:person1', foafKnowsProp, '_:person2'),
-                    $.rdf.triple('_:person2', foafWeblogProp, '<' + href + '>'),
-                    $.rdf.triple('_:person2', $.rdf.type, foafPersonClass)
+                    $.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
+                    $.rdf.triple(person1Bnode, foafWeblogProp, work),
+                    $.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
+                    $.rdf.triple(person2Bnode, foafWeblogProp, '<' + href + '>'),
+                    $.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
 
                 ];
             }
@@ -58,9 +60,9 @@
 
 
 
-    $.fn.xfn = function (triple) { 
-    //triple e.g. 'friend' 'met' etc
-        if (triple === undefined) {
+    $.fn.xfn = function (relationship) { 
+    //relationship e.g. 'friend' 'met' etc
+        if (relationship === undefined) {
             var triples = $.map($(this), function (elem) {
                 return gleaner.call($(elem));
             });
@@ -72,9 +74,9 @@
                 var elem = $(this),
                 rel = elem.attr('rel');
                 if (rel === undefined || rel === '') {
-                    elem.attr('rel', triple);
-                } else if (!rel.toLowerCase().match(triple.toLowerCase())) {
-                    elem.attr('rel', rel + ' ' + triple);
+                    elem.attr('rel', relationship);
+                } else if (!rel.toLowerCase().match(relationship.toLowerCase())) {
+                    elem.attr('rel', rel + ' ' + relationship);
                 }
             });
             return this;

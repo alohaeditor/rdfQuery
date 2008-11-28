@@ -7,8 +7,9 @@
     foaf = $.uri("http://xmlns.com/foaf/0.1/"),
     foafPersonClass = $.rdf.resource('<' + foaf + 'Person>'),
     foafKnowsProp = $.rdf.resource('<' + foaf + 'knows>'),
-    foafWeblogProp = $.rdf.resource('<' + foaf + 'weblog>');
-
+    foafWeblogProp = $.rdf.resource('<' + foaf + 'weblog>'),
+    person1Bnode = $.rdf.blank("[]"),
+    person2Bnode = $.rdf.blank("[]");
 
 	function setup(content) {
 		$('#main').html(content);
@@ -46,11 +47,11 @@
 		var work = '<' + $.uri.base() + '>';
 
 		testTriples($('#main > p > a').rdf(), [
-			$.rdf.triple('_:person1', $.rdf.type, foafPersonClass),
-			$.rdf.triple('_:person1', foafWeblogProp, work),
-			$.rdf.triple('_:person1', foafKnowsProp, '_:person2'),
-			$.rdf.triple('_:person2', foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple('_:person2', $.rdf.type, foafPersonClass)
+			$.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
+			$.rdf.triple(person1Bnode, foafWeblogProp, work),
+			$.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
+			$.rdf.triple(person2Bnode, foafWeblogProp, '<http://example.com/>'),
+			$.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
 		]);
 		teardown();
 	});
@@ -60,11 +61,11 @@
 		setup('<p>Friend and met: <a href="http://example.com/" rel="friend met">Test Person3</a></p>');
 		var work = '<' + $.uri.base() + '>';
 		testTriples($('#main > p > a').rdf(), [
-			$.rdf.triple('_:person1', $.rdf.type, foafPersonClass),
-			$.rdf.triple('_:person1', foafWeblogProp, work),
-			$.rdf.triple('_:person1', foafKnowsProp, '_:person2'),
-			$.rdf.triple('_:person2', foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple('_:person2', $.rdf.type, foafPersonClass)
+			$.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
+			$.rdf.triple(person1Bnode, foafWeblogProp, work),
+			$.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
+			$.rdf.triple(person2Bnode, foafWeblogProp, '<http://example.com/>'),
+			$.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
 		]);
 		teardown();
 	});
@@ -88,11 +89,11 @@
 		setup('<p>Friend: <a href="http://example.com/" rel="friend">Test Person2</a></p>');
 		var work = '<' + $.uri.base() + '>';
 		testTriples($('#main > p > a').xfn(), [
-			$.rdf.triple('_:person1', $.rdf.type, foafPersonClass),
-			$.rdf.triple('_:person1', foafWeblogProp, work),
-			$.rdf.triple('_:person1', foafKnowsProp, '_:person2'),
-			$.rdf.triple('_:person2', foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple('_:person2', $.rdf.type, foafPersonClass)
+			$.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
+			$.rdf.triple(person1Bnode, foafWeblogProp, work),
+			$.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
+			$.rdf.triple(person2Bnode, foafWeblogProp, '<http://example.com/>'),
+			$.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
 
 		]);
 		teardown();
@@ -102,11 +103,11 @@
 		setup('<p>Friend and met: <a href="http://example.com/" rel="friend met">Test Person3</a></p>');
 		var work = '<' + $.uri.base() + '>';
 		testTriples($('#main > p > a').xfn(), [
-			$.rdf.triple('_:person1', $.rdf.type, foafPersonClass),
-			$.rdf.triple('_:person1', foafWeblogProp, work),
-			$.rdf.triple('_:person1', foafKnowsProp, '_:person2'),
-			$.rdf.triple('_:person2', foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple('_:person2', $.rdf.type, foafPersonClass)
+			$.rdf.triple(person1Bnode, $.rdf.type, foafPersonClass),
+			$.rdf.triple(person1Bnode, foafWeblogProp, work),
+			$.rdf.triple(person1Bnode, foafKnowsProp, person2Bnode),
+			$.rdf.triple(person2Bnode, foafWeblogProp, '<http://example.com/>'),
+			$.rdf.triple(person2Bnode, $.rdf.type, foafPersonClass)
 
 		]);
 		teardown();
