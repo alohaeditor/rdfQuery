@@ -43,87 +43,179 @@
 
                 var triple = $.rdf.triple(root, $.rdf.type, $.rdf.resource('<' + v + 'Vcard>'));
                 triples.push(triple);
+                vcards.add(triple);
                 
                 var descendants = c.getElementsByTagName('*');
                 for (var k = 0; k < descendants.length; k++) {
                     var x = descendants[k];
                     var cName = x.className;
-                    if (cName.indexOf('fn')!=-1) {
+
+					var reg = /(?:^|\s)fn(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'fn>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
                     }
 
 //object here would be the name object
-                    var nameNode;
-
-
-                    if (cName.indexOf('n')!=-1) {
+                    var nameNode = $.rdf.blank("[]");
+					reg = /(?:^|\s)n(?:\s|$)/
+					
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
-                        nameNode = $.rdf.blank("[]");
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
                         var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));
                         triples.push(triple1);
                         triples.push(triple2);
+		                vcards.add(triple1);
+        		        vcards.add(triple2);
 
                     }
 
 //these are all properties of the name object
 
-                    if(cName.indexOf('given-name')!=-1){
+					reg = /(?:^|\s)given-name(?:\s|$)/
+                    if (reg.exec(cName)) {
+//check for n; if not there, add it - http://microformats.org/wiki/hcard#Implied_.22n.22_Optimization
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'given-name>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
+				    	var q = $.rdf();
+						q = q.where('?vcard a <'+v+'Name>');
+
+						if(q.length == 0){
+                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
+                        triples.push(triple2);
+		                vcards.add(triple2);
+                        triples.push(triple3);
+		                vcards.add(triple3);
+						}
+
                     }
-                    if(cName.indexOf('family-name')!=-1){
+
+					reg = /(?:^|\s)family-name(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'family-name>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
+				    	var q = $.rdf();
+						q = q.where('?vcard a <'+v+'Name>');
+
+						if(q.length == 0){
+                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
+                        triples.push(triple2);
+		                vcards.add(triple2);
+                        triples.push(triple3);
+		                vcards.add(triple3);
+						}
                     }
-                    if(cName.indexOf('additional-name')!=-1){
+					reg = /(?:^|\s)additional-name(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'additonal-name>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
+				    	var q = $.rdf();
+						q = q.where('?vcard a <'+v+'Name>');
+
+						if(q.length == 0){
+                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
+                        triples.push(triple2);
+		                vcards.add(triple2);
+                        triples.push(triple3);
+		                vcards.add(triple3);
+						}
                     }
-                    if(cName.indexOf('honorific-prefix')!=-1){
+					reg = /(?:^|\s)honorific-prefix(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'honorific-prefix>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
+				    	var q = $.rdf();
+						q = q.where('?vcard a <'+v+'Name>');
+
+						if(q.length == 0){
+                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
+                        triples.push(triple2);
+		                vcards.add(triple2);
+                        triples.push(triple3);
+		                vcards.add(triple3);
+						}
                     }
-                    if(cName.indexOf('honorific-suffix')!=-1){
-                       var fn = x.textContent;
-                       var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'honorific-suffix>'), $.rdf.literal('"'+fn+'"'));
-                       triples.push(triple1);
+					reg = /(?:^|\s)honorific-suffix(?:\s|$)/
+                    if (reg.exec(cName)) {
+                        var fn = x.textContent;
+                        var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'honorific-suffix>'), $.rdf.literal('"'+fn+'"'));
+                        triples.push(triple1);
+		                vcards.add(triple1);
+				    	var q = $.rdf();
+						q = q.where('?vcard a <'+v+'Name>');
+
+						if(q.length == 0){
+                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
+                        triples.push(triple2);
+		                vcards.add(triple2);
+                        triples.push(triple3);
+		                vcards.add(triple3);
+						}
                     }
 
-//end name object
+//end name object handling
 
-                    if(cName.indexOf('nickname')!=-1){
-                       var fn = x.textContent;
-                       var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
-                       triples.push(triple1);
+//nickname seems incorrect so adding it twice @@
+
+					reg = /(?:^|\s)nickname(?:\s|$)/
+                    if (reg.exec(cName)) {
+                        var fn = x.textContent;
+                        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
+                        var triple0 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
+                        triples.push(triple1);
+		                vcards.add(triple1);
+				    	var q = $.rdf();
+						q = q.where('?vcard a <'+v+'Name>');
+
+						if(q.length == 0){
+                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
+                        triples.push(triple2);
+		                vcards.add(triple2);
+                        triples.push(triple3);
+		                vcards.add(triple3);
+						}
                     }
 
 //url is a resource if it has http:// in it
-
-                    if(cName.indexOf('url')!=-1){
-                       var fn = x.textContent;
+					reg = /(?:^|\s)url(?:\s|$)/
+                    if (reg.exec(cName)) {
+                        var fn = x.getAttribute("href");
                        if(fn.indexOf('http://')==-1){
-                           var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
-                           triples.push(triple1);
+                            var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'url>'), $.rdf.literal('"'+fn+'"'));
+                            triples.push(triple1);
+			                vcards.add(triple1);
                        } else {
-                           var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'nickname>'), $.rdf.resource('<'+fn+'>'));
-                           triples.push(triple1);                           
+                           var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'url>'), $.rdf.resource('<'+fn+'>'));
+                            triples.push(triple1);                           
+			                vcards.add(triple1);
                        }
                     }
-//email, tel, addr,  are trickier
+//email, tel, addr,  are a little trickier
 /*
 e.g.
   <a class="email" href="mailto:neuroNOSPAM@t37.net">
      <span class="type">pref</span><span>erred email</span>
   </a>
 */  
-                    if(cName.indexOf('email')!=-1){
+					reg = /(?:^|\s)email(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.getAttribute("href");
                         var emailDescendants = x.getElementsByTagName('*');
                         for (var j = 0; j < emailDescendants.length; j++) {
@@ -143,6 +235,8 @@ e.g.
                                 }                                    
                                 var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+fn+'"'));
                                 triples.push(triple1);
+				                vcards.add(triple1);
+
                             }
                         }
                     }
@@ -157,7 +251,8 @@ tel
 
 */
 
-                    if(cName.indexOf('tel')!=-1){
+					reg = /(?:^|\s)tel(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var emailDescendants = x.getElementsByTagName('*');
                         for (var j = 0; j < emailDescendants.length; j++) {
                             var y=emailDescendants[j];
@@ -185,8 +280,14 @@ tel
                                 val = yName;
                             }
 //tel needs cleaning up
+//do we need to separate with '-'?
+							if(val.startsWith("tel:")){
+							   val=val.substring(4);
+							}
+
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.resource('<tel:'+val+'>'));
                                 triples.push(triple1);
+				                vcards.add(triple1);
 
                         }
                     }
@@ -205,8 +306,8 @@ example:
 
 */
 
-
-                    if(cName.indexOf('adr')!=-1){
+					reg = /(?:^|\s)adr(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var adrDescendants = x.getElementsByTagName('*');
                         for (var j = 0; j < adrDescendants.length; j++) {
                             var y=adrDescendants[j];
@@ -214,16 +315,20 @@ example:
                             var prop= y.className;
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
                             triples.push(triple1);
+			                vcards.add(triple1);
 
                         }
                     }
 
 //label is easy
 
-                    if(cName.indexOf('label')!=-1){
+					reg = /(?:^|\s)label(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'label>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
+
                     }
 
 //geo bt more complex
@@ -237,7 +342,8 @@ example:
 
 */
 
-                    if(cName.indexOf('geo')!=-1){
+					reg = /(?:^|\s)geo(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var geoDescendants = x.getElementsByTagName('*');
                         for (var j = 0; j < geoDescendants.length; j++) {
                             var y = geoDescendants[j];
@@ -245,6 +351,7 @@ example:
                             var prop = y.className;
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
                             triples.push(triple1);
+			                vcards.add(triple1);
 
                         }
                     }
@@ -253,32 +360,41 @@ example:
 
 //tz, photo, logo, sound, are straightforward
 
-                    if(cName.indexOf('tz')!=-1){
+					reg = /(?:^|\s)tz(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'tz>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
                     }
 
 
-                    if(cName.indexOf('photo')!=-1){
+					reg = /(?:^|\s)photo(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'photo>'), $.rdf.resource('<'+fn+'>'));
                         triples.push(triple1);
+		                vcards.add(triple1);
                     }
 
-                    if(cName.indexOf('logo')!=-1){
+					reg = /(?:^|\s)logo(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'logo>'), $.rdf.resource('<'+fn+'>'));
                         triples.push(triple1);
+		                vcards.add(triple1);
                     }
 
-                    if(cName.indexOf('sound')!=-1){
+					reg = /(?:^|\s)sound(?:\s|$)/
+                    if (reg.exec(cName)) {
                        var fn = x.textContent;
                        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'sound>'), $.rdf.resource('<'+fn+'>'));
                        triples.push(triple1);
+		                vcards.add(triple1);
+
                     }
 
-//bday is odd
+//bday is a little odd
 
 /*
 
@@ -291,8 +407,8 @@ example:
 
 */
 
-
-                    if(cName.indexOf('bday')!=-1){
+					reg = /(?:^|\s)bday(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var bdayDescendants = x.getElementsByTagName('*');
                         for (var j = 0; j < bdayDescendants.length; j++) {
                             var y = bdayDescendants[j];
@@ -300,30 +416,35 @@ example:
                             var prop = y.className;
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
                             triples.push(triple1);
+			                vcards.add(triple1);
 
                         }
                     }
 
 
 
-//title, role are ok
+//title, role are simple
 
-                    if(cName.indexOf('title')!=-1){
+					reg = /(?:^|\s)title(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'title>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
                     }
                         
-                    if(cName.indexOf('role')!=-1){
+					reg = /(?:^|\s)role(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'role>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
                     }
  
 //org is trickier
 
-
-                    if(cName.indexOf('geo')!=-1){
+					reg = /(?:^|\s)org(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var orgDescendants = x.getElementsByTagName('*');
                         var orgNode = $.rdf.blank("[]");
                         var subnodes = false;
@@ -334,65 +455,85 @@ example:
                             if(val && prop){
                                 var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
                                 triples.push(triple3);
+				                vcards.add(triple3);
                                 subnodes=true;
                             }
                         }
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'org>'), orgNode);
                         var triple2 = $.rdf.triple(orgNode, $.rdf.type, $.rdf.resource('<' + v + 'Organization>')); //should check if it has a name
                         triples.push(triple1);
+		                vcards.add(triple1);
                         triples.push(triple2);
+		                vcards.add(triple2);
+
                         if(!subnodes){
                             var fn = x.textContent;
-                            var triple4 = $.rdf.triple(orgNode, $.rdf.resource('<' + v + 'role>'), $.rdf.literal('"'+fn+'"'));
+                            var triple4 = $.rdf.triple(orgNode, $.rdf.resource('<' + v + 'organization-name>'), $.rdf.literal('"'+fn+'"'));
                             triples.push(triple4);
+			                vcards.add(triple4);
+
                         }
                         
                     }
 
 
 
-//category note class are ok
+//category note class are simple
 
-                    if(cName.indexOf('category')!=-1){
+					reg = /(?:^|\s)category(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'category>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
+
                     }
 
-                    if(cName.indexOf('note')!=-1){
+					reg = /(?:^|\s)note(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'note>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
+
                     }
 
-                    if(cName.indexOf('class')!=-1){
+					reg = /(?:^|\s)class(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'class>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
                     }
 
-//key is funny
+//key is a bit odd
 
-                    if(cName.indexOf('key')!=-1){
+					reg = /(?:^|\s)key(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var data = x.getAttribute('title');
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'key>'), $.rdf.resource('<'+data+'>'));
                         triples.push(triple1);                            
+		                vcards.add(triple1);
                     }
 
 //mailer, uid are normal
 
-                    if(cName.indexOf('mailer')!=-1){
+					reg = /(?:^|\s)mailer(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'mailer>'), $.rdf.literal('"'+fn+'"'));
                         triples.push(triple1);
+		                vcards.add(triple1);
                     }
 
-//rev is funny
+//rev is odd
 
-                    if(cName.indexOf('rev')!=-1){
+					reg = /(?:^|\s)rev(?:\s|$)/
+                    if (reg.exec(cName)) {
                         var data = x.getAttribute('title');
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'rev>'), $.rdf.resource('<'+data+'>'));
                         triples.push(triple1);                            
+		                vcards.add(triple1);
                     }
                 }
 

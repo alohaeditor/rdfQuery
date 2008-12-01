@@ -23,7 +23,7 @@
 		}
 	}
 
-
+/*
 	module("Gleaning RDF triples with $.fn.rdf()");
 
 	test("from an element without any hcard", function () {
@@ -45,152 +45,202 @@
 
 		var blank = $.rdf.blank('[]');
     	var x = $.rdf.triple(blank, $.rdf.type, vCardClass);
-    	var y = $.rdf.triple(blank, $.rdf.resource('<'+v+'fn>'), $.rdf.literal('"Internal Revenue Service"'));
-		testTriples($('#main > span').rdf(), [x,y]);
+    	var y = $.rdf.triple(blank, $.rdf.resource('<'+v+'n>'), $.rdf.literal('"Internal Revenue Service"'));
+    	var q = $('#main > span').rdf();
+    	q = q.where('?vcard a '+vCardClass);
+    	alert("q [1] "+q);
+		equals(q.length, 1, "there should one vcard");
+		q = q.where('?vcard v:fn "Internal Revenue Service"');
+		equals(q.length, 1, "there should be one literal with a specific value");
 		teardown();
 	});
 
 
 
+	test("from fn with another class second", function () {
+		setup('<span class="vcard"><a class="fn foo" href="http://irs.gov/">Internal Revenue Service</a></span>');
+
+		var blank = $.rdf.blank('[]');
+    	var x = $.rdf.triple(blank, $.rdf.type, vCardClass);
+    	var y = $.rdf.triple(blank, $.rdf.resource('<'+v+'n>'), $.rdf.literal('"Internal Revenue Service"'));
+    	var q = $('#main > span').rdf();
+    	q = q.where('?vcard a '+vCardClass);
+    	alert("q [1] "+q);
+		equals(q.length, 1, "there should one vcard");
+		q = q.where('?vcard v:fn "Internal Revenue Service"');
+		equals(q.length, 1, "there should be one literal with a specific value");
+		teardown();
+	});
+
+
+*/
+	test("from fn with another class first", function () {
+		setup('<span class="vcard"><a class="foo fn" href="http://irs.gov/">Internal Revenue Service</a></span>');
+
+		var blank = $.rdf.blank('[]');
+    	var x = $.rdf.triple(blank, $.rdf.type, vCardClass);
+    	var y = $.rdf.triple(blank, $.rdf.resource('<'+v+'n>'), $.rdf.literal('"Internal Revenue Service"'));
+    	var q = $('#main > span').rdf();
+    	q = q.where('?vcard a '+vCardClass);
+		equals(q.length, 1, "there should one vcard");
+		q = q.where('?vcard v:fn "Internal Revenue Service"');
+		equals(q.length, 1, "there should be one literal with a specific value");
+		teardown();
+	});
+
+
+	test("from fn with another class first and last", function () {
+		setup('<span class="vcard"><a class="foo fn bar" href="http://irs.gov/">Internal Revenue Service</a></span>');
+
+		var blank = $.rdf.blank('[]');
+    	var x = $.rdf.triple(blank, $.rdf.type, vCardClass);
+    	var y = $.rdf.triple(blank, $.rdf.resource('<'+v+'n>'), $.rdf.literal('"Internal Revenue Service"'));
+    	var q = $('#main > span').rdf();
+    	q = q.where('?vcard a '+vCardClass);
+		equals(q.length, 1, "there should one vcard");
+		q = q.where('?vcard v:fn "Internal Revenue Service"');
+		equals(q.length, 1, "there should be one literal with a specific value");
+		teardown();
+	});
 
 /*
-	test("from an element with a rel='friend met'", function () {
-		setup('<p>Friend and met: <a href="http://example.com/" rel="friend met">Test Person3</a></p>');
-		var work = '<' + $.uri.base() + '>';
-		testTriples($('#main > p > a').rdf(), [
-			$.rdf.triple('_:person1', $.rdf.type, foafPersonClass),
-			$.rdf.triple('_:person1', foafWeblogProp, work),
-			$.rdf.triple('_:person1', foafKnowsProp, '_:person2'),
-			$.rdf.triple('_:person2', foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple('_:person2', $.rdf.type, foafPersonClass)
-		]);
-		teardown();
-	});
+	test("from implied name node with given-name", function () {
+		setup('<span class="vcard"><a class="fn given-name">John</a></span>');
 
-	module("Gleaning RDF triples with $.fn.xfn()");
+		var blankVC = $.rdf.blank('[]');
+		var blankN = $.rdf.blank('[]');
 
-	test("from an element without an xfn", function () {
-		setup('<p>This is just a paragraph</p>');
-		testTriples($('#main > p').xfn(), []);
-		teardown();
-	});
+    	var x = $.rdf.triple(blankVC, $.rdf.type, vCardClass);
+    	var z = $.rdf.triple(blankN, $.rdf.type, '<' + v + 'Name>');
+    	var y = $.rdf.triple(blankN, $.rdf.resource('<'+v+'given-name>'), $.rdf.literal('"John"'));
+    	var q = $('#main > span').rdf();
+    	q = q.where('?vcard a '+vCardClass);
+		equals(q.length, 1, 'there should be one Vcard');
+    	q = q.where('?name a v:Name');
+		equals(q.length, 1, 'there should be one Name');
+		q = q.where('?vcard v:fn "John"');
+		equals(q.length, 1, 'there should be one literal with fn and a specific value');
 
-	test("from an element with a rel='me'", function () {
-		setup('<p>Me: <a href="http://example.com/" rel="me">Test Person1</a></p>');
-		testTriples($('#main > p > a').xfn(), []);
-		teardown();
-	});
-
-
-	test("from an element with a rel='friend'", function () {
-		setup('<p>Friend: <a href="http://example.com/" rel="friend">Test Person2</a></p>');
-		var work = '<' + $.uri.base() + '>';
-		testTriples($('#main > p > a').xfn(), [
-			$.rdf.triple('_:person1', $.rdf.type, foafPersonClass),
-			$.rdf.triple('_:person1', foafWeblogProp, work),
-			$.rdf.triple('_:person1', foafKnowsProp, '_:person2'),
-			$.rdf.triple('_:person2', foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple('_:person2', $.rdf.type, foafPersonClass)
-
-		]);
-		teardown();
-	});
-
-	test("from an element with a rel='friend met'", function () {
-		setup('<p>Friend and met: <a href="http://example.com/" rel="friend met">Test Person3</a></p>');
-		var work = '<' + $.uri.base() + '>';
-		testTriples($('#main > p > a').xfn(), [
-			$.rdf.triple('_:person1', $.rdf.type, foafPersonClass),
-			$.rdf.triple('_:person1', foafWeblogProp, work),
-			$.rdf.triple('_:person1', foafKnowsProp, '_:person2'),
-			$.rdf.triple('_:person2', foafWeblogProp, '<http://example.com/>'),
-			$.rdf.triple('_:person2', $.rdf.type, foafPersonClass)
-
-		]);
-		teardown();
-	});
-
-
-	module("Adding xfn information with $.fn.xfn()");
-
-	test("to an element without a href attribute", function () {
-		setup('<p>This is just a paragraph</p>');
-		var p = $('#main > p');
-		p.xfn('met');
-		equals(p.attr('rel'), undefined, "it shouldn't add anything");
-		teardown();
-	});
-
-
-	test("to an element with a href attribute", function () {
-		setup('<p>Met: <a href="http://example.com/">Mr Foo</a></p>');
-		var a = $('#main > p > a');
-		a.xfn('met');
-		equals(a.attr('rel'), 'met');
-		teardown();
-	});
-
-
-	test("to an element that already has a rel attribute", function () {
-		setup('<p>Met: <a href="http://example.com/" rel="friend">Mr Foo</a></p>');
-		var a = $('#main > p > a');
-		a.xfn('met');
-		equals(a.attr('rel'), 'friend met');
-		teardown();
-	});
-
-
-	module("Using type() selector");
-
-	test("from an element without an xfn using type()", function () {
-		setup('<p>This is just a paragraph</p>');
-		var jquery = $('#main *:type()');
-		equals(jquery.length, 0);
-		teardown();
-	});
-
-
-	test("finding all elements with a rel for xfn using type()", function () {
-		setup('<p>Met: <a href="http://example.com/">Mr Foo</a></p>');
-		var jquery = $('#main *:type()');
-		equals(jquery.length, 1);
-		ok(jquery.is('a'), "it should locate the <a> element");
-		teardown();
-	});
-
-
-	test("from an element without a rel using type(foaf:Person)", function () {
-		setup('<p>This is just a paragraph</p>');
-		var jquery = $('#main *:type("foaf:Person")');
-		equals(jquery.length, 0);
-		teardown();
-	});
-
-
-	test("finding all elements with a rel using type(foaf:Person)", function () {
-		setup('<p>Met: <a href="http://example.com/">Mr Foo</a></p>');
-		var jquery = $("#main *:type('foaf:Person')");
-		equals(jquery.length, 1);
-		ok(jquery.is('a'), "it should locate the <a> element");
-		teardown();
-	});
-
-
-	module("Using about() selector");
-
-	test("from an element without a xfn using about()", function () {
-		setup('<p>This is just a paragraph</p>');
-		var jquery = $('#main *:about()');
-		equals(jquery.length, 0);
-		teardown();
-	});
-
-	test("finding all elements with a rel='license' using about()", function () {
-		setup('<p>Met: <a href="http://example.com/">Mr Foo</a></p>');
-		var jquery = $('#main *:about()');
-		equals(jquery.length, 1);
-		ok(jquery.is('a'), "it should locate the <a> element");
+		q = q.where('?name v:given-name "John"');
+		equals(q.length, 1, 'there should be one literal with given-name and a specific value');		
 		teardown();
 	});
 */
+
+/*
+
+testcases: http://microformats.org/tests/hcard/
+
+*/
+
+
+/*
+
+01-tantek-basic
+  <div class="vcard">
+   <a class="url fn" href="http://tantek.com/">Tantek Çelik</a>
+   <div class="org">Technorati</div>
+  </div>
+
+*/
+
+/*
+	test("from url and fn with org", function () {
+		setup('<div class="vcard"><a class="url fn" href="http://tantek.com/">Tantek Çelik</a><div class="org">Technorati</div></div>');
+
+    	var q = $('#main > div').rdf();
+    	q = q.databank.triples();
+		equals(q.length, 6, 'Six triples all together');
+		teardown();
+	});
+*/
+
+
+/*
+
+02-multiple-class-names-on-vcard
+  <div class="vcard"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></div>
+  <p><span class="attendee vcard"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></span></p>
+  <address class="vcard author"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></address>
+  <ul><li class="reviewer vcard first"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></li></ul>
+
+*/
+
+/*
+	test("from url and fn with org", function () {
+		setup('<div class="vcard"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></div><p><span class="attendee vcard"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></span></p><address class="vcard author"><span class="fn n"><span class="given-name">Ryan</span><span class="family-name">King</span></span></address><ul><li class="reviewer vcard first"><span class="fn n"><span class="given-name">Ryan</span><span class="family-name">King</span></span></li></ul>');
+
+    	var q = $('#main > div').rdf();
+    	q = q.databank.triples();
+		equals(q.length, 40, 'Forty triples all together');
+		teardown();
+	});
+*/
+
+/*
+
+03-implied-n
+  <p class="vcard">
+    <span class="fn">Ryan King</span>
+
+  </p>
+
+  <p class="vcard">
+    <abbr class="fn" title="Ryan King">me</abbr>
+  </p>
+
+  <p class="vcard">
+    <img src="/me.jpg" title="Brian Suda" alt="Ryan King" class="fn" />
+  </p>
+
+  <p class="vcard">
+  <a class="fn" href="http://suda.co.uk/">Brian Suda</a>
+  </p>
+
+  <p class="vcard">
+    <span class="fn">King, Ryan</span>
+  </p>
+  
+  <p class="vcard">
+
+    <span class="fn">King, R</span>
+  </p>
+  
+  <p class="vcard">
+    <span class="fn">King R</span>
+  </p>
+  
+  <p class="vcard">
+    <span class="fn">King R.</span>
+
+  </p>
+
+  <p class="vcard">
+    <span class="fn">Jesse James Garrett</span>
+  </p> 
+  
+  <p class="vcard">
+    <span class="fn">Thomas Vander Wal</span>
+  </p>
+
+*/
+
+/*
+
+	test("from url and fn with org", function () {
+		setup('<p class="vcard"><span class="fn">Ryan King</span></p><p class="vcard"><abbr class="fn" title="Ryan King">me</abbr></p><p class="vcard"><img src="/me.jpg" title="Brian Suda" alt="Ryan King" class="fn" /></p><p class="vcard"><a class="fn" href="http://suda.co.uk/">Brian Suda</a></p><p class="vcard"><span class="fn">King, Ryan</span></p><p class="vcard"><span class="fn">King, R</span></p><p class="vcard"><span class="fn">King R</span></p><p class="vcard"><span class="fn">King R.</span></p><p class="vcard"><span class="fn">Jesse James Garrett</span></p><p class="vcard"><span class="fn">Thomas Vander Wal</span></p>');
+
+    	var q = $('#main > p').rdf();
+    	q = q.databank.triples();
+		equals(q.length, 200, '200 triples all together');
+		teardown();
+	});
+*/
+
+/*
+
+More tests to come...
+
+*/
+
 })(jQuery);
