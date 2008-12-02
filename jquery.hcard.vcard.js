@@ -18,19 +18,18 @@
 
 (function ($) {
 
-	var vcards = $.rdf.databank([], 
-		{namespaces: 
-			{ 
-			v: 'http://www.w3.org/2006/vcard/ns#', 
-			foaf: 'http://xmlns.com/foaf/0.1/' 
-		} 
-		}),
-	triples = [],
-	v = 'http://www.w3.org/2006/vcard/ns#',
-
 	testForVcardClass = function () {
+		var vcards = $.rdf.databank([], 
+			{namespaces: 
+				{ 
+				v: 'http://www.w3.org/2006/vcard/ns#'
+				} 
+			}),
+		v = 'http://www.w3.org/2006/vcard/ns#';
+
 			var cl = $('*.vcard');
 			for (var i = 0; i < cl.length; i++) {
+
 				var c = cl[i],
 				ids = $('@id'),
             	root;
@@ -42,8 +41,11 @@
                 }
 
                 var triple = $.rdf.triple(root, $.rdf.type, $.rdf.resource('<' + v + 'Vcard>'));
-                triples.push(triple);
                 vcards.add(triple);
+ 
+//namenode is a new object which many name-related properties hang off
+                var nameNode = $.rdf.blank("[]");
+                var nameNodeFound = false;
                 
                 var descendants = c.getElementsByTagName('*');
                 for (var k = 0; k < descendants.length; k++) {
@@ -54,24 +56,34 @@
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'fn>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
+						//special case "implied-n-optimization"
+						//exactly two wrds, we make an 'n' and given-name and family-name
+						reg = /^(\w+)\s+(\w+)$/
+						var res = reg.exec(fn);
+	                    if (res) {
+	                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+    	                    var triple3 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'given-name>'), '"'+res[1]+'"');
+        	                var triple4 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'family-name>'), '"'+res[2]+'"');
+		    	            vcards.add(triple2);
+		        	        vcards.add(triple3);
+		            	    vcards.add(triple4);
+						}
                     }
 
-//object here would be the name object
-                    var nameNode = $.rdf.blank("[]");
+
+                  
 					reg = /(?:^|\s)n(?:\s|$)/
 					
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
                         var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));
-                        triples.push(triple1);
-                        triples.push(triple2);
 		                vcards.add(triple1);
         		        vcards.add(triple2);
-
+						nameNodeFound = true;
                     }
+
 
 //these are all properties of the name object
 
@@ -80,17 +92,12 @@
 //check for n; if not there, add it - http://microformats.org/wiki/hcard#Implied_.22n.22_Optimization
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'given-name>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
-				    	var q = $.rdf();
-						q = q.where('?vcard a <'+v+'Name>');
 
-						if(q.length == 0){
+						if(!nameNodeFound){
                         var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
                         var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-                        triples.push(triple2);
 		                vcards.add(triple2);
-                        triples.push(triple3);
 		                vcards.add(triple3);
 						}
 
@@ -100,17 +107,12 @@
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'family-name>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
-				    	var q = $.rdf();
-						q = q.where('?vcard a <'+v+'Name>');
 
-						if(q.length == 0){
+						if(!nameNodeFound){
                         var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
                         var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-                        triples.push(triple2);
 		                vcards.add(triple2);
-                        triples.push(triple3);
 		                vcards.add(triple3);
 						}
                     }
@@ -118,17 +120,12 @@
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'additonal-name>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
-				    	var q = $.rdf();
-						q = q.where('?vcard a <'+v+'Name>');
 
-						if(q.length == 0){
+						if(!nameNodeFound){
                         var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
                         var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-                        triples.push(triple2);
 		                vcards.add(triple2);
-                        triples.push(triple3);
 		                vcards.add(triple3);
 						}
                     }
@@ -136,17 +133,12 @@
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'honorific-prefix>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
-				    	var q = $.rdf();
-						q = q.where('?vcard a <'+v+'Name>');
 
-						if(q.length == 0){
+						if(!nameNodeFound){
                         var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
                         var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-                        triples.push(triple2);
 		                vcards.add(triple2);
-                        triples.push(triple3);
 		                vcards.add(triple3);
 						}
                     }
@@ -154,17 +146,12 @@
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'honorific-suffix>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
-				    	var q = $.rdf();
-						q = q.where('?vcard a <'+v+'Name>');
 
-						if(q.length == 0){
+						if(!nameNodeFound){
                         var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
                         var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-                        triples.push(triple2);
 		                vcards.add(triple2);
-                        triples.push(triple3);
 		                vcards.add(triple3);
 						}
                     }
@@ -178,17 +165,12 @@
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
                         var triple0 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
-				    	var q = $.rdf();
-						q = q.where('?vcard a <'+v+'Name>');
 
-						if(q.length == 0){
+						if(!nameNodeFound){
                         var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
                         var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-                        triples.push(triple2);
 		                vcards.add(triple2);
-                        triples.push(triple3);
 		                vcards.add(triple3);
 						}
                     }
@@ -199,11 +181,9 @@
                         var fn = x.getAttribute("href");
                        if(fn.indexOf('http://')==-1){
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'url>'), $.rdf.literal('"'+fn+'"'));
-                            triples.push(triple1);
 			                vcards.add(triple1);
                        } else {
                            var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'url>'), $.rdf.resource('<'+fn+'>'));
-                            triples.push(triple1);                           
 			                vcards.add(triple1);
                        }
                     }
@@ -216,6 +196,7 @@ e.g.
 */  
 					reg = /(?:^|\s)email(?:\s|$)/
                     if (reg.exec(cName)) {
+
                         var fn = x.getAttribute("href");
                         var emailDescendants = x.getElementsByTagName('*');
                         for (var j = 0; j < emailDescendants.length; j++) {
@@ -232,13 +213,24 @@ e.g.
                                 }
                                 if(type.toLowerCase()=="mobile"){
                                     prop="mobileEmail";
-                                }                                    
-                                var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+fn+'"'));
-                                triples.push(triple1);
-				                vcards.add(triple1);
+                                }
 
-                            }
-                        }
+								if(fn.indexOf("mailto:")==0){
+									fn = fn.substring(7);
+								}
+                            	var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+fn+'"'));
+				            	vcards.add(triple1);
+                                                             
+							}
+						}
+						if(emailDescendants.length==0){
+							if(fn.indexOf("mailto:")==0){
+								fn = fn.substring(7);
+							}
+                            var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'email>'), $.rdf.literal('"'+fn+'"'));
+				            vcards.add(triple1);
+						}
+                     
                     }
 
 /*
@@ -286,7 +278,6 @@ tel
 							}
 
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.resource('<tel:'+val+'>'));
-                                triples.push(triple1);
 				                vcards.add(triple1);
 
                         }
@@ -314,7 +305,6 @@ example:
                             var val=y.textContent;
                             var prop= y.className;
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
-                            triples.push(triple1);
 			                vcards.add(triple1);
 
                         }
@@ -326,7 +316,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'label>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
 
                     }
@@ -350,7 +339,6 @@ example:
                             var val = y.textContent;
                             var prop = y.className;
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
-                            triples.push(triple1);
 			                vcards.add(triple1);
 
                         }
@@ -364,7 +352,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'tz>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
                     }
 
@@ -373,7 +360,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'photo>'), $.rdf.resource('<'+fn+'>'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
                     }
 
@@ -381,7 +367,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'logo>'), $.rdf.resource('<'+fn+'>'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
                     }
 
@@ -389,7 +374,6 @@ example:
                     if (reg.exec(cName)) {
                        var fn = x.textContent;
                        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'sound>'), $.rdf.resource('<'+fn+'>'));
-                       triples.push(triple1);
 		                vcards.add(triple1);
 
                     }
@@ -415,7 +399,6 @@ example:
                             var val = y.getAttribute("title");
                             var prop = y.className;
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
-                            triples.push(triple1);
 			                vcards.add(triple1);
 
                         }
@@ -429,7 +412,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'title>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
                     }
                         
@@ -437,7 +419,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'role>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
                     }
  
@@ -454,22 +435,18 @@ example:
                             var prop = y.className;
                             if(val && prop){
                                 var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
-                                triples.push(triple3);
 				                vcards.add(triple3);
                                 subnodes=true;
                             }
                         }
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'org>'), orgNode);
                         var triple2 = $.rdf.triple(orgNode, $.rdf.type, $.rdf.resource('<' + v + 'Organization>')); //should check if it has a name
-                        triples.push(triple1);
 		                vcards.add(triple1);
-                        triples.push(triple2);
 		                vcards.add(triple2);
 
                         if(!subnodes){
                             var fn = x.textContent;
                             var triple4 = $.rdf.triple(orgNode, $.rdf.resource('<' + v + 'organization-name>'), $.rdf.literal('"'+fn+'"'));
-                            triples.push(triple4);
 			                vcards.add(triple4);
 
                         }
@@ -484,7 +461,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'category>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
 
                     }
@@ -493,7 +469,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'note>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
 
                     }
@@ -502,7 +477,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'class>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
                     }
 
@@ -512,7 +486,6 @@ example:
                     if (reg.exec(cName)) {
                         var data = x.getAttribute('title');
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'key>'), $.rdf.resource('<'+data+'>'));
-                        triples.push(triple1);                            
 		                vcards.add(triple1);
                     }
 
@@ -522,7 +495,6 @@ example:
                     if (reg.exec(cName)) {
                         var fn = x.textContent;
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'mailer>'), $.rdf.literal('"'+fn+'"'));
-                        triples.push(triple1);
 		                vcards.add(triple1);
                     }
 
@@ -532,22 +504,31 @@ example:
                     if (reg.exec(cName)) {
                         var data = x.getAttribute('title');
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'rev>'), $.rdf.resource('<'+data+'>'));
-                        triples.push(triple1);                            
 		                vcards.add(triple1);
                     }
                 }
 
+
             }
+		return vcards;
+
+
        };
     
 
     
     gleaner = function (options) {
-        testForVcardClass();
-        alert(triples);
-        return triples;        
+		var trips = [];
+        var vcards = testForVcardClass();
+
+  		for (i = 0; i < vcards.triples().length; i += 1) {
+			//alert(vcards.triples()[i]);
+			trips.push(vcards.triples()[i]);
+		}
+
+        //alert(trips);
+        return trips;      
     },
-    
     $.rdf.gleaners.push(gleaner);
 
 })(jQuery);

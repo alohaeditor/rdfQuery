@@ -23,8 +23,9 @@
 		}
 	}
 
-/*
+
 	module("Gleaning RDF triples with $.fn.rdf()");
+
 
 	test("from an element without any hcard", function () {
 		setup('<p>This is just a paragraph</p>');
@@ -36,9 +37,12 @@
 	test("from the simplest element with a class='vcard'", function () {
 		setup('<span class="vcard"></span>');
     	var x = $.rdf.triple($.rdf.blank('[]'), $.rdf.type, vCardClass)
-		testTriples($('#main > span').rdf(), [x]);
+    	var q = $('#main > span').rdf();
+    	q = q.where('?vcard a '+vCardClass);
+		equals(q.length, 1, "there should one vcard");
 		teardown();
 	});
+
 
 	test("from the simplest element with a class='vcard'", function () {
 		setup('<span class="vcard"><a class="fn" href="http://irs.gov/">Internal Revenue Service</a></span>');
@@ -48,7 +52,6 @@
     	var y = $.rdf.triple(blank, $.rdf.resource('<'+v+'n>'), $.rdf.literal('"Internal Revenue Service"'));
     	var q = $('#main > span').rdf();
     	q = q.where('?vcard a '+vCardClass);
-    	alert("q [1] "+q);
 		equals(q.length, 1, "there should one vcard");
 		q = q.where('?vcard v:fn "Internal Revenue Service"');
 		equals(q.length, 1, "there should be one literal with a specific value");
@@ -65,7 +68,6 @@
     	var y = $.rdf.triple(blank, $.rdf.resource('<'+v+'n>'), $.rdf.literal('"Internal Revenue Service"'));
     	var q = $('#main > span').rdf();
     	q = q.where('?vcard a '+vCardClass);
-    	alert("q [1] "+q);
 		equals(q.length, 1, "there should one vcard");
 		q = q.where('?vcard v:fn "Internal Revenue Service"');
 		equals(q.length, 1, "there should be one literal with a specific value");
@@ -73,7 +75,7 @@
 	});
 
 
-*/
+
 	test("from fn with another class first", function () {
 		setup('<span class="vcard"><a class="foo fn" href="http://irs.gov/">Internal Revenue Service</a></span>');
 
@@ -81,7 +83,9 @@
     	var x = $.rdf.triple(blank, $.rdf.type, vCardClass);
     	var y = $.rdf.triple(blank, $.rdf.resource('<'+v+'n>'), $.rdf.literal('"Internal Revenue Service"'));
     	var q = $('#main > span').rdf();
+
     	q = q.where('?vcard a '+vCardClass);
+
 		equals(q.length, 1, "there should one vcard");
 		q = q.where('?vcard v:fn "Internal Revenue Service"');
 		equals(q.length, 1, "there should be one literal with a specific value");
@@ -103,7 +107,7 @@
 		teardown();
 	});
 
-/*
+
 	test("from implied name node with given-name", function () {
 		setup('<span class="vcard"><a class="fn given-name">John</a></span>');
 
@@ -125,7 +129,7 @@
 		equals(q.length, 1, 'there should be one literal with given-name and a specific value');		
 		teardown();
 	});
-*/
+
 
 /*
 
@@ -134,113 +138,69 @@ testcases: http://microformats.org/tests/hcard/
 */
 
 
-/*
-
-01-tantek-basic
-  <div class="vcard">
-   <a class="url fn" href="http://tantek.com/">Tantek Çelik</a>
-   <div class="org">Technorati</div>
-  </div>
-
-*/
-
-/*
-	test("from url and fn with org", function () {
+	test("from url and fn with org: 01-tantek-basic", function () {
 		setup('<div class="vcard"><a class="url fn" href="http://tantek.com/">Tantek Çelik</a><div class="org">Technorati</div></div>');
 
     	var q = $('#main > div').rdf();
+    	q = q.where('?vcard a v:Vcard');
+		equals(q.length, 1, 'there should be one Vcard');
+    	q = q.where('?vcard v:url <http://tantek.com/>');
+		equals(q.length, 1, 'there should be one url');
+    	q = q.where('?vcard v:fn "Tantek Çelik"');
+		equals(q.length, 1, 'there should be one fn');
+    	q = q.where('?vcard v:org ?org');
+		equals(q.length, 1, 'there should be one org');
+    	q = q.where('?org a v:Organization');
+		equals(q.length, 1, 'there should be one type v:Organization');		
+    	q = q.where('?org v:organization-name "Technorati"');
+		equals(q.length, 1, 'there should be one org name');	
     	q = q.databank.triples();
 		equals(q.length, 6, 'Six triples all together');
 		teardown();
 	});
-*/
 
 
-/*
-
-02-multiple-class-names-on-vcard
-  <div class="vcard"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></div>
-  <p><span class="attendee vcard"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></span></p>
-  <address class="vcard author"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></address>
-  <ul><li class="reviewer vcard first"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></li></ul>
-
-*/
-
-/*
-	test("from url and fn with org", function () {
+	test("multiple vcards: 02-multiple-class-names-on-vcard", function () {
 		setup('<div class="vcard"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></div><p><span class="attendee vcard"><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></span></p><address class="vcard author"><span class="fn n"><span class="given-name">Ryan</span><span class="family-name">King</span></span></address><ul><li class="reviewer vcard first"><span class="fn n"><span class="given-name">Ryan</span><span class="family-name">King</span></span></li></ul>');
 
     	var q = $('#main > div').rdf();
-    	q = q.databank.triples();
-		equals(q.length, 40, 'Forty triples all together');
+    	q = q.where('?vcard a v:Vcard');
+		equals(q.length, 4, 'there should be four Vcards');
 		teardown();
 	});
-*/
 
-/*
-
-03-implied-n
-  <p class="vcard">
-    <span class="fn">Ryan King</span>
-
-  </p>
-
-  <p class="vcard">
-    <abbr class="fn" title="Ryan King">me</abbr>
-  </p>
-
-  <p class="vcard">
-    <img src="/me.jpg" title="Brian Suda" alt="Ryan King" class="fn" />
-  </p>
-
-  <p class="vcard">
-  <a class="fn" href="http://suda.co.uk/">Brian Suda</a>
-  </p>
-
-  <p class="vcard">
-    <span class="fn">King, Ryan</span>
-  </p>
-  
-  <p class="vcard">
-
-    <span class="fn">King, R</span>
-  </p>
-  
-  <p class="vcard">
-    <span class="fn">King R</span>
-  </p>
-  
-  <p class="vcard">
-    <span class="fn">King R.</span>
-
-  </p>
-
-  <p class="vcard">
-    <span class="fn">Jesse James Garrett</span>
-  </p> 
-  
-  <p class="vcard">
-    <span class="fn">Thomas Vander Wal</span>
-  </p>
-
-*/
-
-/*
-
-	test("from url and fn with org", function () {
+	test("multiple vcards and implied n 03-implied-n", function () {
 		setup('<p class="vcard"><span class="fn">Ryan King</span></p><p class="vcard"><abbr class="fn" title="Ryan King">me</abbr></p><p class="vcard"><img src="/me.jpg" title="Brian Suda" alt="Ryan King" class="fn" /></p><p class="vcard"><a class="fn" href="http://suda.co.uk/">Brian Suda</a></p><p class="vcard"><span class="fn">King, Ryan</span></p><p class="vcard"><span class="fn">King, R</span></p><p class="vcard"><span class="fn">King R</span></p><p class="vcard"><span class="fn">King R.</span></p><p class="vcard"><span class="fn">Jesse James Garrett</span></p><p class="vcard"><span class="fn">Thomas Vander Wal</span></p>');
 
-    	var q = $('#main > p').rdf();
-    	q = q.databank.triples();
-		equals(q.length, 200, '200 triples all together');
+    	var q = $('#main').rdf();
+    	q = q.where('?vcard a v:Vcard');
+		equals(q.length, 10, 'there should be ten Vcards');
 		teardown();
 	});
-*/
 
-/*
 
-More tests to come...
+	test("text that should be ignored 04-ignore-unknowns", function () {
+		setup('<p class="vcard"><span class="ignore-me">Some text that shouldn\'t be in the vCard.</span><span class="fn n"><span class="given-name">Ryan</span> <span class="family-name">King</span></span></p><p class="ignore-me-too">Some more text that shouldn\'t be in the vCard.</p>');
 
-*/
+    	var q = $('#main').rdf();
+    	q = q.where('?vcard a v:Vcard');
+		equals(q.length, 1, 'there should be one Vcard');
+		teardown();
+	});
+
+
+
+	test("fn should be the text node (with implied-n-optimization) and 'email' should be the href, sans scheme: 05-mailto-1", function () {
+	
+	setup('<p class="vcard"><a class="fn email" href="mailto:ryan@technorati.com">Ryan King</a></p>');
+
+    	var q = $('#main').rdf();
+    	q = q.where('?vcard a v:Vcard');
+		equals(q.length, 1, 'there should be one Vcard');
+		teardown();
+	});
+
+/* more tests to come */
+
 
 })(jQuery);
