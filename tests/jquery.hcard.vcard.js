@@ -405,6 +405,7 @@ testcases: http://microformats.org/tests/hcard/
 		teardown();
 	});
 
+
 	test("various tel: 21-tel(2)", function () {
 	
 	setup('<div class="vcard"><p class="fn">John Doe</p><p class="tel"><span class="type">home</span><span class="value">+1 415 555 1232</span></p></div>');
@@ -482,15 +483,19 @@ testcases: http://microformats.org/tests/hcard/
 	});
 
 
+
 	test("most annoying test ever: 23-abbr-title-everything", function () {
 	
 	setup('<p class="vcard"><abbr class="fn" title="John Doe">foo</abbr><span class="n"><abbr class="honorific-prefix" title="Mister">Mr.</abbr><abbr class="given-name" title="Jonathan">John</abbr> <abbr class="additional-name" title="John">J</abbr> <abbr class="family-name" title="Doe-Smith">Doe</abbr> <abbr class="honorific-suffix" title="Medical Doctor">M.D</abbr></span> <abbr class="nickname" title="JJ">jj</abbr> <abbr class="bday" title="2006-04-04">April 4, 2006</abbr> <span class="adr"> <abbr class="post-office-box" title="Box 1234">B. 1234</abbr> <abbr class="extended-address" title="Suite 100">Ste. 100</abbr> <abbr class="street-address" title="123 Fake Street">123 Fake St.</abbr> <abbr class="locality" title="San Francisco">San Fran</abbr> <abbr class="region" title="California">CA</abbr> <abbr class="postal-code" title="12345-6789">12345</abbr> <abbr class="country-name" title="United States of America">USA</abbr> <abbr class="type" title="work">workplace</abbr></span> <abbr class="tel" title="415.555.1234">1234</abbr> <abbr class="tel-type-value" title="work">workplace</abbr> <abbr class="tz" title="-0700">Pacific Time</abbr> <span class="geo"><abbr class="latitude" title="37.77">Northern</abbr> <abbr class="longitude" title="-122.41">California</abbr></span> <abbr class="title" title="President">pres.</abbr> and <abbr class="role" title="Chief">cat wrangler</abbr> <span class="org"> <abbr class="organization-name" title="Intellicorp">foo</abbr> <abbr class="organization-unit" title="Intelligence">bar</abbr> </span> <abbr class="note" title="this is a note">this is not a note</abbr> <abbr class="uid" title="abcdefghijklmnopqrstuvwxyz">alpha</abbr> <abbr class="class" title="public">pub</abbr></p>');
 
     	var result = $('#main').rdf();
-		equals(result.databank.triples().length, 31, '31 triples');
+		equals(result.databank.triples().length, 34, '34 triples');
 		teardown();
 
 	});
+
+
+// 24 is not done on the test suite site 
 
 
 	test("geo abbrievation: 25-geo-abbr", function () {
@@ -510,9 +515,155 @@ testcases: http://microformats.org/tests/hcard/
 	});
 
 
-/* more tests to come */
+
+	test("second most annoying test ever - ancestors not just children: 26-ancestors", function () {
+	
+	setup('<div class="vcard"><div><span class="fn"><span>John</span> <span>Doe</span></span><span class="n"><span><span class="honorific-prefix"><strong>Mister</strong></span><span class="given-name"><i>Jonathan</i></span><span class="additional-name"><b>John</b></span><span class="family-name"><em>Doe-Smith</em></span><span class="honorific-suffix">Medical Doctor</span></span></span><span class="nickname"><span>JJ</span></span> <span class="bday">2006-04-04</span><span class="adr"><span><span class="post-office-box"><samp>Box 1234</samp></span> <span class="extended-address"><dfn>Suite 100</dfn></span> <span class="street-address"> <span>123 Fake Street</span></span><span class="locality"><em>San Francisco</em></span><span class="region"><strong>California</strong></span><span class="postal-code"><abbr>12345-6789</abbr></span><span class="country-name"><acronym>United States of America</acronym></span><span class="type"><span>work</span></span></span></span><span class="tel"><span>415</span>.<span>555</span>.<span>1234</span></span><span class="tel-type-value">work</span><span class="tz"><span>-0700</span></span><span class="geo"><span><span class="latitude"><code>37.77</code></span><span class="longitude"><tt>-122.41</tt></span></span></span><span class="title"><strong>President</strong></span> and <span class="role"><em>Chief</em></span><span class="org"><span class="organization-name"><strong>Intellicorp</strong></span><span class="organization-unit"><em>Intelligence</em></span></span><span class="note"><cite>this is a note</cite></span><span class="uid"><kbd>abcdefghijklmnopqrstuvwxyz</kbd></span><span class="class"><samp>public</samp></span></div></div>');
+
+    	var result = $('#main').rdf();
+		equals(result.databank.triples().length, 33, '33 triples');
+		teardown();
+
+	});
 
 
+	test("birthday: 28-bday-datetime", function () {
+	
+	setup('<p class="vcard"> <span class="fn">john doe</span>, <abbr class="bday" title="2000-01-01T00:00:00">January 1st, 2000 at midnight</abbr></p>');
+
+    	var result = $('#main').rdf();
+		equals(result.databank.triples().length, 7, '7 triples');
+    	q = result.where('?vcard <'+v+'bday> "2000-01-01T00:00:00"');
+		equals(q.length, 1, '1 bday as title');
+		teardown();
+
+	});
+
+
+	test("birthday and timezone: 29-bday-datetime-timezone", function () {
+	
+	setup('<p class="vcard"><span class="fn">john doe</span>, <abbr class="bday" title="2000-01-01T00:00:00-0800">January 1st, 2000 at midnight on the north american west coast</abbr></p>');
+
+    	var result = $('#main').rdf();
+		equals(result.databank.triples().length, 7, '7 triples');
+    	q = result.where('?vcard <'+v+'bday> "2000-01-01T00:00:00-0800"');
+		equals(q.length, 1, '1 bday as title');
+		teardown();
+
+	});
+
+
+	test("various vcards including orgs: 30-fn-org", function () {
+	
+	setup('<div class="vcard"><div class="fn org">W3C</div></div><div class="vcard"><div class="fn">Dan Connolly</div><div class="org">W3C</div></div><div class="vcard"><img class="fn" src="http://www.w3.org/Icons/w3c_home" alt="W3C" /><div class="org">W3C</div></div><div class="vcard"><img class="fn org" src="http://www.w3.org/Icons/w3c_home" alt="World Wide Web Consortium" /></div><div class="vcard"><object data="http://www.w3.org/Icons/w3c_home"><abbr class="fn org" title="World Wide Web Consortium">W3C</abbr></object></div>');
+
+    	var result = $('#main').rdf();
+    	q = result.where('?vcard a <'+v+'Vcard>');
+		equals(q.length, 5, '5 vcards');
+    	q = result.where('?org a <'+v+'Organization>');
+		equals(q.length, 5, '5 orgs');
+		teardown();
+
+	});
+
+
+
+
+
+//it doesn't pass this one. If anyone's going to be this annoying then it's tough. ditto 32-header
+
+/*
+
+	test("testing ref outside the vcard: 31-include", function () {
+	
+	setup('<p id="email1"><a href="mailto:correct@example.com" class="email">my email</a></p><p id="email2"><a href="mailto:incorrect@example.com" class="email">my email</a></p><div class="vcard"><a class="url fn" href="http://suda.co.uk/">Brian Suda</a><object data="#email1" class="include" type="text/html"/><object data="#email2" type="text/html"/></div><div class="vcard"><a class="url fn" href="http://suda.co.uk/">Brian Suda</a><a href="#email1" class="include"></a><a href="#email2"/></div><div class="vcard"><a class="url fn" href="http://suda.co.uk/">Brian Suda</a><a href="#email1" class="include"/><a href="#email2"/></div>');
+
+    	var result = $('#main').rdf();
+		teardown();
+
+	});
+*/
+
+	test("areas and maps: 33-area", function () {
+	
+	setup('<div class="vcard"><map id="mailto-test-1"><area class="fn email" href="mailto:joe@example.com" alt="Joe Public"/><area class="url" href="http://example.com/" alt="my website!" /></map></div>');
+
+    	var result = $('#main').rdf();
+		equals(result.databank.triples().length, 8, '8 triples');
+		teardown();
+
+	});
+
+
+
+	test("areas and maps: 33-area", function () {
+	
+	setup('<div class="vcard"><a class="fn email" href="mailto:joe@example.com">Joe Public</a><span class="note">Note 1</span> <span class="foorbar">Note 2</span> <span class="note foorbar">Note 3</span> <span class="note foorbar">Note 4 with a ; and a , to be escaped<!-- this <strong>should</strong> be ignored--></span></div>');
+
+    	var result = $('#main').rdf();
+		equals(result.databank.triples().length, 10, '10 triples');
+		teardown();
+
+	});
+
+
+
+	test("includes: 35-include-pattern", function () {
+	
+	setup('<div class="vcard"><span class="fn n" id="j"><span class="given-name">James</span> <span class="family-name">Levine</span></span></div><div class="vcard"><object data="#j" class="include" type="text/html"></object><span class="org">SimplyHired</span><span class="title">Microformat Brainstormer</span></div><div class="vcard"><span class="fn n" id="j2"><span class="given-name">James</span> <span class="family-name">Levine</span></span><span class="org">SimplyHired</span><span class="title">Microformat Brainstormer</span></div>');
+
+    	var result = $('#main').rdf();
+		equals(result.databank.triples().length, 21, '21 triples');
+		teardown();
+
+	});
+
+
+	test("categories: 36-categories", function () {
+	
+	setup('<p class="vcard"><span class="fn">john doe</span>, <abbr class="category" title="C1">C1a</abbr> <a class="category" href="http://example.com" title="C2">C2a</a> <a class="category" href="http://example.com/C3" rel="tag" title="C3a">C3b</a> <img class="category" src="http://example.com/" alt="C4"/> <a class="category" href="http://example.com/C5/" rel="tag" title="C5a">C5b</a> <a class="category" href="http://example.com/C6?tag=false" rel="tag" title="C6a">C6b</a> <a class="category" href="http://example.com/C7#anchor" rel="tag" title="C7a">C7b</a> <a class="category" href="http://example.com/C8?tag=trailing-slash/" rel="tag" title="C8a">C8b</a> <a class="category" href="http://example.com/C9/?tag=trailing-slash/" rel="tag" title="C9a">C9b</a></p><div class="vcard"><span class="fn n"><span class="given-name">Joe</span> <span class="family-name">User</span></span><span class="category">User</span><a class="category" rel="tag" href="http://example.com/luser">a big luser!</a></div>');
+
+    	var result = $('#main').rdf();
+    	q = result.where('?things <'+v+'category> ?cats');
+		equals(q.length, 11, '11 categories');
+		teardown();
+
+	});
+
+
+
+
+/*
+
+//not clear how to do this one
+	test("stuff: 37-singleton", function () {
+	
+	setup('<p class="vcard"><span class="fn n"><span class="given-name">john</span> <span class="family-name"><span class="sort-string">d</span>oe</span> 1</span> <span class="fn n"><span class="given-name"><span class="sort-string">j</span>ohn</span> <span class="family-name">doe</span> 2</span> <abbr class="bday" title="20060707">today</abbr> <abbr class="bday" title="20060708">tomorrow</abbr> <abbr class="geo" title="123.45;67.89">Here</abbr> <abbr class="geo" title="98.765;43.21">There</abbr> <abbr class="rev" title="20060707">today</abbr> <abbr class="rev" title="20060708">tomorrow</abbr> <abbr class="uid" title="unique-id-1">id-1</abbr> <abbr class="uid" title="unique-id-2">id-2</abbr> <span class="tz">+0600</span> <span class="tz">+0800</span> <span class="class">public</span> <span class="class">private</span>');
+
+    	var result = $('#main').rdf();
+    	//q = result.where('?things <'+v+'category> ?cats');
+		//equals(q.length, 11, '11 categories');
+		teardown();
+
+	});
+
+
+
+*/
+
+	test("stuff: 38-uid", function () {
+	
+	setup('<div class="vcard"><span class="fn">Ryan King</span><a class="url uid" href="http://theryanking.com/contact/">My other hCard</a></div><div class="vcard"><span class="fn">Ryan King</span><object class="url uid" data="http://theryanking.com/contact/">My other hCard</object></div><div class="vcard"><span class="fn">Ryan King</span><img class="url uid" src="http://theryanking.com/contact/" alt="my other hcard" /></div><div class="vcard"><span class="fn">Ryan King</span><map id="foo"><area class="url uid" href="http://theryanking.com/contact/" alt="my other hcard" /></map></div>');
+
+    	var result = $('#main').rdf();
+    	q = result.where('?things a <'+v+'Vcard>');
+		equals(q.length, 4, '4 vcards');
+    	//uid is a literal in http://www.w3.org/2006/vcard/hcard2rdf.xsl
+    	q = result.where('?things <'+v+'uid> "http://theryanking.com/contact/"');
+		equals(q.length, 4, '4 uids');
+		teardown();
+
+	});
 
 
 

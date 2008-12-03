@@ -95,15 +95,22 @@
 
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'fn>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
+
 						//special case "implied-n-optimization"
-						//exactly two wrds, we make an 'n' and given-name and family-name
+						//exactly two words, we make an 'n' and given-name and family-name
 						reg = /^(\w+)\s+(\w+)$/
 						var res = reg.exec(fn);
 	                    if (res) {
-	                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+							if(!nameNodeFound){
+	                        	var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
+			    	            vcards.add(triple2);
+                        		var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
+			    	            vcards.add(triple3);
+
+							}
+
     	                    var triple3 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'given-name>'), '"'+res[1]+'"');
         	                var triple4 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'family-name>'), '"'+res[2]+'"');
-		    	            vcards.add(triple2);
 		        	        vcards.add(triple3);
 		            	    vcards.add(triple4);
 						}
@@ -341,7 +348,19 @@ e.g.
                             var y=emailDescendants[j];
                             var yName= y.className;
                             if(yName.indexOf('type')!=-1){
-                                var type = y.textContent;
+                                var type ;
+							if(y.getAttribute("data")){
+    	                     	type = y.getAttribute("data");
+        	                }else if(y.getAttribute("href")){
+            	                type = y.getAttribute("href");
+							}else if(y.getAttribute("title")){
+            	                type = y.getAttribute("title");
+							}else if(y.getAttribute("alt")){
+            	                type = y.getAttribute("alt");
+                	        }else{							
+                	        	type = x.textContent;
+                	        }
+
                                 var prop = "email";
                                 if(type.toLowerCase()=="home" || type.toLowerCase()=="personal"){
                                     prop="personalEmail";
@@ -528,13 +547,11 @@ example:
                             var y=adrDescendants[j];
                             var val=y.textContent;
                             var prop= y.className;
-							if(prop=="type"){
 
-
-							}else{
-	                            var triple1 = $.rdf.triple(adrNode, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
-				                vcards.add(triple1);
-							}
+								if(prop!=""){
+		                            var triple1 = $.rdf.triple(adrNode, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
+					                vcards.add(triple1);
+								}
                         }
 
 
@@ -713,14 +730,24 @@ example:
 
 					reg = /(?:^|\s)bday(?:\s|$)/
                     if (reg.exec(cName)) {
+
                         var bdayDescendants = x.getElementsByTagName('*');
-                        for (var j = 0; j < bdayDescendants.length; j++) {
-                            var y = bdayDescendants[j];
-                            var val = y.getAttribute("title");
-                            var prop = y.className;
+
+						if(bdayDescendants.length==0){
+                            var val = x.getAttribute("title");
+                            var prop = x.className;
                             var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
 			                vcards.add(triple1);
+						
+						}else{
 
+	                        for (var j = 0; j < bdayDescendants.length; j++) {
+    	                        var y = bdayDescendants[j];
+        	                    var val = y.getAttribute("title");
+            	                var prop = y.className;
+                	            var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
+			        	        vcards.add(triple1);
+							}
                         }
                     }
 
@@ -771,6 +798,7 @@ example:
                         var orgDescendants = x.getElementsByTagName('*');
                         var orgNode = $.rdf.blank("[]");
                         var subnodes = false;
+
                         for (var j = 0; j < orgDescendants.length; j++) {
                             var y = orgDescendants[j];
                             var val;
@@ -905,6 +933,22 @@ example:
                 	        	fn = x.textContent;
                 	        }
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'mailer>'), $.rdf.literal('"'+fn+'"'));
+		                vcards.add(triple1);
+                    }
+
+					reg = /(?:^|\s)uid(?:\s|$)/
+                    if (reg.exec(cName)) {
+						var fn;
+							if(x.getAttribute("data")){
+    	                     	fn = x.getAttribute("data");
+        	                }else if(x.getAttribute("href")){
+            	                fn = x.getAttribute("href");
+							}else if(x.getAttribute("src")){
+            	                fn = x.getAttribute("src");
+                	        }else{							
+                	        	fn = x.textContent;
+                	        }
+                        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'uid>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
                     }
 
