@@ -135,11 +135,7 @@
                     if (reg.exec(cName)) {
 //check for n; if not there, add it - http://microformats.org/wiki/hcard#Implied_.22n.22_Optimization
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -161,11 +157,7 @@
 					reg = /(?:^|\s)family-name(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -185,11 +177,7 @@
 					reg = /(?:^|\s)additional-name(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -209,11 +197,7 @@
 					reg = /(?:^|\s)honorific-prefix(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -233,11 +217,7 @@
 					reg = /(?:^|\s)honorific-suffix(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -262,11 +242,7 @@
 					reg = /(?:^|\s)nickname(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -302,10 +278,7 @@
                         if(fn.indexOf('/')==0){
 
 							if(base){
-
-
 								if(base.lastIndexOf("/")==base.length-1){
-
 								   base = base.substring(0,base.length-1)
 								}
 								var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'url>'), $.rdf.resource('<' + base +'' + fn + '>'));							
@@ -321,8 +294,9 @@
 			                vcards.add(triple1);
                        }
                     }
-//email, tel, addr,  are a little trickier
 /*
+email
+
 e.g.
   <a class="email" href="mailto:neuroNOSPAM@t37.net">
      <span class="type">pref</span><span>erred email</span>
@@ -336,11 +310,7 @@ e.g.
     	                     	fn = x.getAttribute("data");
         	                }else if(x.getAttribute("href")){
             	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
+							}else{							
                 	        	fn = x.textContent;
                 	        }
                         var emailDescendants = x.getElementsByTagName('*');
@@ -353,11 +323,7 @@ e.g.
     	                     	type = y.getAttribute("data");
         	                }else if(y.getAttribute("href")){
             	                type = y.getAttribute("href");
-							}else if(y.getAttribute("title")){
-            	                type = y.getAttribute("title");
-							}else if(y.getAttribute("alt")){
-            	                type = y.getAttribute("alt");
-                	        }else{							
+							}else{						
                 	        	type = x.textContent;
                 	        }
 
@@ -416,10 +382,6 @@ tel
     	                     	val = x.getAttribute("data");
         	                }else if(x.getAttribute("href")){
             	                val = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
-            	                val = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                val = x.getAttribute("alt");
                 	        }else{							
                 	        	val = x.textContent;
                 	        }
@@ -471,15 +433,7 @@ tel
 
                         }
 
-/*
-							if(y.getAttribute("data")){
-    	                     	val = y.getAttribute("data");
-        	                }else if(y.getAttribute("href")){
-            	                val = y.getAttribute("href");
-                	        }else{
-*/
 
-//tel needs cleaning up
 //do we need to separate with '-'?
 							if(val){
 
@@ -502,7 +456,7 @@ tel
 
 /*
 
-addr
+adr
 
 example:
   <span class="adr">
@@ -557,16 +511,12 @@ example:
 
                     }
 
-//label is easy
-
+//label
 					reg = /(?:^|\s)label(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -578,14 +528,17 @@ example:
 
                     }
 
-//geo bt more complex
 
 /*
+
+geo:
 
   <span class="geo">
      <abbr class="latitude" title="48.816667">N 48¡ 81.6667</abbr>
      <abbr class="longitude" title="2.366667">E 2¡ 36.6667</abbr>
   </span>
+
+- also in a short form
 
 */
 
@@ -593,18 +546,14 @@ example:
                     if (reg.exec(cName)) {
                         var geoDescendants = x.getElementsByTagName('*');
         	                    var val;
-								if(x.getAttribute("data")){
-    	        	             	val = x.getAttribute("data");
-        	        	        }else if(x.getAttribute("href")){
-            	        	        val = x.getAttribute("href");
-								}else if(x.getAttribute("title")){
+								if(x.getAttribute("title")){
             	                	val = x.getAttribute("title");
 								}else if(x.getAttribute("alt")){
             		                val = x.getAttribute("alt");
                 		        }else{							
                 	    	    	val = x.textContent;
                 	        	}
-
+							//short form
 							if(val.indexOf(";")!=-1){
 							
 								var lat= val.substring(0,val.indexOf(";"));
@@ -620,11 +569,8 @@ example:
 	                        for (var j = 0; j < geoDescendants.length; j++) {
     	                        var y = geoDescendants[j];
         	                    var val;
-								if(y.getAttribute("data")){
-    	        	             	val = y.getAttribute("data");
-        	        	        }else if(y.getAttribute("href")){
-            	        	        val = y.getAttribute("href");
-								}else if(y.getAttribute("title")){
+								
+								if(y.getAttribute("title")){
             	                	val = y.getAttribute("title");
 								}else if(y.getAttribute("alt")){
             		                val = y.getAttribute("alt");
@@ -648,11 +594,8 @@ example:
 					reg = /(?:^|\s)tz(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -703,10 +646,6 @@ example:
     	                     	fn = x.getAttribute("data");
         	                }else if(x.getAttribute("href")){
             	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
                 	        }else{							
                 	        	fn = x.textContent;
                 	        }
@@ -715,9 +654,10 @@ example:
 
                     }
 
-//bday is a little odd
 
 /*
+
+bday:
 
     <div class="bday">
     <dt>Birthday</dt>
@@ -758,11 +698,8 @@ example:
 					reg = /(?:^|\s)title(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -776,11 +713,7 @@ example:
 					reg = /(?:^|\s)role(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -806,11 +739,7 @@ example:
     	                     	val = y.getAttribute("data");
         	                }else if(y.getAttribute("href")){
             	                val = y.getAttribute("href");
-							}else if(y.getAttribute("title")){
-            	                val = y.getAttribute("title");
-							}else if(y.getAttribute("alt")){
-            	                val = y.getAttribute("alt");
-                	        }else{							
+							}else{							
                 	        	val = y.textContent;
                 	        }
 
@@ -832,11 +761,7 @@ example:
     	                     	fn = x.getAttribute("data");
         	                }else if(x.getAttribute("href")){
             	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
+							}else{						
                 	        	fn = x.textContent;
                 	        }
                             var triple4 = $.rdf.triple(orgNode, $.rdf.resource('<' + v + 'organization-name>'), $.rdf.literal('"'+fn+'"'));
@@ -854,11 +779,7 @@ example:
 					reg = /(?:^|\s)category(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -873,11 +794,7 @@ example:
 					reg = /(?:^|\s)note(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -892,11 +809,7 @@ example:
 					reg = /(?:^|\s)class(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
@@ -907,7 +820,7 @@ example:
 		                vcards.add(triple1);
                     }
 
-//key is a bit odd
+//key
 
 					reg = /(?:^|\s)key(?:\s|$)/
                     if (reg.exec(cName)) {
@@ -916,16 +829,12 @@ example:
 		                vcards.add(triple1);
                     }
 
-//mailer, uid are normal
+//mailer, uid (should uid be literal?)
 
 					reg = /(?:^|\s)mailer(?:\s|$)/
                     if (reg.exec(cName)) {
 						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("title")){
+							if(x.getAttribute("title")){
             	                fn = x.getAttribute("title");
 							}else if(x.getAttribute("alt")){
             	                fn = x.getAttribute("alt");
