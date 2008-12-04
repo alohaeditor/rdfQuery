@@ -23,6 +23,14 @@
 		}
 	}
 
+    function toTxt(q){
+        var txt = '';
+        var triples = q.databank.triples()
+        for (i = 0; i < triples.length; i += 1) {
+			txt = txt + triples[i];
+		}
+    return  txt ;
+    }
 
 	module("Gleaning RDF triples with $.fn.rdf()");
 
@@ -657,13 +665,16 @@ testcases: http://microformats.org/tests/hcard/
 
     	var result = $('#main').rdf();
     	q = result.where('?things a <'+v+'Vcard>');
-		equals(q.length, 4, '4 vcards');
+		equals(q.length, 4, '4 vcards '+toTxt(q));
     	//uid is a literal in http://www.w3.org/2006/vcard/hcard2rdf.xsl
     	q = result.where('?things <'+v+'uid> "http://theryanking.com/contact/"');
 		equals(q.length, 4, '4 uids');
+
 		teardown();
 
 	});
+
+
 
 
 

@@ -18,6 +18,9 @@
 
 (function ($) {
 
+	var v = 'http://www.w3.org/2006/vcard/ns#';
+
+
 	testForVcardClass = function () {
 
 		var vcards = $.rdf.databank([], 
@@ -25,8 +28,7 @@
 				{ 
 				v: 'http://www.w3.org/2006/vcard/ns#'
 				} 
-			}),
-		v = 'http://www.w3.org/2006/vcard/ns#';
+			});
 
 		var base;
 
@@ -57,13 +59,15 @@
 			}
 		}
 
+		//loop through vcards
 		var cl = $('*.vcard');
 			for (var i = 0; i < cl.length; i++) {
 
 				var c = cl[i],
 				ids = $('@id'),
             	root;
-            
+
+            	//capture ID if present for the root of the vcard
                 if (ids[0]) {
                     root = $.rdf.resource('<' + $.uri.base() + '#' + ids[0] + '>');
                 } else {
@@ -73,7 +77,7 @@
                 var triple = $.rdf.triple(root, $.rdf.type, $.rdf.resource('<' + v + 'Vcard>'));
                 vcards.add(triple);
  
-//namenode is a new object which many name-related properties hang off
+				//namenode is a new object which many name-related properties hang off
                 var nameNode = $.rdf.blank("[]");
                 var nameNodeFound = false;
                 
@@ -84,15 +88,7 @@
 
 					var reg = /(?:^|\s)fn(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
-
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'fn>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
 
@@ -101,13 +97,7 @@
 						reg = /^(\w+)\s+(\w+)$/
 						var res = reg.exec(fn);
 	                    if (res) {
-							if(!nameNodeFound){
-	                        	var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
-			    	            vcards.add(triple2);
-                        		var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-			    	            vcards.add(triple3);
-
-							}
+							nameNodeFound = addNameNode(nameNodeFound,root,nameNode,vcards);
 
     	                    var triple3 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'given-name>'), '"'+res[1]+'"');
         	                var triple4 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'family-name>'), '"'+res[2]+'"');
@@ -117,164 +107,68 @@
                     }
 
 
-                  
-					reg = /(?:^|\s)n(?:\s|$)/
-					
+                    //name object. Sometimes implied, sometimes explicit
+					reg = /(?:^|\s)n(?:\s|$)/					
                     if (reg.exec(cName)) {
-                        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));
-		                vcards.add(triple1);
-        		        vcards.add(triple2);
-						nameNodeFound = true;
+						nameNodeFound = addNameNode(nameNodeFound,root,nameNode,vcards);
                     }
 
 
-//these are all properties of the name object
-
+					//names (except nickname) are all properties of the name object
 					reg = /(?:^|\s)given-name(?:\s|$)/
                     if (reg.exec(cName)) {
-//check for n; if not there, add it - http://microformats.org/wiki/hcard#Implied_.22n.22_Optimization
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+
+						//check for n; if not there, add it - http://microformats.org/wiki/hcard#Implied_.22n.22_Optimization
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'given-name>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
-
-						if(!nameNodeFound){
-                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
-                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-		                vcards.add(triple2);
-		                vcards.add(triple3);
-						}
-
+							nameNodeFound = addNameNode(nameNodeFound,root,nameNode,vcards);
                     }
 
 					reg = /(?:^|\s)family-name(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'family-name>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
-
-						if(!nameNodeFound){
-                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
-                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-		                vcards.add(triple2);
-		                vcards.add(triple3);
-						}
+						nameNodeFound = addNameNode(nameNodeFound,root,nameNode,vcards);
                     }
 					reg = /(?:^|\s)additional-name(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'additonal-name>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
-
-						if(!nameNodeFound){
-                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
-                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-		                vcards.add(triple2);
-		                vcards.add(triple3);
-						}
+						nameNodeFound = addNameNode(nameNodeFound,root,nameNode,vcards);
                     }
 					reg = /(?:^|\s)honorific-prefix(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'honorific-prefix>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
-
-						if(!nameNodeFound){
-                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
-                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-		                vcards.add(triple2);
-		                vcards.add(triple3);
-						}
+						nameNodeFound = addNameNode(nameNodeFound,root,nameNode,vcards);
                     }
 					reg = /(?:^|\s)honorific-suffix(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'honorific-suffix>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
-
-						if(!nameNodeFound){
-                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
-                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-		                vcards.add(triple2);
-		                vcards.add(triple3);
-						}
+						nameNodeFound = addNameNode(nameNodeFound,root,nameNode,vcards);
                     }
 
-//end name object handling
+					//end of name object handling
 
-//nickname seems incorrect so adding it twice @@
-
+					//nickname is a property of the vcard not the name object
 					reg = /(?:^|\s)nickname(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
-                        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
-                        var triple0 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
-		                vcards.add(triple1);
+						var fn = getTextType(x);
 
-						if(!nameNodeFound){
-                        var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));							
-                        var triple3 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
-		                vcards.add(triple2);
-		                vcards.add(triple3);
-						}
+                        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'nickname>'), $.rdf.literal('"'+fn+'"'));
+		                vcards.add(triple1);
                     }
 
 //url is a resource if it has http:// in it
 					reg = /(?:^|\s)url(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("src")){
-            	                fn = x.getAttribute("src");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
-
+						var fn = getUrlType(x);
                         if(fn.indexOf('/')==0){
 
 							if(base){
@@ -304,28 +198,13 @@ e.g.
 */  
 					reg = /(?:^|\s)email(?:\s|$)/
                     if (reg.exec(cName)) {
-
-						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getUrlType(x);
                         var emailDescendants = x.getElementsByTagName('*');
                         for (var j = 0; j < emailDescendants.length; j++) {
                             var y=emailDescendants[j];
                             var yName= y.className;
                             if(yName.indexOf('type')!=-1){
-                                var type ;
-							if(y.getAttribute("data")){
-    	                     	type = y.getAttribute("data");
-        	                }else if(y.getAttribute("href")){
-            	                type = y.getAttribute("href");
-							}else{						
-                	        	type = x.textContent;
-                	        }
+								var type = getUrlType(y);
 
                                 var prop = "email";
                                 if(type.toLowerCase()=="home" || type.toLowerCase()=="personal"){
@@ -349,7 +228,7 @@ e.g.
 						}
 						if(emailDescendants.length==0){
 
-								//because it's rdf, we want mailto (vcard is the reverse
+								//because it's rdf, we want mailto (vcard is the reverse)
 								if(fn.indexOf("mailto:")!=0){
 									fn = 'mailto:' + fn;
 								}							
@@ -377,14 +256,8 @@ tel
 
                         var telDescendants = x.getElementsByTagName('*');
 						if(telDescendants.length==0){
-						var val;
-							if(x.getAttribute("data")){
-    	                     	val = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                val = x.getAttribute("href");
-                	        }else{							
-                	        	val = x.textContent;
-                	        }
+						var val = getUrlType(x);
+
 							if(val.indexOf("tel:")==0){
 							   val=val.substring(4);
 							}
@@ -406,8 +279,6 @@ tel
                         for (var j = 0; j < telDescendants.length; j++) {
                             var y=telDescendants[j];
                             var yName = y.className;
-
-
 
                             if(yName.indexOf('type')!=-1){
                                 var type = y.getAttribute("title");
@@ -514,15 +385,8 @@ example:
 //label
 					reg = /(?:^|\s)label(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
+						var fn = getTextType(x);
 
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
                         var triple1 = $.rdf.triple(nameNode, $.rdf.resource('<' + v + 'label>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
 
@@ -545,14 +409,8 @@ geo:
 					reg = /(?:^|\s)geo(?:\s|$)/
                     if (reg.exec(cName)) {
                         var geoDescendants = x.getElementsByTagName('*');
-        	                    var val;
-								if(x.getAttribute("title")){
-            	                	val = x.getAttribute("title");
-								}else if(x.getAttribute("alt")){
-            		                val = x.getAttribute("alt");
-                		        }else{							
-                	    	    	val = x.textContent;
-                	        	}
+						var val = getTextType(x);
+
 							//short form
 							if(val.indexOf(";")!=-1){
 							
@@ -568,23 +426,15 @@ geo:
 
 	                        for (var j = 0; j < geoDescendants.length; j++) {
     	                        var y = geoDescendants[j];
-        	                    var val;
-								
-								if(y.getAttribute("title")){
-            	                	val = y.getAttribute("title");
-								}else if(y.getAttribute("alt")){
-            		                val = y.getAttribute("alt");
-                		        }else{							
-                	    	    	val = y.textContent;
-                	        	}
-							
-                            var prop = y.className;
-                            	if(prop=="lat" || prop=="long"){
-	                            var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
-				                vcards.add(triple1);
-								}
+								var val = getTextType(y);
 
-                        }
+	                            var prop = y.className;
+    	                        	if(prop=="lat" || prop=="long"){
+	    	                        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
+					                vcards.add(triple1);
+									}
+
+       		               }
                     }
 
 
@@ -593,15 +443,8 @@ geo:
 
 					reg = /(?:^|\s)tz(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
+
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'tz>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
                     }
@@ -609,46 +452,21 @@ geo:
 
 					reg = /(?:^|\s)photo(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("src")){
-    	                     	fn = x.getAttribute("src");
-							}else if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getUrlType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'photo>'), $.rdf.resource('<'+fn+'>'));
 		                vcards.add(triple1);
                     }
 
 					reg = /(?:^|\s)logo(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("src")){
-    	                     	fn = x.getAttribute("src");
-							}else if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getUrlType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'logo>'), $.rdf.resource('<'+fn+'>'));
 		                vcards.add(triple1);
                     }
 
 					reg = /(?:^|\s)sound(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getUrlType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'sound>'), $.rdf.resource('<'+fn+'>'));
 		                vcards.add(triple1);
 
@@ -697,29 +515,16 @@ bday:
 
 					reg = /(?:^|\s)title(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
+
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'title>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
                     }
                         
 					reg = /(?:^|\s)role(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }                        
+						var fn = getTextType(x);
+                      
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'role>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
                     }
@@ -734,15 +539,7 @@ bday:
 
                         for (var j = 0; j < orgDescendants.length; j++) {
                             var y = orgDescendants[j];
-                            var val;
-							if(y.getAttribute("data")){
-    	                     	val = y.getAttribute("data");
-        	                }else if(y.getAttribute("href")){
-            	                val = y.getAttribute("href");
-							}else{							
-                	        	val = y.textContent;
-                	        }
-
+							var val = getUrlType(y);
                             var prop = y.className;
                             if(val && prop){
                                 var triple3 = $.rdf.triple(orgNode, $.rdf.resource('<' + v + '' + prop + '>'), $.rdf.literal('"'+val+'"'));
@@ -756,14 +553,8 @@ bday:
 		                vcards.add(triple2);
 
                         if(!subnodes){
-						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else{						
-                	        	fn = x.textContent;
-                	        }
+						var fn = getUrlType(x);
+
                             var triple4 = $.rdf.triple(orgNode, $.rdf.resource('<' + v + 'organization-name>'), $.rdf.literal('"'+fn+'"'));
 
 			                vcards.add(triple4);
@@ -778,14 +569,7 @@ bday:
 
 					reg = /(?:^|\s)category(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'category>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
 
@@ -793,14 +577,7 @@ bday:
 
 					reg = /(?:^|\s)note(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'note>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
 
@@ -808,14 +585,7 @@ bday:
 
 					reg = /(?:^|\s)class(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'class>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
                     }
@@ -833,35 +603,19 @@ bday:
 
 					reg = /(?:^|\s)mailer(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("title")){
-            	                fn = x.getAttribute("title");
-							}else if(x.getAttribute("alt")){
-            	                fn = x.getAttribute("alt");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getTextType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'mailer>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
                     }
 
 					reg = /(?:^|\s)uid(?:\s|$)/
                     if (reg.exec(cName)) {
-						var fn;
-							if(x.getAttribute("data")){
-    	                     	fn = x.getAttribute("data");
-        	                }else if(x.getAttribute("href")){
-            	                fn = x.getAttribute("href");
-							}else if(x.getAttribute("src")){
-            	                fn = x.getAttribute("src");
-                	        }else{							
-                	        	fn = x.textContent;
-                	        }
+						var fn = getUrlType(x);
                         var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'uid>'), $.rdf.literal('"'+fn+'"'));
 		                vcards.add(triple1);
                     }
 
-//rev is odd
+//rev 
 
 					reg = /(?:^|\s)rev(?:\s|$)/
                     if (reg.exec(cName)) {
@@ -870,15 +624,48 @@ bday:
 		                vcards.add(triple1);
                     }
                 }
-
-
             }
 		return vcards;
 
-
        };
-    
 
+
+    //helper functions
+	getUrlType = function (x){
+		var fn;
+		if(x.getAttribute("data")){
+    	     fn = x.getAttribute("data");
+        }else if(x.getAttribute("href")){
+             fn = x.getAttribute("href");
+		}else if(x.getAttribute("src")){
+             fn = x.getAttribute("src");
+        }else{							
+             fn = x.textContent;
+        }    
+		return fn;
+	}
+
+	getTextType = function(x){
+		var fn;
+ 		if(x.getAttribute("title")){
+            fn = x.getAttribute("title");
+		}else if(x.getAttribute("alt")){
+            fn = x.getAttribute("alt");
+        }else{							
+            fn = x.textContent;
+        }
+		return fn;
+	}
+    
+    addNameNode = function(nameNodeFound, root, nameNode, vcards){
+		if(!nameNodeFound){
+	        var triple1 = $.rdf.triple(root, $.rdf.resource('<' + v + 'n>'), nameNode);
+    	    var triple2 = $.rdf.triple(nameNode, $.rdf.type, $.rdf.resource('<' + v + 'Name>'));
+			vcards.add(triple1);
+        	vcards.add(triple2);
+		}
+		return true;    
+    }
     
     gleaner = function (options) {
 		var trips = [];
