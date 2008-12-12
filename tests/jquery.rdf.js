@@ -585,6 +585,20 @@ test("filtering a union with a filter clause", function() {
   equals(union.get(1).author.value, "Alex");
 });
 
+test("getting just the first match", function() {
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .add('_:a  foaf:name       "Alice" .')
+    .add('_:a  foaf:homepage   <http://work.example.org/alice/> .')
+    .add('_:b  foaf:name       "Bob" .')
+    .add('_:b  foaf:mbox       <mailto:bob@work.example> .')
+    .where('?x foaf:name ?name');
+  equals(rdf.length, 2, "there should be two matches");
+  rdf = rdf.eq(1);
+  equals(rdf.length, 1, "there should be one match");
+  equals(rdf[0].name.value, "Bob");
+});
+
 test("creating new triples based on a template", function() {
   var rdf = $.rdf()
     .prefix('foaf', ns.foaf)

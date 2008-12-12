@@ -302,7 +302,7 @@
   };
 
   $.rdf.fn = $.rdf.prototype = {
-    rdfquery: '0.2',
+    rdfquery: '0.3',
     
     init: function (options) {
       var base, namespaces, optional, databanks, query = this;
@@ -382,22 +382,22 @@
           this.union.push(triple);
           triple.partOf.push(this);
         }
-      } else if (typeof triple === 'string') {
-        options = $.extend({}, { base: this.base(), namespaces: this.prefix(), source: triple }, options);
-        triple = $.rdf.pattern(triple, options);
-        if (!triple.isFixed()) {
+      } else {
+        if (typeof triple === 'string') {
+          options = $.extend({}, { base: this.base(), namespaces: this.prefix(), source: triple }, options);
+          triple = $.rdf.pattern(triple, options);
+        }
+        if (triple.isFixed()) {
+          this.databank.add(triple.triple(), options);
+        } else {
           query = this;
           this.each(function (i, data) {
-            var t = triple.fill(data);
-            if (t.isFixed()) {
-              query.databank.add($.rdf.triple(t.subject, t.property, t.object, options), options);
+            var t = triple.triple(data);
+            if (t !== null) {
+              query.databank.add(t, options);
             }
           });
-        } else {
-          this.databank.add($.rdf.triple(triple.subject, triple.property, triple.object, options), options);
         }
-      } else {
-        this.databank.add(triple, options);
       }
       return this;
     },
@@ -446,6 +446,12 @@
       query = $.rdf({ parent: this, filter: func });
       this.children.push(query);
       return query;
+    },
+
+    eq: function (n) {
+      return this.filter(function (i) { 
+        return i === n;
+      });
     },
 
     reset: function () {
@@ -770,21 +776,26 @@
       return binding;
     },
     
-    
     isFixed: function () {
       return typeof this.subject !== 'string' && 
         typeof this.property !== 'string' && 
         typeof this.object !== 'string';
     },
     
+    triple: function (bindings) {
+      var t = this;
+      if (!this.isFixed()) {
+        t = this.fill(bindings);
+      }
+      if (t.isFixed()) {
+        return $.rdf.triple(t.subject, t.property, t.object, { source: this.toString() });
+      } else {
+        return null;
+      }
+    },
+
     toString: function () {
-      var str = '';
-      str += typeof this.subject === 'string' ? '?' + this.subject : this.subject;
-      str += ' ';
-      str += typeof this.property === 'string' ? '?' + this.property : this.property;
-      str += ' ';
-      str += typeof this.object === 'string' ? '?' + this.object : this.object;
-      return str;
+      return this.subject + ' ' + this.property + ' ' + this.object;
     }
   };
 
@@ -842,6 +853,14 @@
       this.property = property(p, opts);
       this.object = object(o, opts);
       this.source = opts.source;
+      return this;
+    },
+    
+    isFixed: function () {
+      return true;
+    },
+    
+    triple: function (bindings) {
       return this;
     },
     
