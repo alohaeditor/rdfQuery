@@ -20,7 +20,7 @@
     ccLicenseClass = $.rdf.resource('<' + cc + 'License>'),
     ccWorkClass = $.rdf.resource('<' + cc + 'Work>'),
     ccLicenseProp = $.rdf.resource('<' + cc + 'license>'),
-    licenseRegex = /(?:^|\s)(?:(\S+):)?license(?:\s|$)/;
+    licenseRegex = /(?:^|\s)(?:(\S+):)?license(?:\s|$)/,
     
     gleaner = function (options) {
       var rel = this.attr('rel'),
@@ -50,7 +50,7 @@
         }
       }
       return options === undefined ? [] : false;
-    },
+    };
 
   $.fn.cclicense = function (triple) {
     if (triple === undefined) {
