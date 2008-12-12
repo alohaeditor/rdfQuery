@@ -42,8 +42,8 @@ test("creating a triple store from an array of strings", function() {
 	];
 	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
 	equals(rdf.databank.size(), 2, "the length of the triple store should be two");
-	equals(rdf.length, 0, "the length should be two");
-	equals(rdf.size(), 0, "the size should be two");
+	equals(rdf.length, 0, "the length of the query should be zero");
+	equals(rdf.size(), 0, "the size of the query should be zero");
 	var triples = rdf.databank.triples();
 	ok(triples[0].subject.resource, "the subject of the first triple should be a resource");
 	ok(triples[0].property.resource, "the property of the first triple should be a resource");
@@ -66,9 +66,11 @@ test("selecting triples using a search pattern", function() {
 	var triples = [
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
-		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .'
 	];
 	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
+	equals(rdf.databank.size(), 3, "there should be three triples in the databank");
+	equals(rdf.length, 0);
 	var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>');
 	equals(filtered.length, 2, "number of items after filtering");
 	equals(filtered[0].photo.uri, $.uri('photo1.jpg'));
@@ -80,7 +82,7 @@ test("creating triples and specifying options should helpfully bind prefixes", f
 	var triples = [
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
-		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .'
 	];
 	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
 	try {
@@ -93,7 +95,7 @@ test("creating triples and specifying options should helpfully bind prefixes", f
 	}
 });
 
-test("selecting triples using a search pattern, then adding another triple that matches the search pattern", function() {
+test("adding another triple that matches the original search pattern", function() {
 	var rdf = $.rdf()
 	  .prefix('dc', ns.dc)
 	  .prefix('foaf', ns.foaf)
@@ -112,7 +114,7 @@ test("selecting triples using two search patterns", function() {
 	var triples = [
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
-		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .'
 	];
 	var rdf = $.rdf({triples: triples, namespaces: namespaces});
 	var filtered = rdf
@@ -132,7 +134,7 @@ test("selecting triples using two search patterns, then adding a triple", functi
 	var triples = [
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
-		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .'
 	];
 	var rdf = $.rdf({ triples: triples, namespaces: namespaces });
 	var filtered = rdf
@@ -152,7 +154,7 @@ test("using a callback function on each match", function() {
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
 		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
-		'<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .',
+		'<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .'
 	];
 	var rdf = $.rdf({ triples: triples, namespaces: namespaces })
 		.where('?photo dc:creator ?creator')
@@ -173,7 +175,7 @@ test("using three arguments with each() to get the source triples", function() {
 		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
 		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
-		'<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .',
+		'<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .'
 	];
 	var rdf = $.rdf({ triples: triples, namespaces: namespaces })
 		.where('?photo dc:creator ?creator')

@@ -298,7 +298,7 @@ test("URI without a scheme", function() {
 module("Base URI");
 
 test("with no base specified", function() {
-	equals($.uri.base(), document.URL);
+	equals($.uri.base(), document.location.href);
 });
 
 test("with a base specified", function() {

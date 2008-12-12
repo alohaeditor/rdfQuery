@@ -22,21 +22,22 @@
 
     rdfXMLLiteral = ns.rdf + 'XMLLiteral',
 
+    rdfAttributes = ['about', 'href', 'src', 'resource', 'property', 
+                     'rel', 'rev', 'typeof', 'content', 'datatype', 
+                     'lang', 'xml:lang'],
+
     getAttributes = function (elem) {
-      var i, a,
-        atts = {};
-      for (i = 0; i < elem[0].attributes.length; i += 1) {
-        a = elem[0].attributes.item(i);
-        if (/about|href|src|resource|property|rel|rev|typeof|content|datatype|lang|xml:lang/.test(a.nodeName)) {
-          atts[a.nodeName] = a.nodeValue;
-        }
+      var i, a, atts = {};
+      for (i = 0; i < rdfAttributes.length; i += 1) {
+        a = rdfAttributes[i];
+        atts[a] = getAttribute(elem, a);
       }
       return atts;
     },
 
     getAttribute = function (elem, attr) {
       var val = elem[0].getAttribute(attr);
-      if (attr === 'rev' || attr === 'rel' || attr === 'lang') {
+      if (attr === 'rev' || attr === 'rel' || attr === 'lang' || attr === 'xml:lang') {
         val = val === '' ? undefined : val;
       }
       return val === null ? undefined : val;
@@ -124,21 +125,36 @@
       }
     },
 
+    attRegex = /\s([^ =]+)(\s*=\s*("([^"]*)"|'([^']*)'))?/g,
+
     serialize = function (elem) {
-      var i, string = '', atts, a, name, ns;
+      var i, string = '', atts, a, name, ns, tag;
       elem.contents().each(function () {
         var j = $(this),
           e = j[0];
         if (j.is('[nodeType=1]')) { // tests whether the node is an element
           name = e.nodeName.toLowerCase();
           ns = j.xmlns('');
-          atts = e.attributes;
           string += '<' + name;
-          for (i = 0; i < e.attributes.length; i += 1) {
-            a = atts.item(i);
-            string += ' ' + a.nodeName + '="';
-            string += a.nodeValue.replace(/[<"&]/g, entity);
-            string += '"';
+          if (e.outerHTML) {
+            tag = /<[^>]+>/.exec(e.outerHTML);
+            a = attRegex.exec(tag);
+            while (a !== null) {
+              if (!/^jQuery/.test(a[1])) {
+                string += ' ' + a[1] + '=';
+                string += a[2] ? a[3] : '"' + a[1] + '"';
+              }
+              a = attRegex.exec(tag);
+            }
+            attRegex.lastIndex = 0;
+          } else {
+            atts = e.attributes;          
+            for (i = 0; i < atts.length; i += 1) {
+              a = atts.item(i);
+              string += ' ' + a.nodeName + '="';
+              string += a.nodeValue.replace(/[<"&]/g, entity);
+              string += '"';
+            }
           }
           if (ns !== undefined && j.attr('xmlns') === undefined) {
             string += ' xmlns="' + ns + '"';

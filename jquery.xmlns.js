@@ -10,21 +10,36 @@
 /*global jQuery */
 (function ($) {
 
+  var 
+    xmlnsRegex = /\sxmlns(?::([^ =]+))?\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+
   $.fn.xmlns = function (prefix, uri) {
     var 
       elem = this.eq(0),
       ns = elem.data('xmlns'),
       e = elem[0], a, p, i,
-      decl = prefix ? 'xmlns:' + prefix : 'xmlns';
+      decl = prefix ? 'xmlns:' + prefix : 'xmlns',
+      tag;
     if (uri === undefined) {
       if (prefix === undefined) { // get the in-scope declarations on the first element
         if (ns === undefined) {
           ns = {};
-          for (i = 0; i < e.attributes.length; i += 1) {
-            a = e.attributes.item(i);
-            if (/^xmlns/.test(a.nodeName)) {
-              prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
-              ns[prefix] = $.uri(a.nodeValue);
+          if (e.outerHTML !== undefined) {
+            tag = /<[^>]+>/.exec(e.outerHTML);
+            a = xmlnsRegex.exec(tag);
+            while (a !== null) {
+              prefix = a[1] || '';
+              ns[prefix] = $.uri(a[2] || a[3]);
+              a = xmlnsRegex.exec(tag);
+            }
+            xmlnsRegex.lastIndex = 0;
+          } else {
+            for (i = 0; i < e.attributes.length; i += 1) {
+              a = e.attributes.item(i);
+              if (/^xmlns/.test(a.nodeName)) {
+                prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
+                ns[prefix] = $.uri(a.nodeValue);
+              }
             }
           }
           ns = $.extend({}, elem.parents().length > 0 ? elem.parent().xmlns() : {}, ns);
@@ -39,17 +54,9 @@
         return this;
       } else { // get the in-scope declaration associated with this prefix on the first element
         if (ns === undefined) {
-          while (elem.parent().length > 0 && uri === undefined) {
-            a = elem.attr(decl);
-            if (a !== undefined) {
-              uri = $.uri(a);
-            }
-            elem = elem.parent();
-          }
-          return uri;
-        } else {
-          return ns[prefix];
+          ns = elem.xmlns();
         }
+        return ns[prefix];
       }
     } else { // set
       this.find('*').andSelf().removeData('xmlns');
@@ -69,24 +76,32 @@
           this.removeXmlns(prefix[i]);
         }
       }
-      return this;
     } else {
       decl = prefix ? 'xmlns:' + prefix : 'xmlns';
-      return this.removeAttr(decl);
+      this.removeAttr(decl);
     }
+    this.find('*').andSelf().removeData('xmlns');
+    return this;
   };
 
   $.fn.qname = function (name) {
-    var 
-      name = name || this[0].nodeName.toLowerCase(),
-      m = /^(([^:]+):)?([^:]+)$/.exec(name),
-      prefix = m[2] || '',
-      namespace = this.xmlns(prefix);
+    var m, prefix, namespace;
+    if (name === undefined) {
+      if (this[0].outerHTML === undefined) {
+        name = this[0].nodeName.toLowerCase();
+      } else {
+        name = /<([^ >]+)/.exec(this[0].outerHTML)[1].toLowerCase();
+      }
+    }
+    if (name === '?xml:namespace') {
+      // there's a prefix on the name, but we can't get at it
+      throw "XMLinHTML: Unable to get the prefix to resolve the name of this element";
+    }
+    m = /^(([^:]+):)?([^:]+)$/.exec(name),
+    prefix = m[2] || '',
+    namespace = this.xmlns(prefix);
     if (namespace === undefined && prefix !== '') {
-      throw {
-        name: "MalformedQName",
-        message: "The prefix " + prefix + " is not declared"
-      };
+      throw "MalformedQName: The prefix " + prefix + " is not declared";
     }
     return {
       namespace: namespace,

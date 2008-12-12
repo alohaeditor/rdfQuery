@@ -20,7 +20,7 @@ function testTriples (received, expected) {
 	var i, triples = received.databank.triples();
 	equals(triples.length, expected.length, 'there should be ' + expected.length + ' triples');
 	for (i = 0; i < expected.length; i += 1) {
-		equals(triples[i], expected[i]);
+		equals(triples[i].toString(), expected[i].toString());
 	}
 };
 
@@ -64,7 +64,7 @@ test("Test 0001", function() {
 	$('#main > p').remove();
 });
 
-module("RDFa Test Suite");																																																																
+module("RDFa Test Suite");
 
 test("Test 0001", function() {
 	setup('<p>This photo was taken by <span class="author" about="photo1.jpg" property="dc:creator">Mark Birbeck</span>.</p>');
