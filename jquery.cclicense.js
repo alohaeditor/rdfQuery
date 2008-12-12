@@ -16,10 +16,10 @@
 
   var 
     cc = $.uri("http://creativecommons.org/ns#"),
-    work = $.rdf.resource('<' + $.uri.base() + '>');
-    ccLicenseClass = $.rdf.resource('<' + cc + 'License>');
-    ccWorkClass = $.rdf.resource('<' + cc + 'Work>');
-    ccLicenseProp = $.rdf.resource('<' + cc + 'license>');
+    work = $.rdf.resource('<' + $.uri.base() + '>'),
+    ccLicenseClass = $.rdf.resource('<' + cc + 'License>'),
+    ccWorkClass = $.rdf.resource('<' + cc + 'Work>'),
+    ccLicenseProp = $.rdf.resource('<' + cc + 'license>'),
     licenseRegex = /(?:^|\s)(?:(\S+):)?license(?:\s|$)/;
     
     gleaner = function (options) {
