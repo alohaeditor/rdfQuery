@@ -9,7 +9,8 @@ var ns = { namespaces: {
 	dc: "http://purl.org/dc/elements/1.1/",
 	foaf: "http://xmlns.com/foaf/0.1/",
 	cc: "http://creativecommons.org/ns#",
-	ex: "http://example.org/"
+	ex: "http://example.org/",
+	sioc: "http://rdfs.org/sioc/ns#"
 }};
 
 function setup(rdfa) {
@@ -54,7 +55,6 @@ test("multiple elements with about, rel and resource attributes", function () {
   $('#main').removeData('rdfa.triples');
 });
 
-
 module("RDF Gleaner");
 
 test("Test 0001", function() {
@@ -62,6 +62,16 @@ test("Test 0001", function() {
 	testTriples($('#main > p > span').rdf(), 
 	            [$.rdf.triple('<photo1.jpg> dc:creator "Mark Birbeck" .', ns)]);
 	$('#main > p').remove();
+});
+
+module("Reported bugs");
+
+test("Structured XML Literal", function () {
+  setup('<div property="sioc:note"><p>This <strong>is</strong> something</p><p>And <em>something</em> else</p></div>');
+  testTriples($('#main > p').rdf(), []);
+  testTriples($('#main > div').rdf(),
+              [$.rdf.triple('<> sioc:note "<p xmlns=\\"http://www.w3.org/1999/xhtml\\">This <strong>is</strong> something</p><p xmlns=\\"http://www.w3.org/1999/xhtml\\">And <em>something</em> else</p>"^^rdf:XMLLiteral .', ns)]);
+  $('#main > div').remove();
 });
 
 module("RDFa Test Suite");

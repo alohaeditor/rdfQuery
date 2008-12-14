@@ -506,12 +506,16 @@
 
   $.fn.rdf = function () {
     var j, match, triples = [];
-    triples = $(this).map(function (i, elem) {
-      return $.map($.rdf.gleaners, function (gleaner) {
-        return gleaner.call($(elem));
+    if ($(this).length > 0) {
+      triples = $(this).map(function (i, elem) {
+        return $.map($.rdf.gleaners, function (gleaner) {
+          return gleaner.call($(elem));
+        });
       });
-    });
-    return $.rdf({ triples: triples, namespaces: $(this).xmlns() });
+      return $.rdf({ triples: triples, namespaces: $(this).xmlns() });
+    } else {
+      return $.rdf();
+    }
   };
 
   $.extend($.expr[':'], {
