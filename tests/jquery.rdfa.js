@@ -64,6 +64,16 @@ test("Test 0001", function() {
 	$('#main > p').remove();
 });
 
+module("Ignore illegal CURIEs");
+
+test("In property attribute", function() {
+	setup('<p>This photo was taken by <span class="author" about="photo1.jpg" property="creator">Mark Birbeck</span>.</p>');
+	testTriples($('#main > p > span').rdfa(), 
+	            []);
+	$('#main > p').remove();
+});
+
+
 module("Reported bugs");
 
 test("Structured XML Literal", function () {
@@ -72,6 +82,18 @@ test("Structured XML Literal", function () {
   testTriples($('#main > div').rdf(),
               [$.rdf.triple('<> sioc:note "<p xmlns=\\"http://www.w3.org/1999/xhtml\\">This <strong>is</strong> something</p><p xmlns=\\"http://www.w3.org/1999/xhtml\\">And <em>something</em> else</p>"^^rdf:XMLLiteral .', ns)]);
   $('#main > div').remove();
+});
+
+test("RDFa from html element", function () {
+  testTriples($('html').rdf(), 
+              [$.rdf.triple('<> <http://www.w3.org/1999/xhtml/vocab#stylesheet> <../jquery/tests/qunit/testsuite.css>')]);
+});
+
+test("XMLLiteral including comments", function () {
+  setup('<p property="sioc:note"><!-- ///// --><em>TODO</em></p>');
+  testTriples($('#main > p').rdf(), 
+              [$.rdf.triple('<> sioc:note "<!-- ///// --><em xmlns=\\"http://www.w3.org/1999/xhtml\\">TODO</em>"^^rdf:XMLLiteral .', ns)]);
+  $('#main > p').remove();
 });
 
 module("RDFa Test Suite");

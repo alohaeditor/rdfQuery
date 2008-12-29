@@ -289,7 +289,7 @@
     };
     
   $.typedValue.types['http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'] = {
-    regex: /^.*$/,
+    regex: /^.*$/m,
     strip: false,
     value: function (v) {
       return v;
