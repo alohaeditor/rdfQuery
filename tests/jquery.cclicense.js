@@ -105,24 +105,24 @@ test("to an element that already has a rel attribute", function () {
 
 module("Using type() selector");
 
-test("from an element without a cc:license using type()", function () {
+test("from an element without a cc:license using :type", function () {
   setup('<p>This is just a paragraph</p>');
-  var jquery = $('#main *:type()');
+  var jquery = $('#main *:type');
   equals(jquery.length, 0);
   teardown();
 });
 
-test("finding all elements with a rel='license' using type()", function () {
+test("finding all elements with a rel='license' using :type", function () {
   setup('<p>License: <a href="http://creativecommons.org/licenses/by/2.0/" rel="license">cc by 2.0</a></p>');
-  var jquery = $('#main *:type()');
+  var jquery = $('#main *:type');
   equals(jquery.length, 1);
   ok(jquery.is('a'), "it should locate the <a> element");
   teardown();
 });
 
-test("finding all elements with a rel='cc:license' using type()", function () {
+test("finding all elements with a rel='cc:license' using :type", function () {
   setup('<p>License: <a href="http://creativecommons.org/licenses/by/2.0/" rel="cc:license">cc by 2.0</a></p>');
-  var jquery = $('#main *:type()');
+  var jquery = $('#main *:type');
   equals(jquery.length, 1);
   ok(jquery.is('a'), "it should locate the <a> element");
   teardown();
@@ -176,24 +176,24 @@ test("finding all elements with a rel='cc:license' using type(cc:Work)", functio
 
 module("Using about() selector");
 
-test("from an element without a cc:license using about()", function () {
+test("from an element without a cc:license using :about", function () {
   setup('<p>This is just a paragraph</p>');
-  var jquery = $('#main *:about()');
+  var jquery = $('#main *:about');
   equals(jquery.length, 0);
   teardown();
 });
 
-test("finding all elements with a rel='license' using about()", function () {
+test("finding all elements with a rel='license' using :about", function () {
   setup('<p>License: <a href="http://creativecommons.org/licenses/by/2.0/" rel="license">cc by 2.0</a></p>');
-  var jquery = $('#main *:about()');
+  var jquery = $('#main *:about');
   equals(jquery.length, 1);
   ok(jquery.is('a'), "it should locate the <a> element");
   teardown();
 });
 
-test("finding all elements with a rel='cc:license' using about()", function () {
+test("finding all elements with a rel='cc:license' using :about", function () {
   setup('<p>License: <a href="http://creativecommons.org/licenses/by/2.0/" rel="cc:license">cc by 2.0</a></p>');
-  var jquery = $('#main *:about()');
+  var jquery = $('#main *:about');
   equals(jquery.length, 1);
   ok(jquery.is('a'), "it should locate the <a> element");
   teardown();
