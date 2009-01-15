@@ -11,6 +11,8 @@
 /*global jQuery */
 (function ($) {
 	
+	var mem = {};
+	
 	$.curie = function (curie, options) {
 		var 
 			opts = $.extend({}, $.curie.defaults, options || {}),

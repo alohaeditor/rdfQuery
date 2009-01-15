@@ -157,12 +157,17 @@
   
     toString: function () {
       var result = '';
-      result = this.scheme === undefined ? result : (result + this.scheme + ':');
-      result = this.authority === undefined ? result : (result + '//' + this.authority);
-      result = result + this.path;
-      result = this.query === undefined ? result : (result + '?' + this.query);
-      result = this.fragment === undefined ? result : (result + '#' + this.fragment);
-      return result;
+      if (this._string) {
+        return this._string;
+      } else {
+        result = this.scheme === undefined ? result : (result + this.scheme + ':');
+        result = this.authority === undefined ? result : (result + '//' + this.authority);
+        result = result + this.path;
+        result = this.query === undefined ? result : (result + '?' + this.query);
+        result = this.fragment === undefined ? result : (result + '#' + this.fragment);
+        this._string = result;
+        return result;
+      }
     }
   
   };

@@ -20,8 +20,14 @@ function setup(rdfa) {
 function testTriples (received, expected) {
 	var i, triples = received.databank.triples();
 	equals(triples.length, expected.length, 'there should be ' + expected.length + ' triples');
-	for (i = 0; i < expected.length; i += 1) {
-		equals(triples[i].toString(), expected[i].toString());
+	if (triples.length >= expected.length) {
+  	for (i = 0; i < expected.length; i += 1) {
+  		equals(triples[i].toString(), expected[i].toString());
+  	}
+	} else {
+  	for (i = 0; i < triples.length; i += 1) {
+  		equals(triples[i].toString(), expected[i].toString());
+  	}
 	}
 };
 

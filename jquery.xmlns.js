@@ -13,7 +13,7 @@
   var 
     xmlnsRegex = /\sxmlns(?::([^ =]+))?\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 
-  $.fn.xmlns = function (prefix, uri) {
+  $.fn.xmlns = function (prefix, uri, inherited) {
     var 
       elem = this.eq(0),
       ns = elem.data('xmlns'),
@@ -42,7 +42,8 @@
               }
             }
           }
-          ns = $.extend({}, elem.parents().length > 0 ? elem.parent().xmlns() : {}, ns);
+          inherited = inherited || (elem.parent().is('*') ? elem.parent().xmlns() : {});
+          ns = $.extend({}, inherited, ns);
           elem.data('xmlns', ns);
         }
         return ns;
