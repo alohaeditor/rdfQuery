@@ -28,7 +28,9 @@
                      'rel', 'rev', 'typeof', 'content', 'datatype', 
                      'lang', 'xml:lang'],
 
-    attRegex = /\s([^ =]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+    attRegex = /\s([^ =]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g,
+    
+    docResource = $.rdf.resource('<>'),
 
     getAttributes = function (elem) {
       var i, e, a, name, value, attMap, ns = {}, atts = {};
@@ -148,15 +150,15 @@
         subject = resourceFromSafeCurie(atts.href, elem, curieOptions);
       }
       if (subject === undefined) {
-        if (elem.is('head') || elem.is('body')) {
-          subject = $.rdf.resource('<>');
+        if (/head|body/i.test(elem[0].nodeName)) {
+          subject = docResource;
         } else if (atts['typeof'] !== undefined) {
           subject = $.rdf.blank('[]');
-        } else if (elem.parent().is('*')) {
+        } else if (elem[0].parentNode.nodeType === 1) {
           subject = context.object || getObjectResource(elem.parent()) || getSubject(elem.parent()).subject;
           skip = !r && atts.property === undefined;
         } else {
-          subject = $.rdf.resource('<>');
+          subject = docResource;
         }
       }
       return { subject: subject, skip: skip };
@@ -191,8 +193,6 @@
         return '&amp;';
       }
     },
-
-    attRegex = /\s([^ =]+)(\s*=\s*("([^"]*)"|'([^']*)'))?/g,
 
     serialize = function (elem) {
       var i, string = '', atts, a, name, ns, tag;
@@ -259,10 +259,9 @@
           namespaces[ns] = attsAndNs.namespaces[ns];
         }
       }
-      //namespaces = this.xmlns(undefined, undefined, context.namespaces);
       context.curieOptions = $.extend({}, rdfaCurieDefaults, { namespaces: namespaces });
-      ///*
       subject = getSubject(this, context);
+      ///*
       lang = getLang(this, context);
       if (subject.skip) {
         rels = context.forward;
