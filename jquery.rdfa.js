@@ -213,13 +213,15 @@
         properties, rels, revs, 
         forward, backward,
         triples = [],
-        atts = getAttributes(this), namespaces;
+        atts, namespaces;
       context = context || {};
       forward = context.forward || [];
       backward = context.backward || [];
-      namespaces = this.xmlns(undefined, undefined, context.namespaces);
+      atts = getAttributes(this);
       context.atts = atts;
+      namespaces = this.xmlns(undefined, undefined, context.namespaces);
       context.curieOptions = $.extend({}, rdfaCurieDefaults, { namespaces: namespaces });
+      ///*
       subject = getSubject(this, context);
       lang = getLang(this, context);
       if (subject.skip) {
@@ -232,11 +234,11 @@
         if (forward.length > 0 || backward.length > 0) {
           parent = context.subject || getSubject(this.parent()).subject;
           for (i = 0; i < forward.length; i += 1) {
-            triple = $.rdf.triple(parent, forward[i], subject);
+            triple = $.rdf.triple(parent, forward[i], subject, { source: this[0] });
             triples.push(triple);
           }
           for (i = 0; i < backward.length; i += 1) {
-            triple = $.rdf.triple(subject, backward[i], parent);
+            triple = $.rdf.triple(subject, backward[i], parent, { source: this[0] });
             triples.push(triple);
           }
         }
@@ -301,6 +303,7 @@
           revs = [];
         }
       }
+      //*/
       this.children().each(function () {
         triples = triples.concat(rdfa.call($(this), { forward: rels, backward: revs, subject: subject, object: resource || subject, lang: lang, namespaces: namespaces }));
       });

@@ -19,7 +19,7 @@
       ns = elem.data('xmlns'),
       e = elem[0], a, p, i,
       decl = prefix ? 'xmlns:' + prefix : 'xmlns',
-      tag;
+      tag, found = false;;
     if (uri === undefined) {
       if (prefix === undefined) { // get the in-scope declarations on the first element
         if (ns === undefined) {
@@ -30,6 +30,7 @@
             while (a !== null) {
               prefix = a[1] || '';
               ns[prefix] = $.uri(a[2] || a[3]);
+              found = true;
               a = xmlnsRegex.exec(tag);
             }
             xmlnsRegex.lastIndex = 0;
@@ -39,11 +40,12 @@
               if (/^xmlns/.test(a.nodeName)) {
                 prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
                 ns[prefix] = $.uri(a.nodeValue);
+                found = true;
               }
             }
           }
           inherited = inherited || (elem.parent().is('*') ? elem.parent().xmlns() : {});
-          ns = $.extend({}, inherited, ns);
+          ns = found ? $.extend({}, inherited, ns) : inherited;
           elem.data('xmlns', ns);
         }
         return ns;
