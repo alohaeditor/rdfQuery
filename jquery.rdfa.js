@@ -174,9 +174,8 @@
         if (context.lang) {
           lang = context.lang;
         } else {
-          parent = elem.parent();
-          if (parent.is('*')) {
-            lang = getLang(parent);
+          if (elem[0].parentNode.nodeType === 1) {
+            lang = getLang(elem.parent());
           }
         }
       }
@@ -246,7 +245,8 @@
         properties, rels, revs, 
         forward, backward,
         triples = [],
-        attsAndNs, atts, namespaces, ns;
+        attsAndNs, atts, namespaces, ns,
+        children = this.children();
       context = context || {};
       forward = context.forward || [];
       backward = context.backward || [];
@@ -261,7 +261,6 @@
       }
       context.curieOptions = $.extend({}, rdfaCurieDefaults, { namespaces: namespaces });
       subject = getSubject(this, context);
-      ///*
       lang = getLang(this, context);
       if (subject.skip) {
         rels = context.forward;
@@ -292,7 +291,7 @@
           datatype = atts.datatype;
           content = atts.content;
           if (datatype !== undefined && datatype !== '') {
-            datatype = this.curie(datatype);
+            datatype = $.curie(datatype, context.curieOptions);
             if (datatype === rdfXMLLiteral) {
               object = $.rdf.literal(serialize(this), { datatype: rdfXMLLiteral });
             } else if (content !== undefined) {
@@ -306,7 +305,7 @@
             } else {
               object = $.rdf.literal(content, { lang: lang });
             }
-          } else if (this.children('*').length === 0 ||
+          } else if (children.length === 0 ||
                      datatype === '') {
             lang = getLang(this, context);
             if (lang === undefined) {
@@ -342,8 +341,7 @@
           revs = [];
         }
       }
-      //*/
-      this.children().each(function () {
+      children.each(function () {
         triples = triples.concat(rdfa.call($(this), { forward: rels, backward: revs, subject: subject, object: resource || subject, lang: lang, namespaces: namespaces }));
       });
       return triples;
