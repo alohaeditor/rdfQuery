@@ -36,7 +36,7 @@
             xmlnsRegex.lastIndex = 0;
           } else {
             for (i = 0; i < e.attributes.length; i += 1) {
-              a = e.attributes.item(i);
+              a = e.attributes[i];
               if (/^xmlns/.test(a.nodeName)) {
                 prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
                 ns[prefix] = $.uri(a.nodeValue);

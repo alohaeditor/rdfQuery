@@ -22,19 +22,52 @@
 
     rdfXMLLiteral = ns.rdf + 'XMLLiteral',
 
-    rdfaCurieDefaults = $.fn.curie.defaults;
+    rdfaCurieDefaults = $.fn.curie.defaults,
 
     rdfAttributes = ['about', 'href', 'src', 'resource', 'property', 
                      'rel', 'rev', 'typeof', 'content', 'datatype', 
                      'lang', 'xml:lang'],
 
+    attRegex = /\s([^ =]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+
     getAttributes = function (elem) {
-      var i, a, atts = {};
-      for (i = 0; i < rdfAttributes.length; i += 1) {
-        a = rdfAttributes[i];
-        atts[a] = getAttribute(elem, a);
+      var i, e, a, name, value, attMap, ns = {}, atts = {};
+      e = elem[0];
+      ns[':length'] = 0;
+      if (e.outerHTML !== undefined) {
+        tag = /<[^>]+>/.exec(e.outerHTML);
+        a = attRegex.exec(tag);
+        while (a !== null) {
+          name = a[1];
+          value = a[2] || a[3];
+          if (/^xmlns/.test(name)) {
+            prefix = /^xmlns(:(.+))?$/.exec(name)[2] || '';
+            ns[prefix] = $.uri(value);
+            ns[':length'] += 1;
+          } else if (/rel|rev|lang|xml:lang/.test(name)) {
+            atts[name] = value === '' ? undefined : value;
+          } else if (/about|href|src|resource|property|typeof|content|datatype/.test(name)) {
+            atts[name] = value === null ? undefined : value;
+          }
+          a = attRegex.exec(tag);
+        }
+        attRegex.lastIndex = 0;
+      } else {
+        attMap = e.attributes;
+        for (i = 0; i < attMap.length; i += 1) {
+          a = attMap[i];
+          if (/^xmlns/.test(a.nodeName)) {
+            prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
+            ns[prefix] = $.uri(a.nodeValue);
+            ns[':length'] += 1;
+          } else if (/rel|rev|lang|xml:lang/.test(a.nodeName)) {
+            atts[a.nodeName] = a.nodeValue === '' ? undefined : a.nodeValue;
+          } else if (/about|href|src|resource|property|typeof|content|datatype/.test(a.nodeName)) {
+            atts[a.nodeName] = a.nodeValue === null ? undefined : a.nodeValue;
+          }
+        }
       }
-      return atts;
+      return { atts: atts, namespaces: ns };
     },
 
     getAttribute = function (elem, attr) {
@@ -83,7 +116,7 @@
     getObjectResource = function (elem, context, relation) {
       var r, resource, atts, curieOpts;
       context = context || {};
-      atts = context.atts || getAttributes(elem);
+      atts = context.atts || getAttributes(elem).atts;
       r = relation === undefined ? atts.rel !== undefined || atts.rev !== undefined : relation;
       resource = atts.resource;
       resource = resource === undefined ? atts.href : resource;
@@ -99,7 +132,7 @@
     getSubject = function (elem, context, relation) {
       var r, atts, curieOptions, subject, skip = false;
       context = context || {};
-      atts = context.atts || getAttributes(elem);
+      atts = context.atts || getAttributes(elem).atts;
       curieOptions = context.curieOptions || $.extend({}, rdfaCurieDefaults, { namespaces: elem.xmlns() });
       r = relation === undefined ? atts.rel !== undefined || atts.rev !== undefined : relation;
       if (atts.about !== undefined) {
@@ -132,7 +165,7 @@
     getLang = function (elem, context) {
       var atts, lang, parent;
       context = context || {};
-      atts = context.atts || getAttributes(elem);
+      atts = context.atts || getAttributes(elem).atts;
       lang = atts['xml:lang'];
       lang = lang === undefined ? atts.lang : lang;
       if (lang === undefined) {
@@ -213,13 +246,20 @@
         properties, rels, revs, 
         forward, backward,
         triples = [],
-        atts, namespaces;
+        attsAndNs, atts, namespaces, ns;
       context = context || {};
       forward = context.forward || [];
       backward = context.backward || [];
-      atts = getAttributes(this);
+      attsAndNs = getAttributes(this);
+      atts = attsAndNs.atts;
       context.atts = atts;
-      namespaces = this.xmlns(undefined, undefined, context.namespaces);
+      namespaces = context.namespaces || this.xmlns();
+      if (attsAndNs.namespaces[':length'] > 0) {
+        for (ns in attsAndNs.namespaces) {
+          namespaces[ns] = attsAndNs.namespaces[ns];
+        }
+      }
+      //namespaces = this.xmlns(undefined, undefined, context.namespaces);
       context.curieOptions = $.extend({}, rdfaCurieDefaults, { namespaces: namespaces });
       ///*
       subject = getSubject(this, context);
@@ -313,7 +353,7 @@
     gleaner = function (options) {
       var type, atts;
       if (options && options.about !== undefined) {
-        atts = getAttributes(this);
+        atts = getAttributes(this).atts;
         if (options.about === null) {
           return atts.property !== undefined || 
                  atts.rel !== undefined || 
@@ -401,7 +441,7 @@
         i, atts,
         ns = this.xmlns();
       span = this;
-      atts = getAttributes(this);
+      atts = getAttributes(this).atts;
       if (typeof triple === 'string') {
         triple = $.rdf.triple(triple, { namespaces: ns, base: $.uri.base() });
       } else if (triple.rdfquery) {
