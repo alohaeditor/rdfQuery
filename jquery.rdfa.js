@@ -28,7 +28,7 @@
                      'rel', 'rev', 'typeof', 'content', 'datatype', 
                      'lang', 'xml:lang'],
 
-    attRegex = /\s([^ =]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g,
+    attRegex = /\s([^ =]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^ >]+))/g,
     
     docResource = $.rdf.resource('<>'),
 
@@ -36,20 +36,19 @@
       var i, e, a, name, value, attMap, ns = {}, atts = {};
       e = elem[0];
       ns[':length'] = 0;
-      if (e.outerHTML !== undefined) {
-        tag = /<[^>]+>/.exec(e.outerHTML);
+      tag = e.outerHTML;
+      if (tag !== undefined) {
+        tag = /<[^>]+>/.exec(tag);
         a = attRegex.exec(tag);
         while (a !== null) {
           name = a[1];
-          value = a[2] || a[3];
+          value = a[2] || a[3] || a[4];
           if (/^xmlns/.test(name)) {
             prefix = /^xmlns(:(.+))?$/.exec(name)[2] || '';
             ns[prefix] = $.uri(value);
             ns[':length'] += 1;
-          } else if (/rel|rev|lang|xml:lang/.test(name)) {
-            atts[name] = value === '' ? undefined : value;
-          } else if (/about|href|src|resource|property|typeof|content|datatype/.test(name)) {
-            atts[name] = value === null ? undefined : value;
+          } else if (/about|href|src|resource|property|typeof|content|datatype|rel|rev|lang|xml:lang/.test(name)) {
+            atts[name] = value;
           }
           a = attRegex.exec(tag);
         }
@@ -193,14 +192,13 @@
       }
     },
 
-    serialize = function (elem) {
+    serialize = function (elem, ignoreNs) {
       var i, string = '', atts, a, name, ns, tag;
       elem.contents().each(function () {
         var j = $(this),
           e = j[0];
-        if (j.is('[nodeType=1]')) { // tests whether the node is an element
+        if (e.nodeType === 1) { // tests whether the node is an element
           name = e.nodeName.toLowerCase();
-          ns = j.xmlns('');
           string += '<' + name;
           if (e.outerHTML) {
             tag = /<[^>]+>/.exec(e.outerHTML);
@@ -222,13 +220,16 @@
               string += '"';
             }
           }
-          if (ns !== undefined && j.attr('xmlns') === undefined) {
-            string += ' xmlns="' + ns + '"';
+          if (!ignoreNs) {
+            ns = j.xmlns('');
+            if (ns !== undefined && j.attr('xmlns') === undefined) {
+              string += ' xmlns="' + ns + '"';
+            }
           }
           string += '>';
-          string += j.html();
+          string += serialize(j, true);
           string += '</' + name + '>';
-        } else if (j.is('[nodeType=8]')) { // tests whether the node is a comment
+        } else if (e.nodeType === 8) { // tests whether the node is a comment
           string += '<!--';
           string += e.nodeValue;
           string += '-->';
