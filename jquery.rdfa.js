@@ -166,9 +166,14 @@
     getLang = function (elem, context) {
       var atts, lang, parent;
       context = context || {};
-      atts = context.atts || getAttributes(elem).atts;
-      lang = atts['xml:lang'];
-      lang = lang === undefined ? atts.lang : lang;
+      if (context.atts) {
+	      lang = context.atts['xml:lang'];
+	      lang = lang === undefined ? context.atts.lang : lang;
+      } else {
+      	lang = elem[0].getAttribute('lang');
+      	lang = (lang === null || lang === '') ? elem[0].getAttribute('xml:lang') : lang;
+      	lang = (lang === null || lang === '') ? undefined : lang;
+      }
       if (lang === undefined) {
         if (context.lang) {
           lang = context.lang;
