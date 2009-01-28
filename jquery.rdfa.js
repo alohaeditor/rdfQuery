@@ -261,6 +261,7 @@
       context.atts = atts;
       namespaces = context.namespaces || this.xmlns();
       if (attsAndNs.namespaces[':length'] > 0) {
+        namespaces = $.extend({}, namespaces);
         for (ns in attsAndNs.namespaces) {
           if (ns !== ':length') {
             namespaces[ns] = attsAndNs.namespaces[ns];
