@@ -262,7 +262,9 @@
       namespaces = context.namespaces || this.xmlns();
       if (attsAndNs.namespaces[':length'] > 0) {
         for (ns in attsAndNs.namespaces) {
-          namespaces[ns] = attsAndNs.namespaces[ns];
+          if (ns !== ':length') {
+            namespaces[ns] = attsAndNs.namespaces[ns];
+          }
         }
       }
       context.curieOptions = $.extend({}, rdfaCurieDefaults, { namespaces: namespaces });
