@@ -856,6 +856,20 @@ test("creating a triple with a literal value with quotes in it", function() {
 	equals(triple.object.datatype, ns.rdf + 'XMLLiteral');
 });
 
+test("creating a triple that belongs to a graph", function() {
+  var triple = $.rdf.triple('<d> <e> <f>', { graph: '<>' });
+  equals(triple.subject.uri, $.uri('d'));
+  equals(triple.property.uri, $.uri('e'));
+  equals(triple.object.uri, $.uri('f'));
+  equals(triple.graph.uri, $.uri.base());
+});
+
+test("two triples that belong to different graphs", function() {
+	var t1 = $.rdf.triple('<a> <b> <c>');
+	var t2 = $.rdf.triple('<a> <b> <c>', { graph: '<>' });
+	ok(t1 !== t2, "should not be equal");
+});
+
 module("Creating Resources");
 
 test("two identical resources", function() {

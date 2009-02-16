@@ -816,7 +816,7 @@
  */
 
   $.rdf.triple = function (subject, property, object, options) {
-    var triple, m;
+    var triple, graph, m;
     // using a two-argument version; first argument is a Turtle statement string
     if (object === undefined) { 
       options = property;
@@ -829,22 +829,31 @@
         throw "Bad Triple: Couldn't parse string " + subject;
       }
     }
-    if (memTriple[subject] && memTriple[subject][property] && memTriple[subject][property][object]) {
-      return memTriple[subject][property][object];
+    graph = (options && options.graph) || '';
+    if (memTriple[graph] && 
+        memTriple[graph][subject] && 
+        memTriple[graph][subject][property] && 
+        memTriple[graph][subject][property][object]) {
+      return memTriple[graph][subject][property][object];
     }
     triple = new $.rdf.triple.fn.init(subject, property, object, options);
-    if (memTriple[triple.subject] && 
-        memTriple[triple.subject][triple.property] && 
-        memTriple[triple.subject][triple.property][triple.object]) {
-      return memTriple[triple.subject][triple.property][triple.object];
+    graph = triple.graph || '';
+    if (memTriple[graph] &&
+        memTriple[graph][triple.subject] && 
+        memTriple[graph][triple.subject][triple.property] && 
+        memTriple[graph][triple.subject][triple.property][triple.object]) {
+      return memTriple[graph][triple.subject][triple.property][triple.object];
     } else {
-      if (memTriple[triple.subject] === undefined) {
-        memTriple[triple.subject] = {};
+      if (memTriple[graph] === undefined) {
+        memTriple[graph] = {};
       }
-      if (memTriple[triple.subject][triple.property] === undefined) {
-        memTriple[triple.subject][triple.property] = {};
+      if (memTriple[graph][triple.subject] === undefined) {
+        memTriple[graph][triple.subject] = {};
       }
-      memTriple[triple.subject][triple.property][triple.object] = triple;
+      if (memTriple[graph][triple.subject][triple.property] === undefined) {
+        memTriple[graph][triple.subject][triple.property] = {};
+      }
+      memTriple[graph][triple.subject][triple.property][triple.object] = triple;
       return triple;
     }
   };
@@ -856,6 +865,7 @@
       this.subject = subject(s, opts);
       this.property = property(p, opts);
       this.object = object(o, opts);
+      this.graph = opts.graph === undefined ? undefined : subject(opts.graph, opts);
       this.source = opts.source;
       return this;
     },
