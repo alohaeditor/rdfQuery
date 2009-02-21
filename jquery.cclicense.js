@@ -38,7 +38,7 @@
           if (options.type === null) {
             return true;
           } else {
-            return options.type === ccLicenseClass.uri || options.type === ccWorkClass.uri;
+            return options.type === ccLicenseClass.value || options.type === ccWorkClass.value;
           }
         } else {
           license = $.rdf.resource('<' + href + '>');

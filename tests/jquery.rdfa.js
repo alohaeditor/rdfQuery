@@ -333,7 +333,7 @@ test("Test 0033", function() {
 	setup('<p>This paper was written by <span rel="dc:creator"><span property="foaf:name">Ben Adida</span>.</span></p>');
 	rdf = $('#main > p > span > span').rdfa();
 	triple = rdf.databank.triples()[0];
-	ok(triple.subject.blank, "the subject of the foaf:name triple should be blank");
+	equals(triple.subject.type, 'bnode', "the subject of the foaf:name triple should be blank");
 	equals(triple.property, $.rdf.resource('foaf:name', ns));
 	equals(triple.object, $.rdf.literal('"Ben Adida"'));
 	
@@ -344,11 +344,11 @@ test("Test 0033", function() {
 	if (triple !== undefined) {
 		equals(triple.subject, $.rdf.resource('<>'));
 		equals(triple.property, $.rdf.resource('dc:creator', ns));
-		ok(triple.object.blank, "the object of the dc:creator triple should be blank");
+		equals(triple.object.type, 'bnode', "the object of the dc:creator triple should be blank");
 	}
 	triple = triples[1];
 	if (triple !== undefined) {
-		ok(triple.subject.blank, "the subject of the foaf:name triple should be blank");
+		equals(triple.subject.type, 'bnode', "the subject of the foaf:name triple should be blank");
 		equals(triple.property, $.rdf.resource('foaf:name', ns));
 		equals(triple.object, $.rdf.literal('"Ben Adida"'));
 		ok(triples[0].object === triples[1].subject, "the object of the first triple should be the same as the subject of the second triple");

@@ -286,6 +286,24 @@
       $.each(query.partOf, function (i, union) {
         resetQuery(union);
       });
+    },
+    
+    json = function (triples) {
+      var e = {},
+        i, t, s, p;
+      for (i = 0; i < triples.length; i += 1) {
+        t = triples[i];
+        s = t.subject.value.toString();
+        p = t.property.value.toString();
+        if (e[s] === undefined) {
+          e[s] = {};
+        }
+        if (e[s][p] === undefined) {
+          e[s][p] = [];
+        }
+        e[s][p] = e[s][p].concat([t.object.export()]);
+      }
+      return e;
     };
     
   $.typedValue.types['http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'] = {
@@ -302,7 +320,7 @@
   };
 
   $.rdf.fn = $.rdf.prototype = {
-    rdfquery: '0.3',
+    rdfquery: '0.4',
     
     init: function (options) {
       var base, namespaces, optional, databanks, query = this;
@@ -437,7 +455,7 @@
           };
         } else {
           func = function () {
-            return this[property].literal ? this[property].value === condition : this[property] === condition;
+            return this[property].type === 'literal' ? this[property].value === condition : this[property] === condition;
           };
         }
       } else {
@@ -446,6 +464,37 @@
       query = $.rdf({ parent: this, filter: func });
       this.children.push(query);
       return query;
+    },
+
+    select: function (bindings) {
+      var s = [], i, j;
+      for (i = 0; i < this.length; i += 1) {
+        if (bindings === undefined) {
+          s[i] = this[i];
+        } else {
+          s[i] = {};
+          for (j = 0; j < bindings.length; j += 1) {
+            s[i][bindings[j]] = this[i][bindings[j]];
+          }
+        }
+      }
+      return s;
+    },
+
+    describe: function (bindings) {
+      var i, j, binding, resources = [];
+      for (i = 0; i < bindings.length; i += 1) {
+        binding = bindings[i];
+        if (binding.substring(0, 1) === '?') {
+          binding = binding.substring(1);
+          for (j = 0; j < this.length; j += 1) {
+            resources.push(this[j][binding]);
+          }
+        } else {
+          resources.push(binding);
+        }
+      }
+      return this.databank.describe(resources);
     },
 
     eq: function (n) {
@@ -503,6 +552,22 @@
   $.rdf.fn.init.prototype = $.rdf.fn;
 
   $.rdf.gleaners = [];
+  
+  $.rdf.export = function (triples) {
+    return json(triples);
+  };
+  
+  /*
+  $.rdf.import = function (json) {
+    var s, p, o, subject, property, object, triple, triples = [];
+    for (s in json) {
+      subject = $.rdf.resource('<' + s + '>');
+      for (p in json[s]) {
+        
+      }
+    }
+  };
+  */
 
   $.fn.rdf = function () {
     var j, match, triples = [];
@@ -565,6 +630,7 @@
       if (options.union === undefined) {
         this.queries = {};
         this.tripleStore = {};
+        this.objectStore = {};
         this.baseURI = options.base || $.uri.base();
         this.namespaces = $.extend({}, options.namespaces || {});
         for (i = 0; i < triples.length; i += 1) {
@@ -647,6 +713,12 @@
           }
           if ($.inArray(triple, this.tripleStore[triple.subject]) === -1) {
             this.tripleStore[triple.subject].push(triple);
+            if (triple.object.type === 'uri' || triple.object.type === 'bnode') {
+              if (this.objectStore[triple.object] === undefined) {
+                this.objectStore[triple.object] = [];
+              }
+              this.objectStore[triple.object].push(triple);
+            }
             addToDatabankQueries(this, triple);
           }
         } else {
@@ -693,6 +765,42 @@
     
     size: function () {
       return this.triples().length;
+    },
+    
+    describe: function (resources) {
+      var i, r, t, rhash = {}, triples = [];
+      while (resources.length > 0) {
+        r = resources.pop();
+        if (rhash[r] === undefined) {
+          if (r.value === undefined) {
+            r = $.rdf.resource(r);
+          }
+          if (this.tripleStore[r] !== undefined) {
+            for (i = 0; i < this.tripleStore[r].length; i += 1) {
+              t = this.tripleStore[r][i];
+              triples.push(t);
+              if (t.object.type === 'bnode') {
+                resources.push(t.object);
+              }
+            }
+          }
+          if (this.objectStore[r] !== undefined) {
+            for (i = 0; i < this.objectStore[r].length; i += 1) {
+              t = this.objectStore[r][i];
+              triples.push(t);
+              if (t.subject.type === 'bnode') {
+                resources.push(t.subject);
+              }
+            }
+          }
+          rhash[r] = true;
+        }
+      }
+      return $.unique(triples);
+    },
+    
+    export: function () {
+      return $.rdf.export(this.triples());
     },
     
     toString: function () {
@@ -878,6 +986,15 @@
       return this;
     },
     
+    export: function () {
+      var e = {},
+        s = this.subject.value.toString(),
+        p = this.property.value.toString();
+      e[s] = {};
+      e[s][p] = this.object.export();
+      return e;
+    },
+    
     toString: function () {
       return this.subject + ' ' + this.property + ' ' + this.object + ' .';
     }
@@ -910,10 +1027,8 @@
   };
 
   $.rdf.resource.fn = $.rdf.resource.prototype = {
-    resource: true,
-    literal: false,
-    uri: undefined,
-    blank: false,
+    type: 'uri',
+    value: undefined,
     
     init: function (value, options) {
       var m, prefix, uri, opts;
@@ -921,13 +1036,13 @@
         m = uriRegex.exec(value);
         opts = $.extend({}, $.rdf.resource.defaults, options);
         if (m !== null) {
-          this.uri = $.uri.resolve(m[1].replace(/\\>/g, '>'), opts.base);
+          this.value = $.uri.resolve(m[1].replace(/\\>/g, '>'), opts.base);
         } else if (value.substring(0, 1) === ':') {
           uri = opts.namespaces[''];
           if (uri === undefined) {
             throw "Malformed Resource: No namespace binding for default namespace in " + value;
           } else {
-            this.uri = $.uri.resolve(uri + value.substring(1));
+            this.value = $.uri.resolve(uri + value.substring(1));
           }
         } else if (value.substring(value.length - 1) === ':') {
           prefix = value.substring(0, value.length - 1);
@@ -935,23 +1050,30 @@
           if (uri === undefined) {
             throw "Malformed Resource: No namespace binding for prefix " + prefix + " in " + value;
           } else {
-            this.uri = $.uri.resolve(uri);
+            this.value = $.uri.resolve(uri);
           }
         } else {
           try {
-            this.uri = $.curie(value, { namespaces: opts.namespaces });
+            this.value = $.curie(value, { namespaces: opts.namespaces });
           } catch (e) {
             throw "Malformed Resource: Bad format for resource " + e;
           }
         }
       } else {
-        this.uri = value;
+        this.value = value;
       }
       return this;
     }, // end init
     
+    export: function () {
+      return {
+        type: 'uri',
+        value: this.value.toString()
+      }
+    },
+    
     toString: function () {
-      return '<' + this.uri + '>';
+      return '<' + this.value + '>';
     }
   };
 
@@ -980,20 +1102,28 @@
   };
   
   $.rdf.blank.fn = $.rdf.blank.prototype = {
-    resource: true,
-    literal: false,
-    blank: true,
+    type: 'bnode',
+    value: undefined,
     id: undefined,
     
     init: function (value, options) {
       if (value === '[]') {
         this.id = blankNodeID();
+        this.value = '_:' + this.id;
       } else if (value.substring(0, 2) === '_:') {
         this.id = value.substring(2);
+        this.value = value;
       } else {
         throw "Malformed Blank Node: " + value + " is not a legal format for a blank node";
       }
       return this;
+    },
+    
+    export: function () {
+      return {
+        type: 'bnode',
+        value: this.value
+      }
     },
     
     toString: function () {
@@ -1018,9 +1148,7 @@
   };
 
   $.rdf.literal.fn = $.rdf.literal.prototype = {
-    resource: false,
-    literal: true,
-    blank: false,
+    type: 'literal',
     value: undefined,
     lang: undefined,
     datatype: undefined,
@@ -1057,7 +1185,7 @@
           this.value = (m[2] || m[4]).replace(/\\"/g, '"');
           if (m[9]) {
             datatype = $.rdf.resource(m[9], opts);
-            $.extend(this, $.typedValue(this.value, datatype.uri));
+            $.extend(this, $.typedValue(this.value, datatype.value));
           } else if (m[7]) {
             this.lang = m[7];
           }
@@ -1067,6 +1195,19 @@
       }
       return this;
     }, // end init
+    
+    export: function () {
+      var e = {
+        type: 'literal',
+        value: this.value.toString()
+      };
+      if (this.lang !== undefined) {
+        e.lang = this.lang;
+      } else if (this.datatype !== undefined) {
+        e.datatype = this.datatype.toString();
+      }
+      return e;
+    },
     
     toString: function () {
       var val = '"' + this.value + '"';

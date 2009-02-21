@@ -284,7 +284,7 @@ $(document).ready(function(){
       if (rdf.length > 0) {
         return rdf.get(0).label.value;
       } else {
-        return resource.uri.fragment;
+        return resource.value.fragment;
       }
     },
     
@@ -379,7 +379,7 @@ $(document).ready(function(){
         .append("\n")
         .append('<li />')
         .children('li:last')
-          .attr('id', resource.uri.fragment)
+          .attr('id', resource.value.fragment)
           .append('<h3>' + label + '</h3>')
           .append('<ul class="properties" />')
           .children('h3')
@@ -390,7 +390,7 @@ $(document).ready(function(){
     },
     
     addDescription = function (resource) {
-      var ind = $('#' + resource.uri.fragment),
+      var ind = $('#' + resource.value.fragment),
         label = ind.children('h3').text(),
         list, empty = true, rdf = $('#content').rdf();
       if (ind.hasClass('open')) {
@@ -404,11 +404,11 @@ $(document).ready(function(){
             var p = this.property, pLabel,
               o = this.value, oLabel, li,
               triple = triples[0];
-            if (!((p === $.rdf.label && o.literal && o.value === label) ||
+            if (!((p === $.rdf.label && o.type === 'literal' && o.value === label) ||
                   (p === $.rdf.type && ontology[o] !== undefined))) {
               empty = false;
-              pLabel = ontology[p] === undefined ? p.uri.fragment : ontology[p].aliases[0];
-              if (o.literal) {
+              pLabel = ontology[p] === undefined ? p.value.fragment : ontology[p].aliases[0];
+              if (o.type === 'literal') {
                 oLabel = o.value;
               } else if (ontology[o] !== undefined) {
                 oLabel = ontology[o].aliases[0];
@@ -420,11 +420,11 @@ $(document).ready(function(){
                 .children('li:last')
                   .attr('class', typeof(triple.source) === 'string' ? 'auto' : 'manual')
                   .html(pLabel + ': ' + oLabel);
-              if (o.resource && ontology[o] === undefined && o.uri.fragment !== undefined) {
+              if (o.type === 'uri' && ontology[o] === undefined && o.value.fragment !== undefined) {
                 li
                   .bind('click', function () {
                     $(this).parent().parent().removeClass('open');
-                    $('#' + o.uri.fragment).addClass('open');
+                    $('#' + o.value.fragment).addClass('open');
                     addDescription(o);
                   });
               }
@@ -446,7 +446,7 @@ $(document).ready(function(){
         aliases[o.value] = s;
       }
       if (typeof(triple.source) !== 'string') {
-        if (o.literal) {
+        if (o.type === 'literal') {
           span = markupText.call(sSpan, o.value.toString());
         } else {
           span = spans[o];

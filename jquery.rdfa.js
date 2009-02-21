@@ -366,7 +366,7 @@
                  atts.rev !== undefined || 
                  atts['typeof'] !== undefined;
         } else {
-          return getSubject(this, {atts: atts}).subject.uri === options.about;
+          return getSubject(this, {atts: atts}).subject.value === options.about;
         }
       } else if (options && options.type !== undefined) {
         type = getAttribute(this, 'typeof');
@@ -408,10 +408,10 @@
     
     createResourceAttr = function (elem, attr, resource) {
       var ref;
-      if (resource.blank) {
+      if (resource.type === 'bnode') {
         ref = '[_:' + resource.id + ']';
       } else {
-        ref = $.uri.base().relative(resource.uri);
+        ref = $.uri.base().relative(resource.value);
       }
       elem.attr(attr, ref);
     },
@@ -461,7 +461,7 @@
       }
       hasRelation = atts.rel !== undefined || atts.rev !== undefined;
       hasRDFa = hasRelation || atts.property !== undefined || atts['typeof'] !== undefined;
-      if (triple.object.resource) {
+      if (triple.object.type !== 'literal') {
         subject = getSubject(this, {atts: atts}, true).subject;
         object = getObjectResource(this, {atts: atts}, true);
         overridableObject = !hasRDFa && atts.resource === undefined;
@@ -469,60 +469,60 @@
         sameObject = object === triple.object;
         if (triple.property === $.rdf.type) {
           if (sameSubject) {
-            createCurieAttr(this, 'typeof', triple.object.uri);
+            createCurieAttr(this, 'typeof', triple.object.value);
           } else if (hasRDFa) {
             span = this.wrapInner('<span />').children('span');
-            createCurieAttr(span, 'typeof', triple.object.uri);
+            createCurieAttr(span, 'typeof', triple.object.value);
             if (object !== triple.subject) {
               createSubjectAttr(span, triple.subject);
             }
           } else {
-            createCurieAttr(this, 'typeof', triple.object.uri);
+            createCurieAttr(this, 'typeof', triple.object.value);
             createSubjectAttr(this, triple.subject);
           }
         } else if (sameSubject) {
           // use a rel
           if (sameObject) {
-            createCurieAttr(this, 'rel', triple.property.uri);
+            createCurieAttr(this, 'rel', triple.property.value);
           } else if (overridableObject || !hasRDFa) {
-            createCurieAttr(this, 'rel', triple.property.uri);
+            createCurieAttr(this, 'rel', triple.property.value);
             createObjectAttr(this, triple.object);
           } else {
             span = this.wrap('<span />').parent();
-            createCurieAttr(span, 'rev', triple.property.uri);
+            createCurieAttr(span, 'rev', triple.property.value);
             createSubjectAttr(span, triple.object);
           }
         } else if (subject === triple.object) {
           if (object === triple.subject) {
             // use a rev
-            createCurieAttr(this, 'rev', triple.property.uri);
+            createCurieAttr(this, 'rev', triple.property.value);
           } else if (overridableObject || !hasRDFa) {
-            createCurieAttr(this, 'rev', triple.property.uri);
+            createCurieAttr(this, 'rev', triple.property.value);
             createObjectAttr(this, triple.subject);
           } else {
             // wrap in a span with a rel
             span = this.wrap('<span />').parent();
-            createCurieAttr(span, 'rel', triple.property.uri);
+            createCurieAttr(span, 'rel', triple.property.value);
             createSubjectAttr(span, triple.subject);
           }
         } else if (sameObject) {
           if (hasRDFa) {
             // use a rev on a nested span
             span = this.wrapInner('<span />').children('span');
-            createCurieAttr(span, 'rev', triple.property.uri);
+            createCurieAttr(span, 'rev', triple.property.value);
             createObjectAttr(span, triple.subject);
             span = span.wrapInner('<span />').children('span');
             createSubjectAttr(span, triple.object);
             span = this;
           } else {
             createSubjectAttr(this, triple.subject);
-            createCurieAttr(this, 'rel', triple.property.uri);
+            createCurieAttr(this, 'rel', triple.property.value);
           }
         } else if (object === triple.subject) {
           if (hasRDFa) {
             // wrap the contents in a span and use a rel
             span = this.wrapInner('<span />').children('span');
-            createCurieAttr(span, 'rel', this.property.uri);
+            createCurieAttr(span, 'rel', this.property.value);
             createObjectAttr(span, triple.object);
             span = span.wrapInner('<span />').children('span');
             createSubjectAttr(span, object);
@@ -530,11 +530,11 @@
           } else {
             // use a rev on this element
             createSubjectAttr(this, triple.object);
-            createCurieAttr(this, 'rev', triple.property.uri);
+            createCurieAttr(this, 'rev', triple.property.value);
           }
         } else if (hasRDFa) {
           span = this.wrapInner('<span />').children('span');
-          createCurieAttr(span, 'rel', triple.property.uri);
+          createCurieAttr(span, 'rel', triple.property.value);
           createSubjectAttr(span, triple.subject);
           createObjectAttr(span, triple.object);
           if (span.children('*').length > 0) {
@@ -543,7 +543,7 @@
           }
           span = this;
         } else {
-          createCurieAttr(span, 'rel', triple.property.uri);
+          createCurieAttr(span, 'rel', triple.property.value);
           createSubjectAttr(this, triple.subject);
           createObjectAttr(this, triple.object);
           if (this.children('*').length > 0) {
@@ -561,7 +561,7 @@
           content = atts.content;
           sameObject = content !== undefined ? content === triple.object.value : !hasContent;
           if (sameSubject && sameObject) {
-            createCurieAttr(this, 'property', triple.property.uri);
+            createCurieAttr(this, 'property', triple.property.value);
           } else {
             span = this.wrapInner('<span />').children('span');
             return addRDFa.call(span, triple);
@@ -571,7 +571,7 @@
             span = this.wrapInner('<span />').children('span');
             return addRDFa.call(span, triple);
           }
-          createCurieAttr(this, 'property', triple.property.uri);
+          createCurieAttr(this, 'property', triple.property.value);
           createSubjectAttr(this, triple.subject);
           if (hasContent) {
             if (triple.object.datatype && triple.object.datatype.toString() === rdfXMLLiteral) {

@@ -10,7 +10,45 @@ var ns = {
 	foaf: "http://xmlns.com/foaf/0.1/",
 	cc: "http://creativecommons.org/ns#",
 	vcard: "http://www.w3.org/2001/vcard-rdf/3.0#"
-}
+};
+
+/* Example adapted from http://www.w3.org/Submission/CBD/ */
+var books = $.rdf.databank()
+  .prefix('rdfs', 'http://www.w3.org/2000/01/rdf-schema#')
+  .prefix('foaf', ns.foaf)
+  .prefix('dc', ns.dc)
+  .prefix('dct', 'http://purl.org/dc/terms/')
+  .prefix('xsd', ns.xsd)
+  .prefix('ex', 'http://example.com/')
+  .add('<http://example.com/aReallyGreatBook> dc:title "A Really Great Book" .')
+  .add('<http://example.com/aReallyGreatBook> dc:publisher "Examples-R-Us" .')
+  .add('<http://example.com/aReallyGreatBook> dc:creator _:creator .')
+  .add('_:creator a <http://xmlns.com/foaf/0.1/Person> .')
+  .add('_:creator foaf:name "John Doe" .')
+  .add('_:creator foaf:mbox "john@example.com" .')
+  .add('_:creator foaf:img <http://example.com/john.jpg> .')
+  .add('<http://example.com/john.jpg> a <http://xmlns.com/foaf/0.1/Image> .')
+  .add('<http://example.com/john.jpg> dc:format "image/jpeg" .')
+  .add('<http://example.com/john.jpg> dc:extent "1234" .')
+  .add('_:creator foaf:phone <tel:+1-999-555-1234> .')
+  .add('<http://example.com/aReallyGreatBook> dc:contributor _:contributor .')
+  .add('_:contributor a <http://xmlns.com/foaf/0.1/Person> .')
+  .add('_:contributor foaf:name "Jane Doe" .')
+  .add('<http://example.com/aReallyGreatBook> dc:language "en" .')
+  .add('<http://example.com/aReallyGreatBook> dc:format "applicaiton/pdf" .')
+  .add('<http://example.com/aReallyGreatBook> dc:rights "Copyright (C) 2004 Examples-R-Us. All rights reserved." .')
+  .add('<http://example.com/aReallyGreatBook> dct:issued "2004-01-19"^^xsd:date .')
+  .add('<http://example.com/aReallyGreatBook> rdfs:seeAlso <http://example.com/anotherGreatBook> .')
+  .add('<http://example.com/anotherGreatBook> dc:title "Another Great Book" .')
+  .add('<http://example.com/anotherGreatBook> dc:publisher "Examples-R-Us" .')
+  .add('<http://example.com/anotherGreatBook> dc:creator "June Doe (june@example.com)" .')
+  .add('<http://example.com/anotherGreatBook> dc:format "application/pdf" .')
+  .add('<http://example.com/anotherGreatBook> dc:language "en" .')
+  .add('<http://example.com/anotherGreatBook> dc:rights "Copyright (C) 2004 Examples-R-Us. All rights reserved." .')
+  .add('<http://example.com/anotherGreatBook> dct:issued "2004-05-03"^^xsd:date .')
+  .add('<http://example.com/anotherGreatBook> rdfs:seeAlso <http://example.com/aReallyGreatBook> .')
+  .add('<http://example.com/aBookCritic> ex:likes <http://example.com/aReallyGreatBook> .')
+  .add('<http://example.com/aBookCritic> ex:dislikes <http://example.com/anotherGreatBook> .');
 
 module("Triplestore Tests");
 
@@ -32,6 +70,9 @@ test("creating a triple store from an array of $.rdf.triple objects", function()
 	equals(rdf.length, 0, "the length of the matches should be zero");
 	equals(rdf.databank.triples()[0], triples[0]);
 	equals(rdf.databank.triples()[1], triples[1]);
+	var d = rdf.describe(['<photo1.jpg>']);
+	equals(d[0], triples[0]);
+	equals(d[1], triples[1]);
 });
 
 test("creating a triple store from an array of strings", function() {
@@ -45,12 +86,12 @@ test("creating a triple store from an array of strings", function() {
 	equals(rdf.length, 0, "the length of the query should be zero");
 	equals(rdf.size(), 0, "the size of the query should be zero");
 	var triples = rdf.databank.triples();
-	ok(triples[0].subject.resource, "the subject of the first triple should be a resource");
-	ok(triples[0].property.resource, "the property of the first triple should be a resource");
-	ok(triples[0].object.resource, "the object of the first triple should be a resource");
-	ok(triples[1].subject.resource, "the subject of the first triple should be a resource");
-	ok(triples[1].property.resource, "the property of the first triple should be a resource");
-	ok(triples[1].object.resource, "the object of the first triple should be a resource");
+	equals(triples[0].subject.type, 'uri', "the subject of the first triple should be a resource");
+	equals(triples[0].property.type, 'uri', "the property of the first triple should be a resource");
+	equals(triples[0].object.type, 'uri', "the object of the first triple should be a resource");
+	equals(triples[1].subject.type, 'uri', "the subject of the first triple should be a resource");
+	equals(triples[1].property.type, 'uri', "the property of the first triple should be a resource");
+	equals(triples[1].object.type, 'uri', "the object of the first triple should be a resource");
 });
 
 test("adding duplicate triples to a triple store", function() {
@@ -73,8 +114,15 @@ test("selecting triples using a search pattern", function() {
 	equals(rdf.length, 0);
 	var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>');
 	equals(filtered.length, 2, "number of items after filtering");
-	equals(filtered[0].photo.uri, $.uri('photo1.jpg'));
-	equals(filtered[1].photo.uri, $.uri('photo2.jpg'));
+	equals(filtered[0].photo.value, $.uri('photo1.jpg'));
+	equals(filtered[1].photo.value, $.uri('photo2.jpg'));
+	var selected = filtered.select();
+	equals(selected[0].photo.type, 'uri');
+	equals(selected[0].photo.value, $.uri('photo1.jpg'));
+	equals(selected[1].photo.type, 'uri');
+	equals(selected[1].photo.value, $.uri('photo2.jpg'));
+	var d = filtered.describe(['?photo']);
+	equals(d.length, 3);
 });
 
 test("creating triples and specifying options should helpfully bind prefixes", function() {
@@ -103,10 +151,10 @@ test("adding another triple that matches the original search pattern", function(
 	  .add('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .');
 	var filtered = rdf.where('?photo dc:creator <http://www.blogger.com/profile/1109404>');
 	equals(filtered.length, 1, "number of items after filtering");
-	equals(filtered[0].photo.uri, $.uri('photo1.jpg'));
+	equals(filtered[0].photo.value, $.uri('photo1.jpg'));
 	var added = filtered.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .');
 	equals(filtered.length, 2, "number of items after filtering");
-	equals(filtered[1].photo.uri, $.uri('photo2.jpg'));
+	equals(filtered[1].photo.value, $.uri('photo2.jpg'));
 });
 
 test("selecting triples using two search patterns", function() {
@@ -121,12 +169,19 @@ test("selecting triples using two search patterns", function() {
 		.where('?photo dc:creator ?creator')
 		.where('?creator foaf:img ?photo');
 	equals(filtered.length, 1, "number of items after filtering");
-	equals(filtered[0].photo.uri, $.uri('photo1.jpg'));
-	equals(filtered[0].creator.uri, $.uri('http://www.blogger.com/profile/1109404'));
+	equals(filtered[0].photo.value, $.uri('photo1.jpg'));
+	equals(filtered[0].creator.value, $.uri('http://www.blogger.com/profile/1109404'));
 	equals(filtered.sources()[0][0], $.rdf.triple(triples[0], {namespaces: namespaces}));
 	equals(filtered.sources()[0][1], $.rdf.triple(triples[1], {namespaces: namespaces}));
-	equals(filtered[0].photo.uri, $.uri('photo1.jpg'));
-	equals(filtered[0].creator.uri, $.uri('http://www.blogger.com/profile/1109404'))
+	var selected = filtered.select();
+	equals(selected[0].photo.type, 'uri');
+	equals(selected[0].photo.value, $.uri('photo1.jpg'));
+	equals(selected[0].creator.type, 'uri');
+	equals(selected[0].creator.value, 'http://www.blogger.com/profile/1109404');
+	var selected2 = filtered.select(['creator']);
+	equals(selected2[0].creator.type, 'uri');
+	equals(selected2[0].creator.value, 'http://www.blogger.com/profile/1109404');
+	ok(selected2[0].photo === undefined, 'there should not be a photo property');
 });
 
 test("selecting triples using two search patterns, then adding a triple", function() {
@@ -141,10 +196,10 @@ test("selecting triples using two search patterns, then adding a triple", functi
 		.where('?photo dc:creator ?creator')
 		.where('?creator foaf:img ?photo');
 	equals(filtered.length, 1, "number of items after filtering");
-	equals(filtered[0].photo.uri, $.uri('photo1.jpg'));
+	equals(filtered[0].photo.value, $.uri('photo1.jpg'));
 	var added = rdf.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .');
 	equals(filtered.length, 2, "number of items after adding a new triple");
-	equals(filtered[1].photo.uri, $.uri('photo2.jpg'));
+	equals(filtered[1].photo.value, $.uri('photo2.jpg'));
 });
 
 test("using a callback function on each match", function() {
@@ -164,8 +219,8 @@ test("using a callback function on each match", function() {
 		photos.push(match.photo);
 	});
 	equals(count, 2, "it should iterate twice");
-	equals(photos[0].uri, $.uri('photo1.jpg'));
-	equals(photos[1].uri, $.uri('photo2.jpg'));
+	equals(photos[0].value, $.uri('photo1.jpg'));
+	equals(photos[1].value, $.uri('photo2.jpg'));
 });
 
 test("using three arguments with each() to get the source triples", function() {
@@ -200,7 +255,7 @@ test("mapping each match to an array", function() {
 		.where('?photo dc:creator ?creator')
 		.where('?creator foaf:img ?photo');
 	var photos = rdf.map(function () {
-	  return this.photo.uri;
+	  return this.photo.value;
 	});
 	equals(photos[0], $.uri('photo1.jpg'));
 	equals(photos[1], $.uri('photo2.jpg'));
@@ -216,7 +271,7 @@ test("using the result of bindings() as a jQuery objectct", function() {
 		.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .')
 		.where('?photo dc:creator ?creator')
 		.where('?creator foaf:img ?photo');
-	var photos = rdf.map(function () { return this.photo.uri });
+	var photos = rdf.map(function () { return this.photo.value });
 	equals(photos[0], $.uri('photo1.jpg'));
 	equals(photos[1], $.uri('photo2.jpg'));
 });
@@ -331,9 +386,9 @@ test("creating an optional clause", function() {
     .optional('?x foaf:mbox ?mbox');
   equals(rdf.length, 3, "there should be three matches");
   equals(rdf[0].name.value, "Alice");
-  equals(rdf[0].mbox.uri, 'mailto:alice@example.com');
+  equals(rdf[0].mbox.value, 'mailto:alice@example.com');
   equals(rdf[1].name.value, "Alice");
-  equals(rdf[1].mbox.uri, 'mailto:alice@work.example');
+  equals(rdf[1].mbox.value, 'mailto:alice@work.example');
   equals(rdf[2].name.value, "Bob");
   equals(rdf[2].mbox, undefined);
 });
@@ -364,9 +419,9 @@ test("adding a triple that should cause the creation of two matches", function()
   rdf.add('_:a  foaf:name       "Alice" .');
   equals(rdf.length, 2, "there should be two matches");
   equals(rdf[0].name.value, "Alice");
-  equals(rdf[0].mbox.uri, 'mailto:alice@example.com');
+  equals(rdf[0].mbox.value, 'mailto:alice@example.com');
   equals(rdf[1].name.value, "Alice");
-  equals(rdf[1].mbox.uri, 'mailto:alice@work.example');
+  equals(rdf[1].mbox.value, 'mailto:alice@work.example');
 });
 
 test("adding a triple that satisfies an optional clause", function() {
@@ -380,7 +435,7 @@ test("adding a triple that satisfies an optional clause", function() {
   rdf = rdf.add('_:a foaf:mbox <mailto:alice@example.com> .')
   equals(rdf.length, 1, "there should be one match");
   equals(rdf[0].name.value, "Alice");
-  equals(rdf[0].mbox.uri, 'mailto:alice@example.com');
+  equals(rdf[0].mbox.value, 'mailto:alice@example.com');
 });
 
 test("multiple optional clauses", function() {
@@ -396,9 +451,9 @@ test("multiple optional clauses", function() {
   equals(rdf.length, 2, "there should be two matches");
   equals(rdf[0].name.value, "Alice");
   equals(rdf[0].mbox, undefined);
-  equals(rdf[0].hpage.uri, 'http://work.example.org/alice/');
+  equals(rdf[0].hpage.value, 'http://work.example.org/alice/');
   equals(rdf[1].name.value, "Bob");
-  equals(rdf[1].mbox.uri, 'mailto:bob@work.example');
+  equals(rdf[1].mbox.value, 'mailto:bob@work.example');
   equals(rdf[1].hpage, undefined);
 });
 
@@ -417,12 +472,12 @@ test("creating a union from two sets of triples", function() {
   rdf = rdf
     .where('?photo dc:creator ?person');
   equals(rdf.length, 1, "it should contain one match");
-  equals(rdf.get(0).photo.uri, $.uri('photo1.jpg'));
+  equals(rdf.get(0).photo.value, $.uri('photo1.jpg'));
   equals(rdf.get(0).person.value, "Jane");
   rdf = rdf
     .where('?photo foaf:depicts ?person');
   equals(rdf.length, 1, "it should contain one match");
-  equals(rdf.get(0).photo.uri, $.uri('photo1.jpg'));
+  equals(rdf.get(0).photo.value, $.uri('photo1.jpg'));
   equals(rdf.get(0).person.value, "Jane");
 });
 
@@ -704,10 +759,10 @@ test("getting all the data about a particular resource", function () {
   	.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .')
     .about('<http://www.blogger.com/profile/1109404>');
   equals(rdf.length, 2, "there are two triples about <http://www.blogger.com/profile/1109404>");
-  equals(rdf[0].property.uri, ns.foaf + 'img');
-  equals(rdf[0].value.uri, $.uri('photo1.jpg'));
-  equals(rdf[1].property.uri, ns.foaf + 'img');
-  equals(rdf[1].value.uri, $.uri('photo2.jpg'));
+  equals(rdf[0].property.value, ns.foaf + 'img');
+  equals(rdf[0].value.value, $.uri('photo1.jpg'));
+  equals(rdf[1].property.value, ns.foaf + 'img');
+  equals(rdf[1].value.value, $.uri('photo2.jpg'));
 });
 
 test("getting the difference between two top-level queries", function () {
@@ -741,6 +796,14 @@ test("creating a new databank", function() {
 	equals(data.tripleStore[triples[1].subject].length, 1);
 	equals(data.tripleStore[triples[1].subject][0], triples[1]);
 	equals(data.size(), 2);
+	
+	var e = data.export();
+	ok(e[triples[0].subject.value] !== undefined, 'the export should have a property equal to the subject of the first triple');
+	ok(e[triples[1].subject.value] !== undefined, 'the export should have a property equals to the subject of the second triple');
+	ok(e[triples[0].subject.value][triples[0].property.value], 'expecting { subject: { property: { value }}}');
+	ok(e[triples[1].subject.value][triples[1].property.value], 'expecting { subject: { property: { value }}}');
+	equals(e[triples[0].subject.value][triples[0].property.value][0].type, 'uri');
+	equals(e[triples[0].subject.value][triples[0].property.value][0].value, 'http://www.blogger.com/profile/1109404');
 });
 
 test("getting the triples from a databank", function() {
@@ -771,6 +834,93 @@ test("getting the difference between two databanks", function () {
   equals(diff2.triples()[0], $.rdf.triple('_:b foaf:surname "Jones"', { namespaces: { foaf: ns.foaf }}));
 });
 
+test("describing a resource that is not the object of any triples, and the subject of two", function () {
+  equals(books.size(), 29);
+  var d1 = books.describe(['<http://example.com/aBookCritic>']);
+  equals(d1.length, 2);
+  equals(d1[0], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/likes> <http://example.com/aReallyGreatBook> .'));
+  equals(d1[1], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/dislikes> <http://example.com/anotherGreatBook> .'));  
+});
+
+test("describing a resource that is also the object of two triples", function () {
+  equals(books.size(), 29);
+  var d1 = books.describe(['<http://example.com/anotherGreatBook>']);
+  equals(d1.length, 10);
+  /*
+  .add('<http://example.com/anotherGreatBook> dc:title "Another Great Book" .')
+  .add('<http://example.com/anotherGreatBook> dc:publisher "Examples-R-Us" .')
+  .add('<http://example.com/anotherGreatBook> dc:creator "June Doe (june@example.com)" .')
+  .add('<http://example.com/anotherGreatBook> dc:format "application/pdf" .')
+  .add('<http://example.com/anotherGreatBook> dc:language "en" .')
+  .add('<http://example.com/anotherGreatBook> dc:rights "Copyright (C) 2004 Examples-R-Us. All rights reserved." .')
+  .add('<http://example.com/anotherGreatBook> dct:issued "2004-05-03"^^xsd:date .')
+  .add('<http://example.com/anotherGreatBook> rdfs:seeAlso <http://example.com/aReallyGreatBook> .')
+  .add('<http://example.com/aReallyGreatBook> rdfs:seeAlso <http://example.com/anotherGreatBook> .')
+  .add('<http://example.com/aBookCritic> ex:dislikes <http://example.com/anotherGreatBook> .');
+  */
+});
+
+test("describing a resource with a property that holds a blank node", function () {
+  equals(books.size(), 29);
+  var d1 = books.describe(['<http://example.com/aReallyGreatBook>']);
+  equals(d1.length, 18);
+  /*
+  .add('<http://example.com/aReallyGreatBook> dc:title "A Really Great Book" .')
+  .add('<http://example.com/aReallyGreatBook> dc:publisher "Examples-R-Us" .')
+  .add('<http://example.com/aReallyGreatBook> dc:creator _:creator .')
+  .add('_:creator a <http://xmlns.com/foaf/0.1/Person> .')
+  .add('_:creator foaf:name "John Doe" .')
+  .add('_:creator foaf:mbox "john@example.com" .')
+  .add('_:creator foaf:img <http://example.com/john.jpg> .')
+  .add('_:creator foaf:phone <tel:+1-999-555-1234> .')
+  .add('<http://example.com/aReallyGreatBook> dc:contributor _:contributor .')
+  .add('_:contributor a <http://xmlns.com/foaf/0.1/Person> .')
+  .add('_:contributor foaf:name "Jane Doe" .')
+  .add('<http://example.com/aReallyGreatBook> dc:language "en" .')
+  .add('<http://example.com/aReallyGreatBook> dc:format "applicaiton/pdf" .')
+  .add('<http://example.com/aReallyGreatBook> dc:rights "Copyright (C) 2004 Examples-R-Us. All rights reserved." .')
+  .add('<http://example.com/aReallyGreatBook> dct:issued "2004-01-19"^^xsd:date .')
+  .add('<http://example.com/aReallyGreatBook> rdfs:seeAlso <http://example.com/anotherGreatBook> .')
+  .add('<http://example.com/anotherGreatBook> rdfs:seeAlso <http://example.com/aReallyGreatBook> .')
+  .add('<http://example.com/aBookCritic> ex:likes <http://example.com/aReallyGreatBook> .')
+  */
+});
+
+test("describing a resource where there's a statement with this as an object, and a blank node as the subject", function () {
+  equals(books.size(), 29);
+  var d1 = books.describe(['<http://example.com/john.jpg>']);
+  equals(d1.length, 9);
+  /*
+  .add('<http://example.com/aReallyGreatBook> dc:creator _:creator .')
+  .add('_:creator a <http://xmlns.com/foaf/0.1/Person> .')
+  .add('_:creator foaf:name "John Doe" .')
+  .add('_:creator foaf:mbox "john@example.com" .')
+  .add('_:creator foaf:img <http://example.com/john.jpg> .')
+  .add('<http://example.com/john.jpg> a <http://xmlns.com/foaf/0.1/Image> .')
+  .add('<http://example.com/john.jpg> dc:format "image/jpeg" .')
+  .add('<http://example.com/john.jpg> dc:extent "1234" .')
+  .add('_:creator foaf:phone <tel:+1-999-555-1234> .')
+  */
+});
+
+test("describing two resources with overlapping triples", function () {
+  equals(books.size(), 29);
+  var d1 = books.describe(['_:creator', '<http://example.com/john.jpg>']);
+  equals(d1.length, 9);
+  /*
+  .add('<http://example.com/aReallyGreatBook> dc:creator _:creator .')
+  .add('_:creator a <http://xmlns.com/foaf/0.1/Person> .')
+  .add('_:creator foaf:name "John Doe" .')
+  .add('_:creator foaf:mbox "john@example.com" .')
+  .add('_:creator foaf:img <http://example.com/john.jpg> .')
+  .add('<http://example.com/john.jpg> a <http://xmlns.com/foaf/0.1/Image> .')
+  .add('<http://example.com/john.jpg> dc:format "image/jpeg" .')
+  .add('<http://example.com/john.jpg> dc:extent "1234" .')
+  .add('_:creator foaf:phone <tel:+1-999-555-1234> .')
+  */
+});
+
+
 module("Creating Patterns");
 
 test("two identical patterns", function() {
@@ -791,12 +941,12 @@ test("creating a triple with explicit subject, predicate and object", function()
 	var subject = 'http://www.example.com/foo/';
 	var object = 'mailto:someone@example.com';
 	var triple = $.rdf.triple('<' + subject + '>', 'dc:creator', '<' + object + '>', { namespaces: { dc: ns.dc }});
-  ok(triple.subject.resource, "the subject should be a resource");
-	equals(triple.subject.uri, subject);
-	ok(triple.property.resource, "the property should be a resource");
-	equals(triple.property.uri, ns.dc + 'creator');
-	ok(triple.object.resource, "the object should be a resource");
-	equals(triple.object.uri, object);
+  equals(triple.subject.type, 'uri', "the subject should be a resource");
+	equals(triple.subject.value, subject);
+	equals(triple.property.type, 'uri', "the property should be a resource");
+	equals(triple.property.value, ns.dc + 'creator');
+	equals(triple.object.type, 'uri', "the object should be a resource");
+	equals(triple.object.value, object);
 	equals(triple, '<' + subject + '> <' + ns.dc + 'creator> <' + object + '> .');
 });
 
@@ -805,9 +955,9 @@ test("creating an rdf:type triple", function() {
 	var object = 'doc:Document';
 	var doc = 'http://example.org/#ns';
 	var triple = $.rdf.triple('<' + subject + '>', 'a', object, { namespaces: { doc: doc }});
-	equals(triple.subject.uri, subject);
-	equals(triple.property.uri, ns.rdf + 'type');
-	equals(triple.object.uri, doc + 'Document');
+	equals(triple.subject.value, subject);
+	equals(triple.property.value, ns.rdf + 'type');
+	equals(triple.object.value, doc + 'Document');
 	equals(triple, '<' + subject + '> <' + ns.rdf + 'type> <' + doc + 'Document> .');
 });
 
@@ -816,17 +966,22 @@ test("creating a triple using a string", function() {
 	var object = 'mailto:someone@example.com';
 	var tstr = '<' + subject + '> dc:creator <' + object + '> .';
 	var triple = $.rdf.triple(tstr, { namespaces: { dc: ns.dc }});
-	equals(triple.subject.uri, subject);
-	equals(triple.property.uri, ns.dc + 'creator');
-	equals(triple.object.uri, object);
+	equals(triple.subject.value, subject);
+	equals(triple.property.value, ns.dc + 'creator');
+	equals(triple.object.value, object);
+	var e = triple.export();
+	ok(e[subject] !== undefined, 'the exported triple should have a property equal to the subject');
+	ok(e[subject][triple.property.value] !== undefined, 'the exported triple\'s subject property should have a property whose name is the property name');
+	equals(e[subject][triple.property.value].type, 'uri');
+	equals(e[subject][triple.property.value].value, object);
 });
 
 test("creating a triple using a string with a literal value", function() {
 	var subject = 'http://www.example.com/foo/';
 	var value = '"foo"';
 	var triple = $.rdf.triple('<' + subject + '> dc:subject ' + value, { namespaces: { dc: ns.dc }});
-	equals(triple.subject.uri, subject);
-	equals(triple.property.uri, ns.dc + 'subject');
+	equals(triple.subject.value, subject);
+	equals(triple.property.value, ns.dc + 'subject');
 	ok(!triple.object.resource, "the object isn't a resource");
 	equals(triple.object.value, 'foo');
 });
@@ -835,33 +990,33 @@ test("creating a triple using a string with a literal value with a space in it",
 	var subject = 'http://www.example.com/foo/';
 	var value = '"foo bar"';
 	var triple = $.rdf.triple('<' + subject + '> dc:subject ' + value, { namespaces: { dc: ns.dc }});
-	equals(triple.subject.uri, subject);
-	equals(triple.property.uri, ns.dc + 'subject');
+	equals(triple.subject.value, subject);
+	equals(triple.property.value, ns.dc + 'subject');
 	ok(!triple.object.resource, "the object isn't a resource");
 	equals(triple.object.value, 'foo bar');
 });
 
 test("creating a triple with an unprefixed name and a value with a space in it", function() {
 	var triple = $.rdf.triple(':book1  dc:title  "SPARQL Tutorial" .', { namespaces: { '': 'http://example.org/book/', dc: ns.dc }});
-	equals(triple.subject.uri, 'http://example.org/book/book1');
-	equals(triple.property.uri, ns.dc + 'title');
+	equals(triple.subject.value, 'http://example.org/book/book1');
+	equals(triple.property.value, ns.dc + 'title');
 	equals(triple.object.value, 'SPARQL Tutorial');
 });
 
 test("creating a triple with a literal value with quotes in it", function() {
 	var triple = $.rdf.triple('<> dc:title "E = mc<sup xmlns=\\"http://www.w3.org/1999/xhtml\\">2</sup>: The Most Urgent Problem of Our Time"^^rdf:XMLLiteral .', { namespaces: { dc: ns.dc, rdf: ns.rdf }});
-	equals(triple.subject.uri, $.uri.base());
-	equals(triple.property.uri, ns.dc + 'title');
+	equals(triple.subject.value, $.uri.base());
+	equals(triple.property.value, ns.dc + 'title');
 	equals(triple.object.value, 'E = mc<sup xmlns="http://www.w3.org/1999/xhtml">2</sup>: The Most Urgent Problem of Our Time');
 	equals(triple.object.datatype, ns.rdf + 'XMLLiteral');
 });
 
 test("creating a triple that belongs to a graph", function() {
   var triple = $.rdf.triple('<d> <e> <f>', { graph: '<>' });
-  equals(triple.subject.uri, $.uri('d'));
-  equals(triple.property.uri, $.uri('e'));
-  equals(triple.object.uri, $.uri('f'));
-  equals(triple.graph.uri, $.uri.base());
+  equals(triple.subject.value, $.uri('d'));
+  equals(triple.property.value, $.uri('e'));
+  equals(triple.object.value, $.uri('f'));
+  equals(triple.graph.value, $.uri.base());
 });
 
 test("two triples that belong to different graphs", function() {
@@ -879,29 +1034,38 @@ test("two identical resources", function() {
 	ok(r1 === r2, "should equal each other");
 });
 
+test("a resource", function() {
+  var r = $.rdf.resource('<http://www.example.org/subject>');
+  equals(r.value, 'http://www.example.org/subject', 'should have a value property containing the uri');
+  equals(r.type, 'uri', 'should have a type of "uri"');
+  var e = r.export();
+  equals(e.type, 'uri');
+  equals(e.value, 'http://www.example.org/subject');
+});
+
 test("creating a resource with strings in angle brackets (URIs)", function() {
 	var u = 'http://www.example.org/subject';
 	var r = $.rdf.resource('<' + u + '>');
-	equals(r.uri, u);
+	equals(r.value, u);
 });
 
 test("creating a resource with a relative uri", function() {
 	var u = 'subject';
 	var r = $.rdf.resource('<' + u + '>');
-	equals('' + r.uri, '' + $.uri(u));
+	equals('' + r.value, '' + $.uri(u));
 });
 
 test("creating a resource with a relative uri and supplying a base uri", function() {
 	var u = 'subject';
 	var base = 'http://www.example.org/';
 	var r = $.rdf.resource('<' + u + '>', { base: base });
-	equals('' + r.uri, '' + $.uri.resolve(u, base));
+	equals('' + r.value, '' + $.uri.resolve(u, base));
 });
 
 test("creating a resource with a uri that contains a greater-than sign", function() {
 	var u = 'http://www.example.org/a>b';
 	var r = $.rdf.resource('<' + u.replace(/>/g, '\\>') + '>');
-	equals(r.uri, u);
+	equals(r.value, u);
 });
 
 test("creating a resource using a string that looks like an absolute uri", function() {
@@ -918,13 +1082,13 @@ test("creating a resource from a curie", function() {
 	var dc = "http://purl.org/dc/elements/1.1/";
 	var c = 'dc:creator';
 	var r = $.rdf.resource(c, { namespaces: { dc: dc } });
-	equals(r.uri, dc + 'creator');
+	equals(r.value, dc + 'creator');
 });
 
 test("creating a resource from a qname starting with ':'", function() {
 	var d = 'http://www.example.com/foo/';
 	var r = $.rdf.resource(':bar', { namespaces: { '': d }});
-	equals(r.uri, d + 'bar');
+	equals(r.value, d + 'bar');
 });
 
 test("creating a resource from a qname starting with ':' with no default namespace binding", function() {
@@ -939,7 +1103,7 @@ test("creating a resource from a qname starting with ':' with no default namespa
 test("creating a resource from a qname ending with ':'", function() {
 	var foo = 'http://www.example.com/foo/'
 	var r = $.rdf.resource('foo:', { namespaces: { foo: foo }});
-	equals(r.uri, foo);
+	equals(r.value, foo);
 });
 
 test("creating a resource from a qname ending with ':' with no binding for the prefix", function() {
@@ -957,6 +1121,12 @@ test("two identical literals", function() {
 	var l1 = $.rdf.literal('"foo"');
 	var l2 = $.rdf.literal('"foo"');
 	ok(l1 === l2, "should be equal");
+});
+
+test("a literal", function() {
+  var l = $.rdf.literal('"foo"');
+  equals(l.value, 'foo', 'should have a value property');
+  equals(l.type, 'literal', 'should have a type of "literal"');
 });
 
 test("creating a literal with a datatype", function() {
@@ -1081,6 +1251,10 @@ test("creating a date by specifying the datatype in the value", function() {
 	equals(r.value, '2008-10-05');
 	equals(r.datatype, 'http://www.w3.org/2001/XMLSchema#date');
 	equals(r, '"2008-10-05"^^<http://www.w3.org/2001/XMLSchema#date>')
+	var e = r.export();
+	equals(r.type, 'literal');
+	equals(r.value, '2008-10-05');
+	equals(r.datatype, 'http://www.w3.org/2001/XMLSchema#date');
 });
 
 test("creating a literal with a language by specifying the language in the value", function() {
@@ -1088,6 +1262,10 @@ test("creating a literal with a language by specifying the language in the value
 	equals(r.value, 'chat');
 	equals(r.lang, 'fr');
 	equals(r, '"chat"@fr');
+	var e = r.export();
+	equals(r.type, 'literal')
+	equals(r.value, 'chat');
+	equals(r.lang, 'fr');
 });
 
 module("Creating blank nodes");
@@ -1100,9 +1278,13 @@ test("two blank nodes with the same id", function() {
 
 test("creating a blank node", function() {
 	var r = $.rdf.blank('_:foo');
-	equals(r.resource, true);
-	equals(r.blank, true);
+	equals(r.type, 'bnode');
+	equals(r.value, '_:foo');
 	equals(r.id, 'foo');
+	var e = r.export();
+	equals(e.type, 'bnode');
+	equals(e.value, '_:foo');
+	ok(e.id === undefined, 'the exported version of a blank node should not have an id');
 });
 
 test("creating two blank nodes", function() {
