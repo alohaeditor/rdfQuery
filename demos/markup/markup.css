@@ -128,11 +128,14 @@ h1 {
 	position: absolute;
 	top: 66%;
 	height: 33%;
+	overflow: auto;
 	width: 100%;
 }
-#data p {
-	width: 80%;
+
+#data form {
+  width: 80%;
 }
+
 #data input,
 #data textarea {
 	width: 120%;
@@ -141,4 +144,40 @@ h1 {
 
 #data input.error {
 	border: 2px solid #BF6930;
+}
+
+#messages {
+  width: 96%;
+  position: relative;
+}
+
+#help, #response {
+  margin-top: 0;
+  width: 47%;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+#help {
+  float: left;
+}
+
+#response {
+  float: right;
+  text-align: right;
+  font-size: 0.8em;
+  line-height: 1.4em;
+  background-color: #E6D8CF;
+  border: 1px solid #E6A173;
+  color: black;
+  padding-top: 0.2em;
+}
+
+#answer {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+kbd, #response, #answer {
+  font-family: "Helvetica", "Arial", sans-serif;
 }

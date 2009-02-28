@@ -12,8 +12,10 @@
   <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8" />
     <title>Mark it up!</title>
+    <link rel="stylesheet" type="text/css" href="../theme/ui.all.css" />
     <link rel="stylesheet" type="text/css" href="markup.css" />
     <script type="text/javascript" src="../jquery-1.3.min.js"></script>
+    <script type="text/javascript" src="../jquery-ui-personalized-1.6rc6.min.js"></script>
     <script type="text/javascript" src="../../jquery.uri.js"></script>
     <script type="text/javascript" src="../../jquery.xmlns.js"></script>
     <script type="text/javascript" src="../../jquery.curie.js"></script>
@@ -40,12 +42,22 @@
             Note:
             <input id="statement" />
           </p>
-          <p>
-            <textarea id="source" rows="5" cols="80">
-            </textarea>
-          </p>
         </form>
+        <div id="messages">
+          <p id="help">
+            You can enter statements, such as:<br />
+            <kbd>Erasmus Darwin was Robert Darwin's father</kbd><br />
+            or questions such as:<br />
+            <kbd>Who were Charles Robert Darwin's parents?</kbd>
+          </p>
+          <p id="response">
+            Confirmation or answers will appear here.
+          </p>
+        </div>
       </div>
+      <p id="answer">
+        This is the answer!
+      </p>
     </div>
     <div id="summary">
       <ul class="classes">
