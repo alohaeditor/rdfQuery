@@ -19,7 +19,7 @@
       ns = elem.data('xmlns'),
       e = elem[0], a, p, i,
       decl = prefix ? 'xmlns:' + prefix : 'xmlns',
-      tag, found = false;;
+      tag, found = false;
     if (uri === undefined) {
       if (prefix === undefined) { // get the in-scope declarations on the first element
         if (ns === undefined) {
@@ -44,14 +44,16 @@
               }
             }
           }
-          inherited = inherited || (elem.parent().is('*') ? elem.parent().xmlns() : {});
+          inherited = inherited || (e.parentNode.nodeType === 1 ? elem.parent().xmlns() : {});
           ns = found ? $.extend({}, inherited, ns) : inherited;
           elem.data('xmlns', ns);
         }
         return ns;
       } else if (typeof prefix === 'object') { // set the prefix mappings defined in the object
         for (p in prefix) {
-          this.xmlns(p, prefix[p]);
+          if (typeof prefix[p] === 'string') {
+            this.xmlns(p, prefix[p]);
+          }
         }
         this.find('*').andSelf().removeData('xmlns');
         return this;
@@ -72,7 +74,9 @@
     if (typeof prefix === 'object') {
       if (prefix.length === undefined) { // assume an object representing namespaces
         for (p in prefix) {
-          this.removeXmlns(p);
+          if (typeof prefix[p] === 'string') {
+            this.removeXmlns(p);
+          }
         }
       } else { // it's an array
         for (i = 0; i < prefix.length; i += 1) {
@@ -100,8 +104,8 @@
       // there's a prefix on the name, but we can't get at it
       throw "XMLinHTML: Unable to get the prefix to resolve the name of this element";
     }
-    m = /^(([^:]+):)?([^:]+)$/.exec(name),
-    prefix = m[2] || '',
+    m = /^(([^:]+):)?([^:]+)$/.exec(name);
+    prefix = m[2] || '';
     namespace = this.xmlns(prefix);
     if (namespace === undefined && prefix !== '') {
       throw "MalformedQName: The prefix " + prefix + " is not declared";

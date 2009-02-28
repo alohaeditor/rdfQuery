@@ -797,9 +797,9 @@ test("creating a new databank", function() {
 	equals(data.tripleStore[triples[1].subject][0], triples[1]);
 	equals(data.size(), 2);
 	
-	var e = data.export();
-	ok(e[triples[0].subject.value] !== undefined, 'the export should have a property equal to the subject of the first triple');
-	ok(e[triples[1].subject.value] !== undefined, 'the export should have a property equals to the subject of the second triple');
+	var e = data.dump();
+	ok(e[triples[0].subject.value] !== undefined, 'the dump should have a property equal to the subject of the first triple');
+	ok(e[triples[1].subject.value] !== undefined, 'the dump should have a property equals to the subject of the second triple');
 	ok(e[triples[0].subject.value][triples[0].property.value], 'expecting { subject: { property: { value }}}');
 	ok(e[triples[1].subject.value][triples[1].property.value], 'expecting { subject: { property: { value }}}');
 	equals(e[triples[0].subject.value][triples[0].property.value][0].type, 'uri');
@@ -969,9 +969,9 @@ test("creating a triple using a string", function() {
 	equals(triple.subject.value, subject);
 	equals(triple.property.value, ns.dc + 'creator');
 	equals(triple.object.value, object);
-	var e = triple.export();
-	ok(e[subject] !== undefined, 'the exported triple should have a property equal to the subject');
-	ok(e[subject][triple.property.value] !== undefined, 'the exported triple\'s subject property should have a property whose name is the property name');
+	var e = triple.dump();
+	ok(e[subject] !== undefined, 'the dumped triple should have a property equal to the subject');
+	ok(e[subject][triple.property.value] !== undefined, 'the dumped triple\'s subject property should have a property whose name is the property name');
 	equals(e[subject][triple.property.value].type, 'uri');
 	equals(e[subject][triple.property.value].value, object);
 });
@@ -1038,7 +1038,7 @@ test("a resource", function() {
   var r = $.rdf.resource('<http://www.example.org/subject>');
   equals(r.value, 'http://www.example.org/subject', 'should have a value property containing the uri');
   equals(r.type, 'uri', 'should have a type of "uri"');
-  var e = r.export();
+  var e = r.dump();
   equals(e.type, 'uri');
   equals(e.value, 'http://www.example.org/subject');
 });
@@ -1251,7 +1251,7 @@ test("creating a date by specifying the datatype in the value", function() {
 	equals(r.value, '2008-10-05');
 	equals(r.datatype, 'http://www.w3.org/2001/XMLSchema#date');
 	equals(r, '"2008-10-05"^^<http://www.w3.org/2001/XMLSchema#date>')
-	var e = r.export();
+	var e = r.dump();
 	equals(r.type, 'literal');
 	equals(r.value, '2008-10-05');
 	equals(r.datatype, 'http://www.w3.org/2001/XMLSchema#date');
@@ -1262,7 +1262,7 @@ test("creating a literal with a language by specifying the language in the value
 	equals(r.value, 'chat');
 	equals(r.lang, 'fr');
 	equals(r, '"chat"@fr');
-	var e = r.export();
+	var e = r.dump();
 	equals(r.type, 'literal')
 	equals(r.value, 'chat');
 	equals(r.lang, 'fr');
@@ -1281,10 +1281,10 @@ test("creating a blank node", function() {
 	equals(r.type, 'bnode');
 	equals(r.value, '_:foo');
 	equals(r.id, 'foo');
-	var e = r.export();
+	var e = r.dump();
 	equals(e.type, 'bnode');
 	equals(e.value, '_:foo');
-	ok(e.id === undefined, 'the exported version of a blank node should not have an id');
+	ok(e.id === undefined, 'the dumped version of a blank node should not have an id');
 });
 
 test("creating two blank nodes", function() {

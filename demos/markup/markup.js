@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(document).ready(function () {
   var 
     ns = {
       rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
@@ -128,7 +128,7 @@ $(document).ready(function(){
         type: 'relation',
         range: '<http://xmlns.com/foaf/0.1/Person>',
         aliases: ['daughter']
-      },
+      }
     },
     
     rules = [{
@@ -201,29 +201,29 @@ $(document).ready(function(){
              '?gparent biografr:hasGrandchild ?gchild',
              '?gchild biografr:gender "female"']
     }, {
-     where: ['?gchild biografr:hasGrandparent ?gparent',
-             '?gparent biografr:gender "male"'],
-     then: ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gchild biografr:hasGrandfather ?gparent']
+      where: ['?gchild biografr:hasGrandparent ?gparent',
+              '?gparent biografr:gender "male"'],
+      then: ['?gparent a foaf:Person',
+             '?gchild a foaf:Person',
+             '?gchild biografr:hasGrandfather ?gparent']
     }, {
-     where: ['?gchild biografr:hasGrandparent ?gparent',
-             '?gparent biografr:gender "female"'],
-     then: ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gchild biografr:hasGrandmother ?gparent']
+      where: ['?gchild biografr:hasGrandparent ?gparent',
+              '?gparent biografr:gender "female"'],
+      then: ['?gparent a foaf:Person',
+             '?gchild a foaf:Person',
+             '?gchild biografr:hasGrandmother ?gparent']
     }, {
-     where: ['?gchild biografr:hasGrandfather ?gparent'],
-     then: ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gchild biografr:hasGrandparent ?gparent',
-            '?gparent biografr:gender "male"']
+      where: ['?gchild biografr:hasGrandfather ?gparent'],
+      then: ['?gparent a foaf:Person',
+             '?gchild a foaf:Person',
+             '?gchild biografr:hasGrandparent ?gparent',
+             '?gparent biografr:gender "male"']
     }, {
-     where: ['?gchild biografr:hasGrandmother ?gparent'],
-     then: ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gchild biografr:hasGrandparent ?gparent',
-            '?gparent biografr:gender "female"']
+      where: ['?gchild biografr:hasGrandmother ?gparent'],
+      then: ['?gparent a foaf:Person',
+             '?gchild a foaf:Person',
+             '?gchild biografr:hasGrandparent ?gparent',
+             '?gparent biografr:gender "female"']
     }],
   
     /* S is a O */
@@ -238,15 +238,16 @@ $(document).ready(function(){
     /* Where was S's P */
     isAQueryRegex = /^\s*What\s+(?:was|is|are|were)\s+(\S(?:[^'?]|'[^s])*)\??$/,
     /* Who were S's Ps */
-    queryRegex1 = /^\s*(?:Who|Where|What|When|Which)\s+(?:was|is|are|were)\s+(\S.*\S)'s\s+(?:(\S.*\S)s|(\S.*\S))\??$/,
+    queryRegex1 = /^\s*(?:Who|Where|What|When|Which)\s+(?:was|is|are|were)\s+(\S.*\S)'s\s+(?:(\S.*\S)s|(\S.*[^\s?]))\??$/,
     /* Which P was S in? */
     queryRegex2 = /^\s*(?:Who|Where|What|When|Which)\s+(\S.*\S)\s+(?:was|is|are|were)\s+(\S.*\S)\s+(?:on|in|of|at|as|to|from|for)\??$/,
     /* Where was S P */
     queryRegex3 = /^\s*(?:Who|Where|When)\s+(?:was|is|are|were)\s+(\S.*\S)\s+([^\s?]+)\??$/,
   
     aliases = {},
-    properties = [];
-    // spans = {};
+  
+    people = $('#people ul'),
+    places = $('#places ul'),
   
     makeID = function (label) {
       var matches = label.match(/[a-z][a-z0-9]*/ig);
@@ -332,7 +333,7 @@ $(document).ready(function(){
         do {
           rdf = rdf.where(conditions[j]);
           j += 1;
-        } while (j < conditions.length && rdf.length > 0)
+        } while (j < conditions.length && rdf.length > 0);
         if (rdf.length > 0) {
           j = 0;
           while (j < consequents.length) {
@@ -392,15 +393,15 @@ $(document).ready(function(){
     statement = {
       field: $('#statement'),
       error: $('#error'),
-      val: function() {
+      val: function () {
         return this.field.val();
       },
     
       isQuery: function () {
-        return /\?$/.test(this.val()) || /^(What|Where|When|Who|Which)\s/.test(this.val());
+        return (/\?$/).test(this.val()) || (/^(What|Where|When|Who|Which)\s/).test(this.val());
       },
     
-      validate: function() {
+      validate: function () {
         var triples;
         if (this.val() === '') {
           this.field.removeClass('error');
@@ -417,9 +418,11 @@ $(document).ready(function(){
         }
       },
     
-      triples: function() {
-        var rdf, labels, sLabel, sResource, pLabel, pResource, oLabel, object, 
-          pattern, result,
+      triples: function () {
+        var rdf, labels, sLabel, sResource, 
+          pLabel, pResource, pResources, pDef, range,
+          oLabel, object, 
+          pattern, result, i,
           matches = [], triple, triples = [];
         if (this.isQuery()) {
           if (isAQueryRegex.test(this.val())) {
@@ -476,7 +479,7 @@ $(document).ready(function(){
                 for (i = 0; i < pResources.length; i += 1) {
                   result += englishProperty(pResources[i]);
                   if (i !== pResources.length - 1) {
-                    result += ' or '
+                    result += ' or ';
                   }
                 }
                 result += '. Can you rephrase, please?';
@@ -518,7 +521,7 @@ $(document).ready(function(){
             }
             pResources = aliases[pLabel];
             if (pResources === undefined) {
-              return 'I don\'t recognise "' + prop + '".';
+              return 'I don\'t recognise "' + pLabel + '".';
             } else if (pResources.length === 1) {
               pResource = pResources[0];
               if (ontology[pResource].type !== 'property' && ontology[pResource].type !== 'relation') {
@@ -541,7 +544,7 @@ $(document).ready(function(){
                 for (i = 0; i < pResources.length; i += 1) {
                   result += englishProperty(pResources[i]);
                   if (i !== pResources.length - 1) {
-                    result += ' or '
+                    result += ' or ';
                   }
                 }
                 result += '. Can you rephrase, please?';
@@ -565,25 +568,6 @@ $(document).ready(function(){
           return $.rdf({ triples: triples, namespaces: ns });
         }
       }
-    },
-    
-    addIndividual = function (list, resource, label) {
-      var li;
-      if (label === undefined) {
-        label = resourceLabel(resource);
-      }
-      li = list
-        .append("\n")
-        .append('<li />')
-        .children('li:last')
-          .attr('id', resource.value.fragment)
-          .append('<h3>' + label + '</h3>')
-          .append('<ul class="properties" />')
-          .children('h3')
-            .bind('click', function () {
-              $(this).parent().toggleClass('open');
-              addDescription(resource);
-            });
     },
     
     addDescription = function (resource) {
@@ -631,6 +615,25 @@ $(document).ready(function(){
           ind.removeClass('open');
         }
       }
+    },
+    
+    addIndividual = function (list, resource, label) {
+      var li;
+      if (label === undefined) {
+        label = resourceLabel(resource);
+      }
+      li = list
+        .append("\n")
+        .append('<li />')
+        .children('li:last')
+        .attr('id', resource.value.fragment)
+        .append('<h3>' + label + '</h3>')
+        .append('<ul class="properties" />')
+        .children('h3')
+        .bind('click', function () {
+          $(this).parent().toggleClass('open');
+          addDescription(resource);
+        });
     },
     
     findSpan = function (resource) {
@@ -686,16 +689,7 @@ $(document).ready(function(){
         .each(function () {
           addIndividual(places, this.place, this.label.value);
         });
-    },
-    
-    /*
-    resetSource = function () {
-      $('#source').val($('#content').html());
-    },
-    */
-  
-    people = $('#people ul'),
-    places = $('#places ul');
+    };
   
   $('#people h2, #places h2')
     .bind('click', function () {
@@ -724,7 +718,7 @@ $(document).ready(function(){
     }
   });
 
-  $('#statement').bind("keyup", function(event) {
+  $('#statement').bind("keyup", function (event) {
     var val = statement.val(),
       test = function () {
         if (statement.val() === val) {
@@ -736,33 +730,41 @@ $(document).ready(function(){
     return true;
   });
   
-  $('#notes').bind("submit", function (event){
+  $('#notes').bind("submit", function (event) {
     var rdf, response;
     try {
       rdf = statement.triples();
       if (typeof(rdf) !== 'string') {
         if (statement.isQuery()) {
+          response = $('#response').text('');
+          response.append('Answering "' + statement.val() + '"');
           response = $('#answer').text('');
           response.dialog('option', 'title', statement.val());
-          rdf.each(function (i, data, triples) {
-            var label;
-            response.append('<br>');
-            if (this.result.type === 'uri') {
-              if (ontology[this.result]) {
-                label = ontology[this.result].aliases[0];
-                if (ontology[this.result].type === 'class') {
-                  response.append(/^aeiou/.test(label) ? 'an ' : 'a ');
-                }
-              } else {
-                label = resourceLabel(this.result);
+          if (rdf.length > 0) {
+            rdf.each(function (i, data, triples) {
+              var label;
+              if (i > 0) {
+                response.append('<br>');
               }
-            } else if (this.result.type === 'bnode') {
-              label = resourceLabel(this.result);
-            } else {
-              label = this.result.value;
-            }
-            response.append(label);
-          })
+              if (this.result.type === 'uri') {
+                if (ontology[this.result]) {
+                  label = ontology[this.result].aliases[0];
+                  if (ontology[this.result].type === 'class') {
+                    response.append(/^aeiou/.test(label) ? 'an ' : 'a ');
+                  }
+                } else {
+                  label = resourceLabel(this.result);
+                }
+              } else if (this.result.type === 'bnode') {
+                label = resourceLabel(this.result);
+              } else {
+                label = this.result.value;
+              }
+              response.append(label);
+            });
+          } else {
+            response.append('I don\'t know');
+          }
           response.dialog('open');
         } else {
           response = $('#response').text('');
@@ -781,9 +783,9 @@ $(document).ready(function(){
                 }
                 // spans[this.thing] = span;
                 span.rdfa(triples);
-                if (this.class === $.rdf.resource('<http://xmlns.com/foaf/0.1/Person>')) {
+                if (this['class'] === $.rdf.resource('<http://xmlns.com/foaf/0.1/Person>')) {
                   list = people;
-                } else if (this.class === $.rdf.resource('<http://www.w3.org/2006/vcard/ns#Address>')) {
+                } else if (this['class'] === $.rdf.resource('<http://www.w3.org/2006/vcard/ns#Address>')) {
                   list = places;
                 }
                 if (list !== undefined && $('#' + this.thing.value.fragment).length === 0) {

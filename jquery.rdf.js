@@ -160,6 +160,86 @@
       }
     },
     
+    resetQuery = function (query) {
+      query.length = 0;
+      query.matches = [];
+      $.each(query.children, function (i, child) {
+        resetQuery(child);
+      });
+      $.each(query.partOf, function (i, union) {
+        resetQuery(union);
+      });
+    },
+    
+    updateQuery = function (query, matches) {
+      if (matches.length > 0) {
+        $.each(query.children, function (i, child) {
+          leftActivate(child, matches);
+        });
+        $.each(query.partOf, function (i, union) {
+          updateQuery(union, matches);
+        });
+        $.each(matches, function (i, match) {
+          query.matches.push(match);
+          Array.prototype.push.call(query, match.bindings);
+        });
+      }
+    },
+    
+    leftActivate = function (query, matches) {
+      var newMatches;
+      if (query.union === undefined) {
+        if (query.top || query.parent.top) {
+          newMatches = query.alphaMemory;
+        } else {
+          matches = matches || query.parent.matches;
+          if ($.isFunction(query.filterExp)) {
+            newMatches = $.map(matches, function (match, i) {
+              return query.filterExp.call(match.bindings, i, match.bindings, match.triples) ? match : null;
+            });
+          } else {
+            newMatches = mergeMatches(matches, query.alphaMemory, query.filterExp.optional);
+          }
+        }
+      } else {
+        newMatches = $.map(query.union, function (q) {
+          return q.matches;
+        });
+      }
+      updateQuery(query, newMatches);
+    },
+    
+    rightActivate = function (query, match) {
+      var newMatches;
+      if (query.filterExp.optional) {
+        resetQuery(query);
+        leftActivate(query);
+      } else {
+        if (query.top || query.parent.top) {
+          newMatches = [match];
+        } else {
+          newMatches = mergeMatches(query.parent.matches, [match], false);
+        }
+        updateQuery(query, newMatches);
+      }
+    },
+    
+    addToQuery = function (query, triple) {
+      var match, 
+        bindings = query.filterExp.exec(triple);
+      if (bindings !== null) {
+        match = { triples: [triple], bindings: bindings };
+        query.alphaMemory.push(match);
+        rightActivate(query, match);
+      }
+    },
+    
+    addToQueries = function (queries, triple) {
+      $.each(queries, function (i, query) {
+        addToQuery(query, triple);
+      });
+    },
+    
     addToDatabankQueries = function (databank, triple) {
       var s = triple.subject,
         p = triple.property,
@@ -208,86 +288,6 @@
       }
     },
     
-    addToQueries = function (queries, triple) {
-      $.each(queries, function (i, query) {
-        addToQuery(query, triple);
-      });
-    },
-    
-    addToQuery = function (query, triple) {
-      var match, 
-        bindings = query.filterExp.exec(triple);
-      if (bindings !== null) {
-        match = { triples: [triple], bindings: bindings };
-        query.alphaMemory.push(match);
-        rightActivate(query, match);
-      }
-    },
-    
-    rightActivate = function (query, match) {
-      var newMatches;
-      if (query.filterExp.optional) {
-        resetQuery(query);
-        leftActivate(query);
-      } else {
-        if (query.top || query.parent.top) {
-          newMatches = [match];
-        } else {
-          newMatches = mergeMatches(query.parent.matches, [match], false);
-        }
-        updateQuery(query, newMatches);
-      }
-    },
-    
-    leftActivate = function (query, matches) {
-      var newMatches;
-      if (query.union === undefined) {
-        if (query.top || query.parent.top) {
-          newMatches = query.alphaMemory;
-        } else {
-          matches = matches || query.parent.matches;
-          if ($.isFunction(query.filterExp)) {
-            newMatches = $.map(matches, function (match, i) {
-              return query.filterExp.call(match.bindings, i, match.bindings, match.triples) ? match : null;
-            });
-          } else {
-            newMatches = mergeMatches(matches, query.alphaMemory, query.filterExp.optional);
-          }
-        }
-      } else {
-        newMatches = $.map(query.union, function (q) {
-          return q.matches;
-        });
-      }
-      updateQuery(query, newMatches);
-    },
-    
-    updateQuery = function (query, matches) {
-      if (matches.length > 0) {
-        $.each(query.children, function (i, child) {
-          leftActivate(child, matches);
-        });
-        $.each(query.partOf, function (i, union) {
-          updateQuery(union, matches);
-        });
-        $.each(matches, function (i, match) {
-          query.matches.push(match);
-          Array.prototype.push.call(query, match.bindings);
-        });
-      }
-    },
-    
-    resetQuery = function (query) {
-      query.length = 0;
-      query.matches = [];
-      $.each(query.children, function (i, child) {
-        resetQuery(child);
-      });
-      $.each(query.partOf, function (i, union) {
-        resetQuery(union);
-      });
-    },
-    
     json = function (triples) {
       var e = {},
         i, t, s, p;
@@ -301,7 +301,7 @@
         if (e[s][p] === undefined) {
           e[s][p] = [];
         }
-        e[s][p] = e[s][p].concat([t.object.export()]);
+        e[s][p].push(t.object.dump());
       }
       return e;
     };
@@ -323,7 +323,7 @@
     rdfquery: '0.4',
     
     init: function (options) {
-      var base, namespaces, optional, databanks, query = this;
+      var databanks;
       options = options || {};
       /* must specify either a parent or a union, otherwise it's the top */
       this.parent = options.parent;
@@ -389,7 +389,7 @@
           return query;
         } else if (this.top) {
           databank = triple.databank.add(this.databank);
-          query = $.rdf({ parent: triple.parent, databank: databank })
+          query = $.rdf({ parent: triple.parent, databank: databank });
           return query;
         } else if (this.union === undefined) {
           query = $.rdf({ union: [this, triple] });
@@ -425,13 +425,13 @@
     },
     
     where: function (filter, options) {
-      var query;
+      var query, base, namespaces, optional;
       options = options || {};
       if (typeof filter === 'string') {
         base = options.base || this.base();
-        namespaces = $.extend({}, this.prefix(), options.namespaces || {}),
+        namespaces = $.extend({}, this.prefix(), options.namespaces || {});
         optional = options.optional || false;
-        filter = $.rdf.pattern(filter, { namespaces: namespaces, base: base, optional: optional } );
+        filter = $.rdf.pattern(filter, { namespaces: namespaces, base: base, optional: optional });
       }
       query = $.rdf($.extend({}, options, { parent: this, filter: filter }));
       this.children.push(query);
@@ -553,7 +553,7 @@
 
   $.rdf.gleaners = [];
   
-  $.rdf.export = function (triples) {
+  $.rdf.dump = function (triples) {
     return json(triples);
   };
   
@@ -570,7 +570,7 @@
   */
 
   $.fn.rdf = function () {
-    var j, match, triples = [];
+    var triples = [];
     if ($(this).length > 0) {
       triples = $(this).map(function (i, elem) {
         return $.map($.rdf.gleaners, function (gleaner) {
@@ -682,7 +682,7 @@
         }
       } else {
         $.each(this.union, function (i, databank) {
-          databank.prefix(prefix, namespace);
+          databank.prefix(prefix, uri);
         });
         return this;
       }
@@ -691,7 +691,7 @@
     add: function (triple, options) {
       var base = (options && options.base) || this.base(),
         namespaces = $.extend({}, this.prefix(), (options && options.namespaces) || {}),
-        databank, triples, i;
+        databank;
       if (triple === this) {
         return this;
       } else if (triple.tripleStore !== undefined) {
@@ -734,7 +734,7 @@
       var store = data.tripleStore,
         diff = [];
       $.each(this.tripleStore, function (s, ts) {
-        ots = store[s];
+        var ots = store[s];
         if (ots === undefined) {
           diff = diff.concat(ts);
         } else {
@@ -799,8 +799,8 @@
       return $.unique(triples);
     },
     
-    export: function () {
-      return $.rdf.export(this.triples());
+    dump: function () {
+      return $.rdf.dump(this.triples());
     },
     
     toString: function () {
@@ -968,7 +968,7 @@
 
   $.rdf.triple.fn = $.rdf.triple.prototype = {
     init: function (s, p, o, options) {
-      var opts, m;
+      var opts;
       opts = $.extend({}, $.rdf.triple.defaults, options);
       this.subject = subject(s, opts);
       this.property = property(p, opts);
@@ -986,12 +986,12 @@
       return this;
     },
     
-    export: function () {
+    dump: function () {
       var e = {},
         s = this.subject.value.toString(),
         p = this.property.value.toString();
       e[s] = {};
-      e[s][p] = this.object.export();
+      e[s][p] = this.object.dump();
       return e;
     },
     
@@ -1065,11 +1065,11 @@
       return this;
     }, // end init
     
-    export: function () {
+    dump: function () {
       return {
         type: 'uri',
         value: this.value.toString()
-      }
+      };
     },
     
     toString: function () {
@@ -1119,11 +1119,11 @@
       return this;
     },
     
-    export: function () {
+    dump: function () {
       return {
         type: 'bnode',
         value: this.value
-      }
+      };
     },
     
     toString: function () {
@@ -1196,7 +1196,7 @@
       return this;
     }, // end init
     
-    export: function () {
+    dump: function () {
       var e = {
         type: 'literal',
         value: this.value.toString()

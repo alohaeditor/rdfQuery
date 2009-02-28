@@ -24,16 +24,13 @@
 
     rdfaCurieDefaults = $.fn.curie.defaults,
 
-    rdfAttributes = ['about', 'href', 'src', 'resource', 'property', 
-                     'rel', 'rev', 'typeof', 'content', 'datatype', 
-                     'lang', 'xml:lang'],
-
     attRegex = /\s([^ =]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^ >]+))/g,
     
     docResource = $.rdf.resource('<>'),
 
     getAttributes = function (elem) {
-      var i, e, a, name, value, attMap, ns = {}, atts = {};
+      var i, e, a, tag, name, value, attMap, prefix,
+        ns = {}, atts = {};
       e = elem[0];
       ns[':length'] = 0;
       tag = e.outerHTML;
@@ -115,7 +112,7 @@
     },
 
     getObjectResource = function (elem, context, relation) {
-      var r, resource, atts, curieOpts;
+      var r, resource, atts, curieOptions;
       context = context || {};
       atts = context.atts || getAttributes(elem).atts;
       r = relation === undefined ? atts.rel !== undefined || atts.rev !== undefined : relation;
@@ -164,7 +161,7 @@
     },
     
     getLang = function (elem, context) {
-      var atts, lang, parent;
+      var lang;
       context = context || {};
       if (context.atts) {
 	      lang = context.atts['xml:lang'];
@@ -246,8 +243,8 @@
     },
     
     rdfa = function (context) {
-      var i, subject, value, resource, lang, datatype, content, 
-        types, type, object, triple, parent,
+      var i, subject, resource, lang, datatype, content, 
+        types, object, triple, parent,
         properties, rels, revs, 
         forward, backward,
         triples = [],

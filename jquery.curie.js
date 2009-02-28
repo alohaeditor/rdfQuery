@@ -11,8 +11,6 @@
 /*global jQuery */
 (function ($) {
 	
-	var mem = {};
-	
 	$.curie = function (curie, options) {
 		var 
 			opts = $.extend({}, $.curie.defaults, options || {}),
@@ -75,12 +73,12 @@
 	$.fn.safeCurie = function (safeCurie, options) {
 		var opts = $.extend({}, $.fn.curie.defaults, { namespaces: this.xmlns() }, options || {});
 		return $.safeCurie(safeCurie, opts);
-	}
+	};
 	
 	$.fn.createCurie = function (uri, options) {
 		var opts = $.extend({}, $.fn.curie.defaults, { namespaces: this.xmlns() }, options || {});
 		return $.createCurie(uri, opts);
-	}
+	};
 
 	$.fn.curie.defaults = {
 		reserved: [

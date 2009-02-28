@@ -10,10 +10,6 @@
 /*global jQuery */
 (function ($) {
 
-	var
-		leadingTrailingSpace = /^[\u0020\n\r\t]+|[\u0020\n\r\t]+$/,
-		internalSpace = /[\u0020\n\r\t]+/;
-
 	$.typedValue = function (value, datatype) {
 		return $.typedValue.fn.init(value, datatype);
 	};
@@ -70,7 +66,7 @@
 		regex: /^[\-\+]?[0-9]+$/,
 		strip: true,
 		value: function (v) {
-			return parseInt(v);
+			return parseInt(v, 10);
 		}
 	};
 	
@@ -111,11 +107,11 @@
 		validate: function (v) {
 			var 
 				m = this.regex.exec(v),
-				year = parseInt(m[1]),
+				year = parseInt(m[1], 10),
 				tz = m[10] === undefined || m[10] === 'Z' ? '+0000' : m[10].replace(/:/, ''),
-				date, ms;
+				date;
 			if (year === 0 ||
-				  parseInt(tz) < -1400 || parseInt(tz) > 1400) {
+				  parseInt(tz, 10) < -1400 || parseInt(tz, 10) > 1400) {
 				return false;
 			}
 			try {
@@ -138,14 +134,14 @@
 		validate: function (v) {
 			var 
 				m = this.regex.exec(v),
-				year = parseInt(m[1]),
-				month = parseInt(m[2]),
-				day = parseInt(m[3]),
+				year = parseInt(m[1], 10),
+				month = parseInt(m[2], 10),
+				day = parseInt(m[3], 10),
 				tz = m[10] === undefined || m[10] === 'Z' ? '+0000' : m[10].replace(/:/, '');
 			if (year === 0 ||
 				  month > 12 ||
 				  day > 31 ||
-				  parseInt(tz) < -1400 || parseInt(tz) > 1400) {
+				  parseInt(tz, 10) < -1400 || parseInt(tz, 10) > 1400) {
 				return false;
 			} else {
 				return true;
@@ -177,7 +173,7 @@
 			throw {
 				name: "InvalidDatatype",
 				message: "The datatype " + datatype + " hasn't been registered"
-			}
+			};
 		} else if (d.regex.test(value)) {
 			return d.validate === undefined ? true : d.validate(value);
 		} else {
