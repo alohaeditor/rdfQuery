@@ -146,6 +146,16 @@ h1 {
 	border: 2px solid #BF6930;
 }
 
+#error {
+  position: absolute;
+  right: 5%;
+  top: 1.5em;
+  background-color: white;
+  color: #BF6930;
+  font-weight: bold;
+  padding: 0 0.5em;
+}
+
 #messages {
   width: 96%;
   position: relative;

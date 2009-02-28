@@ -236,11 +236,13 @@ $(document).ready(function(){
     objSubjPropRegex = /^\s*(.*\S)\s+(?:is|was|are|were)\s+(\S.*\S)'s\s+(\S.*\S)\.?\s*$/,
     
     /* Where was S's P */
-    isAQueryRegex = /^\s*What\s+(?:was|is|are|were)\s+(\S(?:[^']|'[^s])*\S)\?$/,
+    isAQueryRegex = /^\s*What\s+(?:was|is|are|were)\s+(\S(?:[^'?]|'[^s])*)\??$/,
     /* Who were S's Ps */
-    queryRegex1 = /^\s*(?:Who|Where|What|When|Which)\s+(?:was|is|are|were)\s+(\S.*\S)'s\s+(?:(\S.*\S)s|(\S.*\S))\?$/,
+    queryRegex1 = /^\s*(?:Who|Where|What|When|Which)\s+(?:was|is|are|were)\s+(\S.*\S)'s\s+(?:(\S.*\S)s|(\S.*\S))\??$/,
     /* Which P was S in? */
-    queryRegex2 = /^\s*(?:Who|Where|What|When|Which)\s+(\S.*\S)\s+(?:was|is|are|were)\s+(\S.*\S)\s+(?:on|in|of|at|as|to|from|for)\?$/,
+    queryRegex2 = /^\s*(?:Who|Where|What|When|Which)\s+(\S.*\S)\s+(?:was|is|are|were)\s+(\S.*\S)\s+(?:on|in|of|at|as|to|from|for)\??$/,
+    /* Where was S P */
+    queryRegex3 = /^\s*(?:Who|Where|When)\s+(?:was|is|are|were)\s+(\S.*\S)\s+([^\s?]+)\??$/,
   
     aliases = {},
     properties = [];
@@ -361,7 +363,7 @@ $(document).ready(function(){
     
     labelTriple = function (label) {
       var id, resource;
-      resource = aliases[label];
+      resource = aliases[label] && aliases[label][0];
       if (resource === undefined) {
         id = makeID(label);
         resource = $.rdf.resource('<#' + id + '>');
@@ -389,68 +391,29 @@ $(document).ready(function(){
     
     statement = {
       field: $('#statement'),
+      error: $('#error'),
       val: function() {
         return this.field.val();
       },
     
       isQuery: function () {
-        return /\?$/.test(this.val());
-      },
-    
-      valid: function() {
-        var matches, subj, prop, sResource, pResource, rdf, labels, query;
-        if (isAregex.test(this.val())) {
-          return true;
-        }
-        if (this.isQuery()) {
-          rdf = $('#content').rdf().prefix('rdfs', ns.rdfs);
-          labels = rdf.where('?thing rdfs:label ?label');
-          if (isAQueryRegex.test(this.val())) {
-            matches = this.val().match(isAQueryRegex);
-            subj = matches[1];
-            query = labels.filter('label', subj);
-            return query.length > 0;
-          } else {
-            if (queryRegex1.test(this.val())) {
-              matches = this.val().match(queryRegex1);
-              subj = matches[1];
-              prop = matches[2] || matches[3];
-            } else if (queryRegex2.test(this.val())) {
-              matches = this.val().match(queryRegex2);
-              subj = matches[2];
-              prop = matches[1];
-            }
-            if (subj !== undefined) {
-              query = labels.filter('label', subj);
-              if (query.length > 0) {
-                pResource = aliases[prop];
-                return pResource === undefined ? false : (ontology[pResource].type === 'property' || ontology[pResource].type === 'relation');
-              }
-            } else {
-              return false;
-            }
-          }
-        } else {
-          if (objSubjPropRegex.test(this.val())) {
-            matches = this.val().match(objSubjPropRegex);
-            prop = matches[3];
-          } else {
-            matches = this.val().match(subjPropObjRegex1) || this.val().match(subjPropObjRegex2);
-            if (matches === null) {
-              return false;
-            }
-            prop = matches[2];
-          }
-          pResource = aliases[prop];
-          return pResource === undefined ? false : (ontology[pResource].type === 'property' || ontology[pResource].type === 'relation');
-        }
+        return /\?$/.test(this.val()) || /^(What|Where|When|Who|Which)\s/.test(this.val());
       },
     
       validate: function() {
-        if (this.valid()) {
+        var triples;
+        if (this.val() === '') {
           this.field.removeClass('error');
+          this.error.text('');
         } else {
-          this.field.addClass('error');
+          triples = this.triples();
+          if (typeof(this.triples()) === 'string') {
+            this.field.addClass('error');
+            this.error.text(triples);
+          } else {
+            this.field.removeClass('error');
+            this.error.text('');
+          }
         }
       },
     
@@ -459,8 +422,6 @@ $(document).ready(function(){
           pattern, result,
           matches = [], triple, triples = [];
         if (this.isQuery()) {
-          rdf = reason($('#content').rdf());
-          labels = rdf.where('?thing rdfs:label ?label');
           if (isAQueryRegex.test(this.val())) {
             matches = this.val().match(isAQueryRegex);
             sLabel = matches[1];
@@ -474,34 +435,121 @@ $(document).ready(function(){
               matches = this.val().match(queryRegex2);
               pLabel = matches[1];
               sLabel = matches[2];
+            } else if (queryRegex3.test(this.val())) {
+              matches = this.val().match(queryRegex3);
+              sLabel = matches[1];
+              pLabel = matches[2];
+            } else {
+              return 'I don\'t recognise the format of the question.';
             }
-            pResource = aliases[pLabel];
+            pResources = aliases[pLabel];
+            if (pResources === undefined) {
+              return 'I don\'t recognise "' + pLabel + '".';
+            } else if (pResources.length === 1) {
+              pResource = pResources[0];
+              if (ontology[pResource].type !== 'property' && ontology[pResource].type !== 'relation') {
+                return '"' + pLabel + '" is a ' + ontology[pResource].type + ' and I was expecting a property or relation.';
+              }
+            } else {
+              if (/^\s*Where/.test(this.val())) {
+                range = '<http://www.w3.org/2006/vcard/ns#Address>';
+              } else if (/^\s*Who/.test(this.val())) {
+                range = '<http://xmlns.com/foaf/0.1/Person>';
+              } else if (/^\s*When/.test(this.val())) {
+                range = '<http://www.w3.org/2001/XMLSchema#date>';
+              }
+              pResources = [];
+              for (i = 0; i < aliases[pLabel].length; i += 1) {
+                pResource = aliases[pLabel][i];
+                pDef = ontology[pResource];
+                if (pDef !== undefined && (pDef.type === 'property' || pDef.type === 'relation')) {
+                  if (range === undefined || pDef.range === range) {
+                    pResources.push(pResource);
+                  }
+                }
+              }
+              if (pResources.length === 0) {
+                pResources = aliases[pLabel];
+              }
+              if (pResources.length > 1) {
+                result = 'I don\'t know if you mean ';
+                for (i = 0; i < pResources.length; i += 1) {
+                  result += englishProperty(pResources[i]);
+                  if (i !== pResources.length - 1) {
+                    result += ' or '
+                  }
+                }
+                result += '. Can you rephrase, please?';
+                return result;
+              }
+              pResource = pResources[0];
+            }
           }
-          sResource = labels.filter('label', sLabel)[0].thing;
-          pattern = $.rdf.pattern(sResource, pResource, '?result');
-          result = rdf.where(pattern);
-          return result;
+          rdf = reason($('#content').rdf());
+          labels = rdf.where('?thing rdfs:label ?label');
+          labels = labels.filter('label', sLabel);
+          if (labels.length > 0) {
+            sResource = labels[0].thing;
+            pattern = $.rdf.pattern(sResource, pResource, '?result');
+            result = rdf.where(pattern);
+            return result;
+          } else {
+            return 'I don\'t recognise "' + sLabel + '".';
+          }
         } else {
           if (isAregex.test(this.val())) {
             matches = this.val().match(isAregex);
             sLabel = matches[1];
             oLabel = matches[2];
             pResource = $.rdf.type;
-          } else if (this.valid()) {
+          } else {
             if (objSubjPropRegex.test(this.val())) {
               matches = this.val().match(objSubjPropRegex);
               oLabel = matches[1];
               sLabel = matches[2];
               pLabel = matches[3];
-            } else {
+            } else if (subjPropObjRegex1.test(this.val()) || subjPropObjRegex2.test(this.val())) {
               matches = this.val().match(subjPropObjRegex1) || this.val().match(subjPropObjRegex2);
               sLabel = matches[1];
               pLabel = matches[2];
               oLabel = matches[3];
+            } else {
+              return 'I don\'t recognise the format of the statement. Can you rephrase please?';
+            }
+            pResources = aliases[pLabel];
+            if (pResources === undefined) {
+              return 'I don\'t recognise "' + prop + '".';
+            } else if (pResources.length === 1) {
+              pResource = pResources[0];
+              if (ontology[pResource].type !== 'property' && ontology[pResource].type !== 'relation') {
+                return '"' + pLabel + '" is a ' + ontology[pResource].type + ' and I was expecting a property or relation.';
+              }
+            } else {
+              pResources = [];
+              for (i = 0; i < aliases[pLabel].length; i += 1) {
+                pResource = aliases[pLabel][i];
+                pDef = ontology[pResource];
+                if (pDef.type === 'property' || pDef.type === 'relation') {
+                  pResources.push(pResource);
+                }
+              }
+              if (pResources.length === 0) {
+                pResources = aliases[pLabel];
+              }
+              if (pResources.length > 1) {
+                result = 'I don\'t know if you mean ';
+                for (i = 0; i < pResources.length; i += 1) {
+                  result += englishProperty(pResources[i]);
+                  if (i !== pResources.length - 1) {
+                    result += ' or '
+                  }
+                }
+                result += '. Can you rephrase, please?';
+                return result;
+              }
             }
             triple = labelTriple(pLabel);
             triples.push(triple);
-            pResource = triple.subject;
           }
           triple = labelTriple(sLabel);
           triples.push(triple);
@@ -596,7 +644,11 @@ $(document).ready(function(){
         o = triple.object,
         sSpan, span;
       if (p === $.rdf.label) {
-        aliases[o.value] = s;
+        if (aliases[o.value] === undefined) {
+          aliases[o.value] = [s];
+        } else {
+          aliases[o.value].push(s);
+        }
       }
       if (typeof(triple.source) !== 'string') {
         if (o.type === 'literal') {
@@ -652,31 +704,25 @@ $(document).ready(function(){
   
   $.each(ontology, function (resource, description) {
     $.each(description.aliases, function (i, alias) {
-      aliases[alias] = resource;
+      if (aliases[alias] === undefined) {
+        aliases[alias] = [resource];
+      } else {
+        aliases[alias].push(resource);
+      }
     });
   });
 
   populateLists();
-  //resetSource();
 
-  /*
-  $('#content span')
-    .each(function (i, span) {
-      var rdf = $(this).rdf();
-      rdf
-        .where('?thing a ?class')
-        .each(function () {
-          spans[this.thing] = $(span);
-        });
-    });
-  */
-  
-  /*
-  $('#content')
-    .bind('rdfChange', resetSource);
-  */
-
-  $('#answer').dialog({ autoOpen: false, modal: true, minHeight: 100 });
+  $('#answer').dialog({ 
+    autoOpen: false, 
+    modal: true, 
+    minHeight: 100,
+    close: function () {
+      $('#statement').select();
+      return true;
+    }
+  });
 
   $('#statement').bind("keyup", function(event) {
     var val = statement.val(),
@@ -685,95 +731,101 @@ $(document).ready(function(){
           statement.validate();
         }
       };
+    $('#error').text('');
     setTimeout(test, 1000);
     return true;
   });
   
   $('#notes').bind("submit", function (event){
     var rdf, response;
-    statement.validate();
-    if (statement.valid()) {
+    try {
       rdf = statement.triples();
-      if (statement.isQuery()) {
-        response = $('#answer').text('');
-        response.dialog('option', 'title', statement.val());
-        response.append(rdf.length + ' answers');
-        rdf.each(function (i, data, triples) {
-          var label;
-          response.append('<br>');
-          if (this.result.type === 'uri') {
-            if (ontology[this.result]) {
-              label = ontology[this.result].aliases[0];
-              if (ontology[this.result].type === 'class') {
-                response.append(/^aeiou/.test(label) ? 'an ' : 'a ');
-              }
-            } else {
-              label = resourceLabel(this.result);
-            }
-          } else if (this.result.type === 'bnode') {
-            label = resourceLabel(this.result);
-          } else {
-            label = this.result.value;
-          }
-          response.append(label);
-        })
-        response.dialog('open');
-      } else {
-        response = $('#response').text('');
-        rdf = reason(rdf);
-        response.append('OK, I know:');
-        rdf
-          .where('?thing a ?class')
-          .each(function (i, data, triples) {
-            var list, span, label;
-            span = findSpan(this.thing);
-            if (span.length === 0) {
-              label = resourceLabel(this.thing, rdf);
-              span = markupText.call($('#content'), label.toString());
-              if (span === undefined) {
-                span = $('#meta').append('<span />').children('span:last');
-              }
-              // spans[this.thing] = span;
-              span.rdfa(triples);
-              if (this.class === $.rdf.resource('<http://xmlns.com/foaf/0.1/Person>')) {
-                list = people;
-              } else if (this.class === $.rdf.resource('<http://www.w3.org/2006/vcard/ns#Address>')) {
-                list = places;
-              }
-              if (list !== undefined && $('#' + this.thing.value.fragment).length === 0) {
-                addIndividual(list, this.thing, label);
-              }
-            }
-          })
-          .reset()
-          .where('?thing ?prop ?val')
-          .filter(function () {
-            return ontology[this.thing] === undefined;
-          })
-          .each(function (i, data, triples) {
-            markupTriple(triples[0]);
-          })
-          .each(function () {
-            var sLabel = englishObject(this.thing);
-            if (this.prop !== $.rdf.label) {
-              response.append('<br>');
-              if (this.val.type === 'literal') {
-                response.append(sLabel + '\'s ' + englishProperty(this.prop) + ' is ' + englishObject(this.val));
-              } else if (this.prop === $.rdf.type) {
-                response.append(sLabel + ' is a ' + englishObject(this.val));
+      if (typeof(rdf) !== 'string') {
+        if (statement.isQuery()) {
+          response = $('#answer').text('');
+          response.dialog('option', 'title', statement.val());
+          rdf.each(function (i, data, triples) {
+            var label;
+            response.append('<br>');
+            if (this.result.type === 'uri') {
+              if (ontology[this.result]) {
+                label = ontology[this.result].aliases[0];
+                if (ontology[this.result].type === 'class') {
+                  response.append(/^aeiou/.test(label) ? 'an ' : 'a ');
+                }
               } else {
-                response.append(englishObject(this.val) + ' is ' + sLabel + '\'s ' + englishProperty(this.prop));
+                label = resourceLabel(this.result);
               }
-            } else if (sLabel !== this.val.value) {
-              response.append('<br>');
-              response.append(sLabel + ' is also known as ' + englishObject(this.val));
+            } else if (this.result.type === 'bnode') {
+              label = resourceLabel(this.result);
+            } else {
+              label = this.result.value;
             }
-          });
+            response.append(label);
+          })
+          response.dialog('open');
+        } else {
+          response = $('#response').text('');
+          rdf = reason(rdf);
+          response.append('OK, I know:');
+          rdf
+            .where('?thing a ?class')
+            .each(function (i, data, triples) {
+              var list, span, label;
+              span = findSpan(this.thing);
+              if (span.length === 0) {
+                label = resourceLabel(this.thing, rdf);
+                span = markupText.call($('#content'), label.toString());
+                if (span === undefined) {
+                  span = $('#meta').append('<span />').children('span:last');
+                }
+                // spans[this.thing] = span;
+                span.rdfa(triples);
+                if (this.class === $.rdf.resource('<http://xmlns.com/foaf/0.1/Person>')) {
+                  list = people;
+                } else if (this.class === $.rdf.resource('<http://www.w3.org/2006/vcard/ns#Address>')) {
+                  list = places;
+                }
+                if (list !== undefined && $('#' + this.thing.value.fragment).length === 0) {
+                  addIndividual(list, this.thing, label);
+                }
+              }
+            })
+            .reset()
+            .where('?thing ?prop ?val')
+            .filter(function () {
+              return ontology[this.thing] === undefined;
+            })
+            .each(function (i, data, triples) {
+              markupTriple(triples[0]);
+            })
+            .each(function () {
+              var sLabel = englishObject(this.thing);
+              if (this.prop !== $.rdf.label) {
+                response.append('<br>');
+                if (this.val.type === 'literal') {
+                  response.append(sLabel + '\'s ' + englishProperty(this.prop) + ' is ' + englishObject(this.val));
+                } else if (this.prop === $.rdf.type) {
+                  response.append(sLabel + ' is a ' + englishObject(this.val));
+                } else {
+                  response.append(englishObject(this.val) + ' is ' + sLabel + '\'s ' + englishProperty(this.prop));
+                }
+              } else if (sLabel !== this.val.value) {
+                response.append('<br>');
+                response.append(sLabel + ' is also known as ' + englishObject(this.val));
+              }
+            });
+        }
+        statement.field.val('');
       }
-      statement.field.val('');
+    } catch (e) {
+      console.log(e);
+      alert('Sorry, you discovered a bug! Please let Jeni know what you did to expose it. (jeni@jenitennison.com)');
     }
     event.preventDefault();
     return true;
   });
+
+  $('#statement').select();
 
 });
