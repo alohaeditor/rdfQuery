@@ -30,9 +30,11 @@ h1 {
 }
 
 #summary {
-	position: relative;
+	position: absolute;
 	width: 25%;
+	height: 90%;
 	margin-right: 2%;
+	overflow: auto;
 }
 #summary > ul {
   -webkit-border-radius: 15px;
@@ -56,6 +58,7 @@ h1 {
 	font-size: 1em;
   -webkit-border-radius: 15px;
 	-moz-border-radius: 15px;
+	cursor: pointer;
 }
 #summary .open h2,
 #summary .individuals li.open h3 {
@@ -88,6 +91,28 @@ h1 {
 }
 #summary .properties li.auto {
   color: #BF6930;
+}
+
+#actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  -webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+  border: 1px #E6D8CF solid;
+  margin: 0.5em;
+  padding: 0.5em 0.2em;
+}
+
+#actions li {
+  display: inline;
+  background-color: #E6D8CF;
+  -webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+  border: 1px #E6D8CF solid;
+  margin: 0;
+	padding: 0.2em 0.5em;
+	cursor: pointer;
 }
 
 #body {

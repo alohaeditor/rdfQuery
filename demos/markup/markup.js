@@ -740,6 +740,7 @@ $(document).ready(function () {
           response.append('Answering "' + statement.val() + '"');
           response = $('#answer').text('');
           response.dialog('option', 'title', statement.val());
+          response.dialog('option', 'width', '33%');
           if (rdf.length > 0) {
             rdf.each(function (i, data, triples) {
               var label;
@@ -827,6 +828,16 @@ $(document).ready(function () {
     event.preventDefault();
     return true;
   });
+
+  $('#json').bind("click", function () {
+      var json = $('#content').rdf().databank.dump(),
+        answer = $('#answer'),
+        s, p, i = 0, j = 0;
+      answer.dialog('option', 'title', 'JSON');
+      answer.dialog('option', 'width', '75%');
+      answer.text($.toJSON(json));
+      answer.dialog('open');
+    });
 
   $('#statement').select();
 
