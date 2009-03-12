@@ -288,7 +288,7 @@
       }
     },
     
-    json = function (triples) {
+    createJson = function (triples) {
       var e = {},
         i, t, s, p;
       for (i = 0; i < triples.length; i += 1) {
@@ -304,6 +304,148 @@
         e[s][p].push(t.object.dump());
       }
       return e;
+    },
+    
+    addAttribute = function (parent, namespace, name, value) {
+      var doc = parent.ownerDocument,
+        a;
+      if (namespace !== undefined && namespace !== null) {
+        a = doc.createAttributeNS(namespace, name);
+        a.nodeValue = value;
+        parent.attributes.setNamedItemNS(a);
+      } else {
+        a = doc.createAttribute(name);
+        a.nodeValue = value;
+        parent.attributes.setNamedItem(a);
+      }
+      return parent;
+    },
+    
+    createXmlnsAtt = function (parent, namespace, prefix) {
+      if (prefix) {
+        addAttribute(parent, 'http://www.w3.org/2000/xmlns/', 'xmlns:' + prefix, namespace);
+      } else {
+        addAttribute(parent, undefined, 'xmlns', namespace);
+      }
+      return parent;
+    },
+    
+    createDocument = function (namespace, name) {
+      var doc, xmlns, prefix;
+      if (document.implementation &&
+          document.implementation.createDocument) {
+        doc = document.implementation.createDocument(namespace, name, null);
+        if (namespace !== undefined && namespace !== null) {
+          if (/:/.test(name)) {
+            prefix = /([^:]+):/.exec(name)[1];
+          }
+          createXmlnsAtt(doc.documentElement, namespace, prefix);
+        }
+        return doc;
+      } else {
+        throw "Sorry, this doesn't work with non-standards-compliant browsers";
+      }
+    },
+    
+    appendElement = function (parent, namespace, name) {
+      var doc = parent.ownerDocument,
+        e;
+      if (namespace !== undefined && namespace !== null) {
+        e = doc.createElementNS(namespace, name);
+      } else {
+        e = doc.createElement(name);
+      }
+      parent.appendChild(e);
+      return e;
+    },
+    
+    appendText = function (parent, text) {
+      var doc = parent.ownerDocument,
+        t;
+      t = doc.createTextNode(text);
+      parent.appendChild(t);
+      return parent;
+    },
+    
+    appendXML = function (parent, xml) {
+      var parser, doc, i, child;
+      parser = new DOMParser();
+      doc = parser.parseFromString('<temp>' + xml + '</temp>', 'text/xml');
+      while (doc.documentElement.childNodes.length > 0) {
+        parent.appendChild(doc.documentElement.childNodes[0]);
+      }
+      return parent;
+    },
+    
+    createRdfXml = function (triples, options) {
+      var doc = createDocument(rdfNs, 'rdf:RDF'),
+        dump = createJson(triples),
+        namespaces = options.namespaces || {},
+        n, s, se, p, pe, i, v,
+        m, local, ns, prefix;
+      for (n in namespaces) {
+        createXmlnsAtt(doc.documentElement, namespaces[n], n);
+      }
+      for (s in dump) {
+        if (dump[s][$.rdf.type.value] !== undefined) {
+          m = /(.+[#\/])([^#\/]+)/.exec(dump[s][$.rdf.type.value][0].value);
+          ns = m[1];
+          local = m[2];
+          for (n in namespaces) {
+            if (namespaces[n] === ns) {
+              prefix = n;
+              break;
+            }
+          }
+          se = appendElement(doc.documentElement, ns, prefix + ':' + local);
+        } else {
+          se = appendElement(doc.documentElement, rdfNs, 'rdf:Description');
+        }
+        if (/^_:/.test(s)) {
+          addAttribute(se, rdfNs, 'rdf:nodeID', s.substring(2));
+        } else {
+          addAttribute(se, rdfNs, 'rdf:about', s);
+        }
+        for (p in dump[s]) {
+          if (p !== $.rdf.type.value.toString() || dump[s][p].length > 1) {
+            m = /(.+[#\/])([^#\/]+)/.exec(p);
+            ns = m[1];
+            local = m[2];
+            for (n in namespaces) {
+              if (namespaces[n] === ns) {
+                prefix = n;
+                break;
+              }
+            }
+            for (i = (p === $.rdf.type.value.toString() ? 1 : 0); i < dump[s][p].length; i += 1) {
+              v = dump[s][p][i];
+              pe = appendElement(se, ns, prefix + ':' + local);
+              if (v.type === 'uri') {
+                addAttribute(pe, rdfNs, 'rdf:resource', v.value);
+              } else if (v.type === 'literal') {
+                if (v.datatype !== undefined) {
+                  if (v.datatype === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
+                    addAttribute(pe, rdfNs, 'rdf:parseType', 'Literal');
+                    appendXML(pe, v.value);
+                  } else {
+                    addAttribute(pe, rdfNs, 'rdf:datatype', v.datatype);
+                    appendText(pe, v.value);
+                  }
+                } else if (v.lang !== undefined) {
+                  addAttribute(pe, 'http://www.w3.org/XML/1998/namespace', 'xml:lang', v.lang);
+                  appendText(pe, v.value);
+                } else {
+                  appendText(pe, v.value);
+                }
+              } else {
+                // blank node
+                addAttribute(pe, rdfNs, 'rdf:nodeID', v.value.substring(2));
+              }
+            }
+          }
+        }
+      }
+      return doc;
     };
     
   $.typedValue.types['http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'] = {
@@ -553,9 +695,22 @@
 
   $.rdf.gleaners = [];
   
-  $.rdf.dump = function (triples) {
-    return json(triples);
+  $.rdf.dump = function (triples, opts) {
+    var opts = $.extend({}, $.rdf.dump.defaults, opts || {}),
+      format = opts.format;
+    if (format === 'application/json') {
+      return createJson(triples, opts);
+    } else if (format === 'application/rdf+xml') {
+      return createRdfXml(triples, opts);
+    } else {
+      throw "Unrecognised dump format: " + format + ". Expected application/json or application/rdf+xml.";
+    }
   };
+  
+  $.rdf.dump.defaults = {
+    format: 'application/json',
+    namespaces: {}
+  }
   
   /*
   $.rdf.import = function (json) {
@@ -799,8 +954,9 @@
       return $.unique(triples);
     },
     
-    dump: function () {
-      return $.rdf.dump(this.triples());
+    dump: function (options) {
+      options = $.extend({ namespaces: this.namespaces, base: this.base }, options || {});
+      return $.rdf.dump(this.triples(), options);
     },
     
     toString: function () {

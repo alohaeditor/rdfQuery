@@ -831,13 +831,23 @@ $(document).ready(function () {
 
   $('#json').bind("click", function () {
       var json = $('#content').rdf().databank.dump(),
-        answer = $('#answer'),
-        s, p, i = 0, j = 0;
+        answer = $('#answer');
       answer.dialog('option', 'title', 'JSON');
       answer.dialog('option', 'width', '75%');
       answer.text($.toJSON(json));
       answer.dialog('open');
     });
+
+  $('#rdfxml').bind("click", function () {
+    var xml = $('#content').rdf().databank.dump({ format: 'application/rdf+xml' }),
+      answer = $('#answer'),
+      serializer;
+    answer.dialog('option', 'title', 'RDF/XML');
+    answer.dialog('option', 'width', '75%');
+    serializer = new XMLSerializer();
+    answer.text(serializer.serializeToString(xml));
+    answer.dialog('open');
+  });
 
   $('#statement').select();
 
