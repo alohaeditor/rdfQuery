@@ -995,6 +995,24 @@ test("creating a new databank", function() {
 	equals(a.nodeValue, triples[1].object.value);
 });
 
+test("loading JSON/RDF into a databank", function() {
+  var json = {
+    'http://example.com/aReallyGreatBook': {
+      'http://purl.org/dc/elements/1.1/title': [ { type: 'literal', value: 'A Really Great Book' } ],
+      'http://purl.org/dc/elements/1.1/creator': [ { type: 'bnode', value: '_:creator' } ],
+      'http://purl.org/dc/terms/issued': [ { type: 'literal', value: '2004-01-19', 
+                                             datatype: 'http://www.w3.org/2001/XMLSchema#date' } ]
+    },
+    '_:creator': {
+      'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': [ { type: 'uri', value: 'http://xmlns.com/foaf/0.1/Person' } ],
+      'http://xmlns.com/foaf/0.1/name': [ { type: 'literal', value: 'John Doe' } ]
+    }
+  };
+  var databank = $.rdf.databank();
+  databank.load(json);
+  ok(databank.size(), 5);
+});
+
 test("getting the triples from a databank", function() {
 	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [

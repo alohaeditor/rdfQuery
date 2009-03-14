@@ -959,6 +959,41 @@
       return $.rdf.dump(this.triples(), options);
     },
     
+    load: function (data) {
+      var s, subject, p, property, o, object, opts, i;
+      for (s in data) {
+        if (s.substring(0, 2) === '_:') {
+          subject = $.rdf.blank(s);
+        } else {
+          subject = $.rdf.resource('<' + s + '>');
+        }
+        for (p in data[s]) {
+          property = $.rdf.resource('<' + p + '>');
+          for (i = 0; i < data[s][p].length; i += 1) {
+            o = data[s][p][i];
+            if (o.type === 'uri') {
+              object = $.rdf.resource('<' + o.value + '>');
+            } else if (o.type === 'bnode') {
+              object = $.rdf.blank(o.value);
+            } else {
+              // o.type === 'literal'
+              if (o.datatype !== undefined) {
+                object = $.rdf.literal(o.value, { datatype: o.datatype });
+              } else {
+                opts = {};
+                if (o.lang !== undefined) {
+                  opts.lang = o.lang;
+                }
+                object = $.rdf.literal('"' + o.value + '"', opts);
+              }
+            }
+            this.add($.rdf.triple(subject, property, object));
+          }
+        }
+      }
+      return this;
+    },
+    
     toString: function () {
       return '[Databank with ' + this.size() + ' triples]';
     }
