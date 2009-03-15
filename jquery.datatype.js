@@ -70,6 +70,14 @@
 		}
 	};
 	
+	$.typedValue.types['http://www.w3.org/2001/XMLSchema#int'] = {
+		regex: /^[\-\+]?[0-9]+$/,
+		strip: true,
+		value: function (v) {
+			return parseInt(v, 10);
+		}
+	};
+	
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#float'] = {
 		regex: /^(?:[\-\+]?(?:[0-9]+\.[0-9]*|\.[0-9]+|[0-9]+)(?:[eE][\-\+]?[0-9]+)?|[\-\+]?INF|NaN)$/,
 		strip: true,

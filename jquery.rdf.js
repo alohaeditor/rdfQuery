@@ -306,6 +306,41 @@
       return e;
     },
     
+    parseJson = function (data) {
+      var s, subject, p, property, o, object, i, opts, triples = [];
+      for (s in data) {
+        if (s.substring(0, 2) === '_:') {
+          subject = $.rdf.blank(s);
+        } else {
+          subject = $.rdf.resource('<' + s + '>');
+        }
+        for (p in data[s]) {
+          property = $.rdf.resource('<' + p + '>');
+          for (i = 0; i < data[s][p].length; i += 1) {
+            o = data[s][p][i];
+            if (o.type === 'uri') {
+              object = $.rdf.resource('<' + o.value + '>');
+            } else if (o.type === 'bnode') {
+              object = $.rdf.blank(o.value);
+            } else {
+              // o.type === 'literal'
+              if (o.datatype !== undefined) {
+                object = $.rdf.literal(o.value, { datatype: o.datatype });
+              } else {
+                opts = {};
+                if (o.lang !== undefined) {
+                  opts.lang = o.lang;
+                }
+                object = $.rdf.literal('"' + o.value + '"', opts);
+              }
+            }
+            triples.push($.rdf.triple(subject, property, object));
+          }
+        }
+      }
+      return triples;
+    },
+    
     addAttribute = function (parent, namespace, name, value) {
       var doc = parent.ownerDocument,
         a;
@@ -446,6 +481,176 @@
         }
       }
       return doc;
+    },
+    
+    parseRdfXmlSubject = function (elem, base) {
+      var s, subject;
+      if (elem.hasAttributeNS(rdfNs, 'about')) {
+        s = elem.getAttributeNS(rdfNs, 'about');
+        subject = $.rdf.resource('<' + s + '>', { base: base });
+      } else if (elem.hasAttributeNS(rdfNs, 'ID')) {
+        s = elem.getAttributeNS(rdfNs, 'ID');
+        subject = $.rdf.resource('<#' + s + '>', { base: base });
+      } else if (elem.hasAttributeNS(rdfNs, 'nodeID')) {
+        s = elem.getAttributeNS(rdfNs, 'nodeID');
+        subject = $.rdf.blank('_:' + s);
+      } else {
+        subject = $.rdf.blank('[]');
+      }
+      return subject;
+    },
+    
+    parseRdfXmlDescription = function (elem, isDescription, base, lang) {
+      var subject, p, property, o, object, reified, lang, i, j, li = 1,
+        collection1, collection2, collectionItem, collectionItems = [],
+        parseType, serializer, literalOpts = {}, oTriples, triples = [];
+      lang = elem.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang') || lang;
+      base = elem.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'base') || base;
+      if (lang !== null && lang !== undefined && lang !== '') {
+        literalOpts = { lang: lang };
+      }
+      subject = parseRdfXmlSubject(elem, base);
+      if (isDescription && (elem.namespaceURI !== rdfNs || elem.localName !== 'Description')) {
+        property = $.rdf.type;
+        object = $.rdf.resource('<' + elem.namespaceURI + elem.localName + '>');
+        triples.push($.rdf.triple(subject, property, object));
+      }
+      for (i = 0; i < elem.attributes.length; i += 1) {
+        p = elem.attributes.item(i);
+        if (p.namespaceURI !== undefined && 
+            p.namespaceURI !== 'http://www.w3.org/2000/xmlns/' &&
+            p.namespaceURI !== 'http://www.w3.org/XML/1998/namespace') {
+          if (p.namespaceURI !== rdfNs) {
+            property = $.rdf.resource('<' + p.namespaceURI + p.localName + '>');
+            object = $.rdf.literal('"' + p.nodeValue + '"', literalOpts);
+            triples.push($.rdf.triple(subject, property, object));
+          } else if (p.localName === 'type') {
+            property = $.rdf.type;
+            object = $.rdf.resource('<' + p.nodeValue + '>', { base: base });
+            triples.push($.rdf.triple(subject, property, object));
+          }
+        }
+      }
+      for (i = 0; i < elem.childNodes.length; i += 1) {
+        p = elem.childNodes[i];
+        if (p.nodeType === 1) {
+          if (p.namespaceURI === rdfNs && p.localName === 'li') {
+            property = $.rdf.resource('<' + rdfNs + '_' + li + '>');
+            li += 1;
+          } else {
+            property = $.rdf.resource('<' + p.namespaceURI + p.localName + '>');
+          }
+          lang = p.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang') || lang;
+          if (lang !== null && lang !== undefined && lang !== '') {
+            literalOpts = { lang: lang };
+          }
+          if (p.hasAttributeNS(rdfNs, 'resource')) {
+            o = p.getAttributeNS(rdfNs, 'resource');
+            object = $.rdf.resource('<' + o + '>', { base: base });
+          } else if (p.hasAttributeNS(rdfNs, 'nodeID')) {
+            o = p.getAttributeNS(rdfNs, 'nodeID');
+            object = $.rdf.blank('_:' + o);
+          } else if (p.hasAttributeNS(rdfNs, 'parseType')) {
+            parseType = p.getAttributeNS(rdfNs, 'parseType');
+            if (parseType === 'Literal') {
+              serializer = new XMLSerializer();
+              o = serializer.serializeToString(p.getElementsByTagName('*')[0]);
+              object = $.rdf.literal(o, { datatype: rdfNs + 'XMLLiteral' });
+            } else if (parseType === 'Resource') {
+              oTriples = parseRdfXmlDescription(p, false, base, lang);
+              if (oTriples.length > 0) {
+                object = oTriples[oTriples.length - 1].subject;
+                triples = triples.concat(oTriples);
+              } else {
+                object = $.rdf.blank('[]');
+              }
+            } else if (parseType === 'Collection') {
+              if (p.getElementsByTagName('*').length > 0) {
+                for (j = 0; j < p.childNodes.length; j += 1) {
+                  o = p.childNodes[j];
+                  if (o.nodeType === 1) {
+                    collectionItems.push(o);
+                  }
+                }
+                collection1 = $.rdf.blank('[]');
+                object = collection1;
+                for (j = 0; j < collectionItems.length; j += 1) {
+                  o = collectionItems[j];
+                  oTriples = parseRdfXmlDescription(o, true, base, lang);
+                  if (oTriples.length > 0) {
+                    collectionItem = oTriples[oTriples.length - 1].subject;
+                    triples = triples.concat(oTriples);
+                  } else {
+                    collectionItem = parseRdfXmlSubject(o);
+                  }
+                  triples.push($.rdf.triple(collection1, $.rdf.first, collectionItem));
+                  if (j === collectionItems.length - 1) {
+                    triples.push($.rdf.triple(collection1, $.rdf.rest, $.rdf.nil));
+                  } else {
+                    collection2 = $.rdf.blank('[]');
+                    triples.push($.rdf.triple(collection1, $.rdf.rest, collection2));
+                    collection1 = collection2;
+                  }
+                }
+              } else {
+                object = $.rdf.nil;
+              }
+            }
+          } else if (p.hasAttributeNS(rdfNs, 'datatype')) {
+            o = p.childNodes[0].nodeValue;
+            object = $.rdf.literal(o, { datatype: p.getAttributeNS(rdfNs, 'datatype') });
+          } else if (p.getElementsByTagName('*').length > 0) {
+            for (j = 0; j < p.childNodes.length; j += 1) {
+              o = p.childNodes[j];
+              if (o.nodeType === 1) {
+                oTriples = parseRdfXmlDescription(o, true, base, lang);
+                if (oTriples.length > 0) {
+                  object = oTriples[oTriples.length - 1].subject;
+                  triples = triples.concat(oTriples);
+                } else {
+                  object = parseRdfXmlSubject(o);
+                }
+              }
+            }
+          } else if (p.childNodes.length > 0) {
+            o = p.childNodes[0].nodeValue;
+            object = $.rdf.literal('"' + o + '"', literalOpts);
+          } else {
+            oTriples = parseRdfXmlDescription(p, false, base, lang);
+            if (oTriples.length > 0) {
+              object = oTriples[oTriples.length - 1].subject;
+              triples = triples.concat(oTriples);
+            } else {
+              object = $.rdf.blank('[]');
+            }
+          }
+          triples.push($.rdf.triple(subject, property, object));
+          if (p.hasAttributeNS(rdfNs, 'ID')) {
+            reified = $.rdf.resource('<#' + p.getAttributeNS(rdfNs, 'ID') + '>', { base: base });
+            triples.push($.rdf.triple(reified, $.rdf.subject, subject));
+            triples.push($.rdf.triple(reified, $.rdf.property, property));
+            triples.push($.rdf.triple(reified, $.rdf.object, object));
+          }
+        }
+      }
+      return triples;
+    },
+    
+    parseRdfXml = function (doc) {
+      var i, lang, d, triples = [];
+      if (doc.documentElement.namespaceURI === rdfNs && doc.documentElement.localName === 'RDF') {
+        lang = doc.documentElement.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang');
+        base = doc.documentElement.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'base') || $.uri.base();
+        for (i = 0; i < doc.documentElement.childNodes.length; i += 1) {
+          d = doc.documentElement.childNodes[i];
+          if (d.nodeType === 1) {
+            triples = triples.concat(parseRdfXmlDescription(d, true, base, lang));
+          }
+        }
+      } else {
+        triples = parseRdfXmlDescription(doc.documentElement, true);
+      }
+      return triples;
     };
     
   $.typedValue.types['http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'] = {
@@ -559,6 +764,11 @@
           });
         }
       }
+      return this;
+    },
+    
+    load: function (data, options) {
+      this.databank.load(data, options);
       return this;
     },
     
@@ -712,18 +922,6 @@
     namespaces: {}
   }
   
-  /*
-  $.rdf.import = function (json) {
-    var s, p, o, subject, property, object, triple, triples = [];
-    for (s in json) {
-      subject = $.rdf.resource('<' + s + '>');
-      for (p in json[s]) {
-        
-      }
-    }
-  };
-  */
-
   $.fn.rdf = function () {
     var triples = [];
     if ($(this).length > 0) {
@@ -959,37 +1157,15 @@
       return $.rdf.dump(this.triples(), options);
     },
     
-    load: function (data) {
-      var s, subject, p, property, o, object, opts, i;
-      for (s in data) {
-        if (s.substring(0, 2) === '_:') {
-          subject = $.rdf.blank(s);
-        } else {
-          subject = $.rdf.resource('<' + s + '>');
-        }
-        for (p in data[s]) {
-          property = $.rdf.resource('<' + p + '>');
-          for (i = 0; i < data[s][p].length; i += 1) {
-            o = data[s][p][i];
-            if (o.type === 'uri') {
-              object = $.rdf.resource('<' + o.value + '>');
-            } else if (o.type === 'bnode') {
-              object = $.rdf.blank(o.value);
-            } else {
-              // o.type === 'literal'
-              if (o.datatype !== undefined) {
-                object = $.rdf.literal(o.value, { datatype: o.datatype });
-              } else {
-                opts = {};
-                if (o.lang !== undefined) {
-                  opts.lang = o.lang;
-                }
-                object = $.rdf.literal('"' + o.value + '"', opts);
-              }
-            }
-            this.add($.rdf.triple(subject, property, object));
-          }
-        }
+    load: function (data, options) {
+      var i, triples;
+      if (data.ownerDocument !== undefined) {
+        triples = parseRdfXml(data);
+      } else {
+        triples = parseJson(data);
+      }
+      for (i = 0; i < triples.length; i += 1) {
+        this.add(triples[i]);
       }
       return this;
     },
@@ -1277,6 +1453,12 @@
 
   $.rdf.type = $.rdf.resource('<' + rdfNs + 'type>');
   $.rdf.label = $.rdf.resource('<' + rdfsNs + 'label>');
+  $.rdf.first = $.rdf.resource('<' + rdfNs + 'first>');
+  $.rdf.rest = $.rdf.resource('<' + rdfNs + 'rest>');
+  $.rdf.nil = $.rdf.resource('<' + rdfNs + 'nil>');
+  $.rdf.subject = $.rdf.resource('<' + rdfNs + 'subject>');
+  $.rdf.property = $.rdf.resource('<' + rdfNs + 'property>');
+  $.rdf.object = $.rdf.resource('<' + rdfNs + 'object>');
 
   $.rdf.blank = function (value, options) {
     var blank;

@@ -1013,6 +1013,387 @@ test("loading JSON/RDF into a databank", function() {
   ok(databank.size(), 5);
 });
 
+test("loading RDF/XML into a databank", function() {
+  var xml = 
+    '<rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '    xmlns:dc="http://purl.org/dc/elements/1.1/"                         ' +
+    '    rdf:about="http://www.w3.org/TR/rdf-syntax-grammar">                ' +
+    '  <dc:title>RDF/XML Syntax Specification (Revised)</dc:title>           ' +
+    '</rdf:Description>                                                      ';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 1);
+  var triple = databank.triples()[0];
+  equals(triple.subject.value, 'http://www.w3.org/TR/rdf-syntax-grammar');
+  equals(triple.property.value, ns.dc + 'title');
+  equals(triple.object.value, 'RDF/XML Syntax Specification (Revised)');
+});
+
+test("loading RDF/XML with (anonymous) blank nodes into a databank", function () {
+  var xml =
+    '<rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar"' +
+    '  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:ex="http://www.example.org/">' +
+    '  <ex:editor>' +
+    '    <rdf:Description>' +
+    '      <ex:homePage>' +
+    '        <rdf:Description rdf:about="http://purl.org/net/dajobe/">' +
+    '        </rdf:Description>' +
+    '      </ex:homePage>' +
+    '    </rdf:Description>' +
+    '  </ex:editor>' +
+    '</rdf:Description>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 2);
+  var triple1 = databank.triples()[0];
+  var triple2 = databank.triples()[1];
+  equals(triple2.subject.value, 'http://www.w3.org/TR/rdf-syntax-grammar');
+  equals(triple2.property.value, 'http://www.example.org/editor');
+  equals(triple2.object, triple1.subject);
+  equals(triple1.property.value, 'http://www.example.org/homePage');
+  equals(triple1.object.value, 'http://purl.org/net/dajobe/');
+});
+
+test("loading RDF/XML with multiple property elements", function () {
+  var xml =
+    '<rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar"' +
+    '  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '  xmlns:ex="http://www.example.org/">' +
+    '  <ex:editor>' +
+    '    <rdf:Description>' +
+    '      <ex:homePage>' +
+    '        <rdf:Description rdf:about="http://purl.org/net/dajobe/">' +
+    '        </rdf:Description>' +
+    '      </ex:homePage>' +
+    '      <ex:fullName>Dave Beckett</ex:fullName>' +
+    '    </rdf:Description>' +
+    '  </ex:editor>' +
+    '  <dc:title>RDF/XML Syntax Specification (Revised)</dc:title>' +
+    '</rdf:Description>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 4);
+});
+
+test("loading RDF/XML with an rdf:resource attribute", function () {
+  var xml =
+    '<rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar"' +
+    '  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '  xmlns:ex="http://www.example.org/">' +
+    '  <ex:editor>' +
+    '    <rdf:Description>' +
+    '      <ex:homePage rdf:resource="http://purl.org/net/dajobe/" />' +
+    '      <ex:fullName>Dave Beckett</ex:fullName>' +
+    '    </rdf:Description>' +
+    '  </ex:editor>' +
+    '  <dc:title>RDF/XML Syntax Specification (Revised)</dc:title>' +
+    '</rdf:Description>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 4);
+});
+
+test("loading RDF/XML with property attributes", function () {
+  var xml =
+    '<rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar"' +
+    '  dc:title="RDF/XML Syntax Specification (Revised)"' +
+    '  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '  xmlns:ex="http://www.example.org/">' +
+    '  <ex:editor>' +
+    '    <rdf:Description ex:fullName="Dave Beckett">' +
+    '      <ex:homePage rdf:resource="http://purl.org/net/dajobe/"/>' +
+    '    </rdf:Description>' +
+    '  </ex:editor>' +
+    '</rdf:Description>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 4);
+});
+
+test("loading RDF/XML whose document element is an rdf:RDF element", function () {
+  var xml =
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '         xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '         xmlns:ex="http://example.org/stuff/1.0/">' +
+    '  <rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar"' +
+    '		   dc:title="RDF/XML Syntax Specification (Revised)">' +
+    '    <ex:editor>' +
+    '      <rdf:Description ex:fullName="Dave Beckett">' +
+    '	<ex:homePage rdf:resource="http://purl.org/net/dajobe/" />' +
+    '      </rdf:Description>' +
+    '    </ex:editor>' +
+    '  </rdf:Description>' +
+    '</rdf:RDF>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 4);
+});
+
+test("loading RDF/XML with xml:lang attributes in it", function () {
+  var xml =
+    '<rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '  rdf:about="http://example.org/buecher/baum" xml:lang="de">' +
+    '  <dc:title>Der Baum</dc:title>' +
+    '  <dc:description>Das Buch ist außergewöhnlich</dc:description>' +
+    '  <dc:title xml:lang="en">The Tree</dc:title>' +
+    '</rdf:Description>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 3);
+  var triples = databank.triples();
+  equals(triples[0].object.lang, 'de');
+  equals(triples[1].object.lang, 'de');
+  equals(triples[2].object.lang, 'en');
+});
+
+test("loading RDF/XML containing XML literals", function () {
+  var xml =
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '         xmlns:ex="http://example.org/stuff/1.0/">' +
+    '  <rdf:Description rdf:about="http://example.org/item01">' +
+    '    <ex:prop rdf:parseType="Literal"' +
+    '             xmlns:a="http://example.org/a#">' +
+    '      <a:Box required="true"><a:widget size="10" /><a:grommit id="23" /></a:Box>' +
+    '    </ex:prop>' +
+    '  </rdf:Description>' +
+    '</rdf:RDF>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 1);
+  equals(databank.triples()[0].object.value, '<a:Box xmlns:a="http://example.org/a#" required="true"><a:widget size="10"/><a:grommit id="23"/></a:Box>');
+  equals(databank.triples()[0].object.datatype, ns.rdf + 'XMLLiteral');
+});
+
+test("loading RDF/XML with a property whose value has a datatype", function () {
+  var xml =
+    '<rdf:Description rdf:about="http://example.org/item01"' +
+    '  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:ex="http://www.example.org/">' +
+    '  <ex:size rdf:datatype="http://www.w3.org/2001/XMLSchema#int">123</ex:size>' +
+    '</rdf:Description>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 1);
+  equals(databank.triples()[0].object.value, '123');
+  equals(databank.triples()[0].object.datatype, ns.xsd + 'int');
+});
+
+test("loading RDF/XML with identified blank nodes", function () {
+  var xml =
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '         xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '         xmlns:ex="http://example.org/stuff/1.0/">' +
+    '  <rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar"' +
+    '		   dc:title="RDF/XML Syntax Specification (Revised)">' +
+    '    <ex:editor rdf:nodeID="abc"/>' +
+    '  </rdf:Description>' +
+    '  <rdf:Description rdf:nodeID="abc"' +
+    '                   ex:fullName="Dave Beckett">' +
+    '    <ex:homePage rdf:resource="http://purl.org/net/dajobe/"/>' +
+    '  </rdf:Description>' +
+    '</rdf:RDF>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 4);
+  equals(databank.triples()[1].object.type, 'bnode');
+  equals(databank.triples()[1].object.value, '_:abc');
+  equals(databank.triples()[2].subject.type, 'bnode');
+  equals(databank.triples()[2].subject.value, '_:abc');
+});
+
+test("loading RDF/XML with rdf:parseType='Resource'", function () {
+  var xml =
+    '<rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar"' +
+    '  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '  xmlns:ex="http://example.org/stuff/1.0/"' +
+  	'	 dc:title="RDF/XML Syntax Specification (Revised)">' +
+    '  <ex:editor rdf:parseType="Resource">' +
+    '    <ex:fullName>Dave Beckett</ex:fullName>' +
+    '    <ex:homePage rdf:resource="http://purl.org/net/dajobe/"/>' +
+    '  </ex:editor>' +
+    '</rdf:Description>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 4);
+  var triples = databank.triples();
+  console.log(triples);
+  equals(triples[1].object, triples[2].subject);
+});
+
+test("loading RDF/XML with a property element having property attributes", function () {
+  var xml =
+    '<rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar"' +
+    '  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '  xmlns:ex="http://example.org/stuff/1.0/"' +
+  	'	   dc:title="RDF/XML Syntax Specification (Revised)">' +
+    '  <ex:editor ex:fullName="Dave Beckett" />' +
+    '</rdf:Description>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 3);
+});
+
+test("loading RDF/XML with typed node elements", function () {
+  var xml =
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '         xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '         xmlns:ex="http://example.org/stuff/1.0/">' +
+    '  <ex:Document rdf:about="http://example.org/thing">' +
+    '    <dc:title>A marvelous thing</dc:title>' +
+    '  </ex:Document>' +
+    '</rdf:RDF>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 2);
+  equals(databank.triples()[0].property.value, ns.rdf + 'type');
+  equals(databank.triples()[0].object.value, 'http://example.org/stuff/1.0/Document');
+});
+
+test("loading RDF/XML with xml:base and rdf:ID attributes", function () {
+  var xml =
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '         xmlns:ex="http://example.org/stuff/1.0/"' +
+    '         xml:base="http://example.org/here/">' +
+    '  <rdf:Description rdf:ID="snack">' +
+    '    <ex:prop rdf:resource="fruit/apple"/>' +
+    '  </rdf:Description>' +
+    '</rdf:RDF>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  var triples = databank.triples();
+  equals(triples[0].subject.value, 'http://example.org/here/#snack');
+  equals(triples[0].object.value, 'http://example.org/here/fruit/apple');
+});
+
+test("loading RDF/XML with rdf:li elements", function () {
+  var xml =
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">' +
+    '  <rdf:Seq rdf:about="http://example.org/favourite-fruit">' +
+    '    <rdf:li rdf:resource="http://example.org/banana"/>' +
+    '    <rdf:li rdf:resource="http://example.org/apple"/>' +
+    '    <rdf:li rdf:resource="http://example.org/pear"/>' +
+    '  </rdf:Seq>' +
+    '</rdf:RDF>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  var triples = databank.triples();
+  equals(triples.length, 4);
+  equals(triples[1].property.value, ns.rdf + '_1');
+  equals(triples[2].property.value, ns.rdf + '_2');
+  equals(triples[3].property.value, ns.rdf + '_3');
+});
+
+test("loading RDF/XML with parseType='Collection'", function() {
+  var xml = 
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '         xmlns:ex="http://example.org/stuff/1.0/">' +
+    '  <rdf:Description rdf:about="http://example.org/basket">' +
+    '    <ex:hasFruit rdf:parseType="Collection">' +
+    '      <rdf:Description rdf:about="http://example.org/banana"/>' +
+    '      <rdf:Description rdf:about="http://example.org/apple"/>' +
+    '      <rdf:Description rdf:about="http://example.org/pear"/>' +
+    '    </ex:hasFruit>' +
+    '  </rdf:Description>' +
+    '</rdf:RDF>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  var triples = databank.triples();
+  // 0: _:b1 rdf:first <http://example.org/banana>
+  // 1: _:b1 rdf:rest _:b2
+  // 2: _:b2 rdf:first <http://example.org/apple>
+  // 3: _:b2 rdf:rest _:b3
+  // 4: _:b3 rdf:first <http://example.org/pear>
+  // 5: _:b3 rdf:rest rdf:nil
+  // 6: <http://example.org/basket> ex:hasFruit _:b1
+  equals(triples[0].property.value, ns.rdf + 'first');
+  equals(triples[0].object.value, 'http://example.org/banana');
+  equals(triples[6].object, triples[1].subject);
+  equals(triples[1].property.value, ns.rdf + 'rest');
+  equals(triples[1].object, triples[2].subject);
+  equals(triples[2].property.value, ns.rdf + 'first');
+  equals(triples[2].object.value, 'http://example.org/apple');
+  equals(triples[1].object, triples[3].subject);
+  equals(triples[3].property.value, ns.rdf + 'rest');
+  equals(triples[3].object, triples[4].subject);
+  equals(triples[4].property.value, ns.rdf + 'first');
+  equals(triples[4].object.value, 'http://example.org/pear');
+  equals(triples[3].object, triples[5].subject);
+  equals(triples[5].property.value, ns.rdf + 'rest');
+  equals(triples[5].object.value, ns.rdf + 'nil');
+  equals(triples[6].subject.value, 'http://example.org/basket');
+  equals(triples[6].property.value, 'http://example.org/stuff/1.0/hasFruit');
+  equals(triples[6].object.type, 'bnode');
+  equals(triples[6].object, triples[0].subject);
+});
+
+test("loading RDF/XML with rdf:IDs to reify triples", function() {
+  var xml =
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '         xmlns:ex="http://example.org/stuff/1.0/"' +
+    '         xml:base="http://example.org/triples/">' +
+    '  <rdf:Description rdf:about="http://example.org/">' +
+    '    <ex:prop rdf:ID="triple1">blah</ex:prop>' +
+    '  </rdf:Description>' +
+    '</rdf:RDF>';
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xml, 'text/xml');
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  var triples = databank.triples();
+  equals(triples.length, 4);
+  equals(triples[0].subject.value, 'http://example.org/');
+  equals(triples[0].property.value, 'http://example.org/stuff/1.0/prop');
+  equals(triples[0].object.value, 'blah');
+  equals(triples[1].subject.value, 'http://example.org/triples/#triple1');
+  equals(triples[1].property.value, ns.rdf + 'subject');
+  equals(triples[1].object.value, 'http://example.org/');
+  equals(triples[2].subject.value, 'http://example.org/triples/#triple1');
+  equals(triples[2].property.value, ns.rdf + 'property');
+  equals(triples[2].object.value, 'http://example.org/stuff/1.0/prop');
+  equals(triples[3].subject.value, 'http://example.org/triples/#triple1');
+  equals(triples[3].property.value, ns.rdf + 'object');
+  equals(triples[3].object.value, 'blah');
+});
+
 test("getting the triples from a databank", function() {
 	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [
