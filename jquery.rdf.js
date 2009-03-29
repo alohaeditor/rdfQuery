@@ -234,9 +234,21 @@
       }
     },
     
+    removeFromQuery = function (query, triple) {
+      query.alphaMemory.splice($.inArray(triple, query.alphaMemory), 1);
+      resetQuery(query);
+      leftActivate(query);
+    },
+    
     addToQueries = function (queries, triple) {
       $.each(queries, function (i, query) {
         addToQuery(query, triple);
+      });
+    },
+    
+    removeFromQueries = function (queries, triple) {
+      $.each(queries, function (i, query) {
+        removeFromQuery(query, triple);
       });
     },
     
@@ -284,6 +296,54 @@
       } else {
         $.each(databank.union, function (i, databank) {
           addToDatabankQueries(databank, triple);
+        });
+      }
+    },
+    
+    removeFromDatabankQueries = function (databank, triple) {
+      var s = triple.subject,
+        p = triple.property,
+        o = triple.object;
+      if (databank.union === undefined) {
+        if (databank.queries[s] !== undefined) {
+          if (databank.queries[s][p] !== undefined) {
+            if (databank.queries[s][p][o] !== undefined) {
+              removeFromQueries(databank.queries[s][p][o], triple);
+            }
+            if (databank.queries[s][p][''] !== undefined) {
+              removeFromQueries(databank.queries[s][p][''], triple);
+            }
+          }
+          if (databank.queries[s][''] !== undefined) {
+            if (databank.queries[s][''][o] !== undefined) {
+              removeFromQueries(databank.queries[s][''][o], triple);
+            }
+            if (databank.queries[s][''][''] !== undefined) {
+              removeFromQueries(databank.queries[s][''][''], triple);
+            }
+          }
+        }
+        if (databank.queries[''] !== undefined) {
+          if (databank.queries[''][p] !== undefined) {
+            if (databank.queries[''][p][o] !== undefined) {
+              removeFromQueries(databank.queries[''][p][o], triple);
+            }
+            if (databank.queries[''][p][''] !== undefined) {
+              removeFromQueries(databank.queries[''][p][''], triple);
+            }
+          }
+          if (databank.queries[''][''] !== undefined) {
+            if (databank.queries[''][''][o] !== undefined) {
+              removeFromQueries(databank.queries[''][''][o], triple);
+            }
+            if (databank.queries[''][''][''] !== undefined) {
+              removeFromQueries(databank.queries[''][''][''], triple);
+            }
+          }
+        }
+      } else {
+        $.each(databank.union, function (i, databank) {
+          removeFromDatabankQueries(databank, triple);
         });
       }
     },
@@ -767,6 +827,25 @@
       return this;
     },
     
+    remove: function (triple, options) {
+      if (typeof triple === 'string') {
+        options = $.extend({}, { base: this.base(), namespaces: this.prefix() }, options);
+        triple = $.rdf.pattern(triple, options);
+      }
+      if (triple.isFixed()) {
+        this.databank.remove(triple.triple(), options);
+      } else {
+        query = this;
+        this.each(function (i, data) {
+          var t = triple.triple(data);
+          if (t !== null) {
+            query.databank.remove(t, options);
+          }
+        });
+      }
+      return this;
+    },
+    
     load: function (data, options) {
       this.databank.load(data, options);
       return this;
@@ -1081,6 +1160,28 @@
         }
         return this;
       }
+    },
+    
+    remove: function (triple, options) {
+      var base = (options && options.base) || this.base(),
+        namespaces = $.extend({}, this.prefix(), (options && options.namespaces) || {}),
+        striples, otriples,
+        databank;
+      if (typeof triple === 'string') {
+        triple = $.rdf.triple(triple, { namespaces: namespaces, base: base, source: triple });
+      }
+      striples = this.tripleStore[triple.subject];
+      if (striples !== undefined) {
+        striples.splice($.inArray(triple, striples), 1);
+      }
+      if (triple.object.type === 'uri' || triple.object.type === 'bnode') {
+        otriples = this.objectStore[triple.object];
+        if (otriples !== undefined) {
+          otriples.splice($.inArray(triple, otriples), 1);
+        }
+      }
+      removeFromDatabankQueries(this, triple);
+      return this;
     },
     
     except: function (data) {

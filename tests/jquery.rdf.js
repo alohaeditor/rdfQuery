@@ -681,6 +681,24 @@ test("creating new triples based on a template", function() {
   */
 });
 
+test("deleting triples based on a template", function () {
+  var rdf = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('_:a    foaf:givenname   "Alice" .')
+    .add('_:a    foaf:family_name "Hacker" .')
+    .add('_:b    foaf:givenname   "Bob" .')
+    .add('_:b    foaf:family_name "Hacker" .')
+    .where('?person foaf:givenname ?gname')
+    .where('?person foaf:family_name ?fname');
+  equals(rdf.databank.size(), 4, "should contain four triples");
+  equals(rdf.length, 2, "should have two matches");
+  rdf = rdf.remove('?person foaf:family_name ?fname');
+  equals(rdf.databank.size(), 2, "should contain two triples");
+  equals(rdf.length, 0, "should have no matches");
+  rdf = rdf.end();
+  equals(rdf.length, 2, "should have two matches");
+});
+
 test("using end() to reset a filter", function() {
   var rdf = $.rdf()
     .prefix('foaf', ns.foaf)
@@ -1508,6 +1526,36 @@ test("describing two resources with overlapping triples", function () {
   */
 });
 
+test("removing a triple from a databank", function () {
+  var d = $.rdf.databank()
+    .prefix('foaf', ns.foaf)
+    .add('_:a foaf:knows _:b')
+    .add('_:a foaf:surname "Smith"');
+  var r = $.rdf({ databank: d })
+    .where('?a foaf:knows ?b');
+  equals(d.size(), 2);
+  equals(r.size(), 1);
+  d.remove('_:a foaf:knows _:b');
+  equals(d.size(), 1);
+  equals(r.size(), 0);
+});
+
+test("updating queries when triples are removed from a databank", function () {
+  var d = $.rdf.databank()
+    .prefix('foaf', ns.foaf)
+    .add('_:a foaf:knows _:b')
+    .add('_:a foaf:surname "Smith"');
+  var root = $.rdf({ databank: d });
+  var r1 = root.where('?a foaf:knows ?b');
+  var r2 = r1.where('?a foaf:surname ?s');
+  equals(root.size(), 0);
+  equals(r1.size(), 1);
+  equals(r2.size(), 1);
+  d.remove('_:a foaf:knows _:b');
+  equals(root.size(), 0);
+  equals(r1.size(), 0);
+  equals(r2.size(), 0);
+});
 
 module("Creating Patterns");
 
