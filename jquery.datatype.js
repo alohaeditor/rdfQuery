@@ -178,10 +178,7 @@
 	$.typedValue.valid = function (value, datatype) {
 		var d = $.typedValue.types[datatype];
 		if (d === undefined) {
-			throw {
-				name: "InvalidDatatype",
-				message: "The datatype " + datatype + " hasn't been registered"
-			};
+			throw "InvalidDatatype: The datatype " + datatype + " can't be recognised";
 		} else if (d.regex.test(value)) {
 			return d.validate === undefined ? true : d.validate(value);
 		} else {
