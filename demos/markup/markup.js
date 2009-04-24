@@ -131,100 +131,89 @@ $(document).ready(function () {
       }
     },
     
-    rules = [{
-      where: ['?child biografr:hasFather ?father'],
-      then: ['?child a foaf:Person',
-             '?father a foaf:Person',
-             '?child biografr:hasParent ?father', 
-             '?father biografr:hasChild ?child',
-             '?father biografr:gender "male"']
-    }, {
-      where: ['?child biografr:hasMother ?mother'],
-      then: ['?child a foaf:Person',
-             '?mother a foaf:Person',
-             '?child biografr:hasParent ?mother',
-             '?mother biografr:hasChild ?child',
-             '?mother biografr:gender "female"']
-    }, {
-      where: ['?gchild biografr:hasParent ?parent',
-              '?parent biografr:hasParent ?gparent'],
-      then: ['?gchild a foaf:Person',
-             '?gparent a foaf:Person',
-             '?gchild biografr:hasGrandparent ?gparent',
-             '?gparent biografr:hasGrandchild ?gchild']
-    }, {
-      where: ['?parent biografr:hasChild ?child',
-              '?child biografr:gender "male"'],
-      then: ['?parent a foaf:Person',
-             '?child a foaf:Person',
-             '?parent biografr:hasSon ?child']
-    }, {
-      where: ['?parent biografr:hasChild ?child',
-              '?child biografr:gender "female"'],
-      then: ['?parent a foaf:Person',
-             '?child a foaf:Person',
-             '?parent biografr:hasDaughter ?child']
-    }, {
-      where: ['?parent biografr:hasSon ?child'],
-      then: ['?parent a foaf:Person',
-             '?child a foaf:Person',
-             '?parent biografr:hasChild ?child',
-             '?child biografr:gender "male"']
-    }, {
-      where: ['?parent biografr:hasDaughter ?child'],
-      then: ['?parent a foaf:Person',
-             '?child a foaf:Person',
-             '?parent biografr:hasChild ?child',
-             '?child biografr:gender "female"']
-    }, {
-      where: ['?gparent biografr:hasGrandchild ?gchild',
-              '?gchild biografr:gender "male"'],
-      then: ['?gparent a foaf:Person',
-             '?gchild a foaf:Person',
-             '?gparent biografr:hasGrandson ?gchild']
-    }, {
-      where: ['?gparent biografr:hasGrandchild ?gchild',
-              '?gchild biografr:gender "female"'],
-      then: ['?gparent a foaf:Person',
-             '?gchild a foaf:Person',
-             '?gparent biografr:hasGranddaughter ?gchild']
-    }, {
-      where: ['?gparent biografr:hasGrandson ?gchild'],
-      then: ['?gparent a foaf:Person',
-             '?gchild a foaf:Person',
-             '?gparent biografr:hasGrandchild ?gchild',
-             '?gchild biografr:gender "male"']
-    }, {
-      where: ['?gparent biografr:hasGranddaughter ?gchild'],
-      then: ['?gparent a foaf:Person',
-             '?gchild a foaf:Person',
-             '?gparent biografr:hasGrandchild ?gchild',
-             '?gchild biografr:gender "female"']
-    }, {
-      where: ['?gchild biografr:hasGrandparent ?gparent',
-              '?gparent biografr:gender "male"'],
-      then: ['?gparent a foaf:Person',
-             '?gchild a foaf:Person',
-             '?gchild biografr:hasGrandfather ?gparent']
-    }, {
-      where: ['?gchild biografr:hasGrandparent ?gparent',
-              '?gparent biografr:gender "female"'],
-      then: ['?gparent a foaf:Person',
-             '?gchild a foaf:Person',
-             '?gchild biografr:hasGrandmother ?gparent']
-    }, {
-      where: ['?gchild biografr:hasGrandfather ?gparent'],
-      then: ['?gparent a foaf:Person',
-             '?gchild a foaf:Person',
-             '?gchild biografr:hasGrandparent ?gparent',
-             '?gparent biografr:gender "male"']
-    }, {
-      where: ['?gchild biografr:hasGrandmother ?gparent'],
-      then: ['?gparent a foaf:Person',
-             '?gchild a foaf:Person',
-             '?gchild biografr:hasGrandparent ?gparent',
-             '?gparent biografr:gender "female"']
-    }],
+    rules = $.rdf.ruleset()
+      .prefix('foaf', ns.foaf)
+      .prefix('biografr', ns.biografr)
+      .add('?child biografr:hasFather ?father',
+           ['?child a foaf:Person',
+            '?father a foaf:Person',
+            '?child biografr:hasParent ?father', 
+            '?father biografr:hasChild ?child',
+            '?father biografr:gender "male"'])
+      .add('?child biografr:hasMother ?mother',
+           ['?child a foaf:Person',
+            '?mother a foaf:Person',
+            '?child biografr:hasParent ?mother',
+            '?mother biografr:hasChild ?child',
+            '?mother biografr:gender "female"'])
+      .add(['?gchild biografr:hasParent ?parent',
+            '?parent biografr:hasParent ?gparent'],
+           ['?gchild a foaf:Person',
+            '?gparent a foaf:Person',
+            '?gchild biografr:hasGrandparent ?gparent',
+            '?gparent biografr:hasGrandchild ?gchild'])
+      .add(['?parent biografr:hasChild ?child',
+            '?child biografr:gender "male"'],
+           ['?parent a foaf:Person',
+            '?child a foaf:Person',
+            '?parent biografr:hasSon ?child'])
+      .add(['?parent biografr:hasChild ?child',
+            '?child biografr:gender "female"'],
+           ['?parent a foaf:Person',
+            '?child a foaf:Person',
+            '?parent biografr:hasDaughter ?child'])
+      .add('?parent biografr:hasSon ?child',
+           ['?parent a foaf:Person',
+            '?child a foaf:Person',
+            '?parent biografr:hasChild ?child',
+            '?child biografr:gender "male"'])
+      .add('?parent biografr:hasDaughter ?child',
+           ['?parent a foaf:Person',
+            '?child a foaf:Person',
+            '?parent biografr:hasChild ?child',
+            '?child biografr:gender "female"'])
+      .add(['?gparent biografr:hasGrandchild ?gchild',
+            '?gchild biografr:gender "male"'],
+           ['?gparent a foaf:Person',
+            '?gchild a foaf:Person',
+            '?gparent biografr:hasGrandson ?gchild'])
+      .add(['?gparent biografr:hasGrandchild ?gchild',
+            '?gchild biografr:gender "female"'],
+           ['?gparent a foaf:Person',
+            '?gchild a foaf:Person',
+            '?gparent biografr:hasGranddaughter ?gchild'])
+      .add('?gparent biografr:hasGrandson ?gchild',
+           ['?gparent a foaf:Person',
+            '?gchild a foaf:Person',
+            '?gparent biografr:hasGrandchild ?gchild',
+            '?gchild biografr:gender "male"'])
+      .add('?gparent biografr:hasGranddaughter ?gchild',
+           ['?gparent a foaf:Person',
+            '?gchild a foaf:Person',
+            '?gparent biografr:hasGrandchild ?gchild',
+            '?gchild biografr:gender "female"'])
+      .add(['?gchild biografr:hasGrandparent ?gparent',
+            '?gparent biografr:gender "male"'],
+           ['?gparent a foaf:Person',
+            '?gchild a foaf:Person',
+            '?gchild biografr:hasGrandfather ?gparent'])
+      .add(['?gchild biografr:hasGrandparent ?gparent',
+            '?gparent biografr:gender "female"'],
+           ['?gparent a foaf:Person',
+            '?gchild a foaf:Person',
+            '?gchild biografr:hasGrandmother ?gparent'])
+      .add('?gchild biografr:hasGrandfather ?gparent',
+           ['?gparent a foaf:Person',
+            '?gchild a foaf:Person',
+            '?gchild biografr:hasGrandparent ?gparent',
+            '?gparent biografr:gender "male"'])
+      .add('?gchild biografr:hasGrandmother ?gparent',
+           ['?gparent a foaf:Person',
+            '?gchild a foaf:Person',
+            '?gchild biografr:hasGrandparent ?gparent',
+            '?gparent biografr:gender "female"']),
+  
+    rdf = $('#content').rdf().reason(rules),
   
     /* S is a O */
     isAregex = /^\s*(.*\S)(?:'s|\s+(?:was|is|are|were))\s+an?\s+(\S.*\S)\.?\s*$/,
@@ -321,42 +310,12 @@ $(document).ready(function () {
       }
     },
     
-    reason = function (rdf) {
-      var nTriples;
-      rdf = rdf || $('#content').rdf();
-      nTriples = rdf.databank.size();
-      $.each(rules, function (i, rule) {
-        var j = 0,
-          conditions = rule.where,
-          consequents = rule.then;
-        rdf = rdf.reset();
-        do {
-          rdf = rdf.where(conditions[j]);
-          j += 1;
-        } while (j < conditions.length && rdf.length > 0);
-        if (rdf.length > 0) {
-          j = 0;
-          while (j < consequents.length) {
-            rdf = rdf.add(consequents[j]);
-            j += 1;
-          }
-        }
-      });
-      rdf = rdf.reset();
-      if (rdf.databank.size() > nTriples) {
-        return reason(rdf);
-      } else {
-        return rdf;
-      }
-    },
-    
-    resourceLabel = function (resource, rdf) {
-      rdf = rdf || $('#content').rdf();
-      rdf = rdf
+    resourceLabel = function (resource) {
+      var q = rdf
         .prefix('rdfs', ns.rdfs)
         .where(resource + ' rdfs:label ?label');
-      if (rdf.length > 0) {
-        return rdf.get(0).label.value;
+      if (q.length > 0) {
+        return q.get(0).label.value;
       } else {
         return resource.value.fragment;
       }
@@ -419,7 +378,7 @@ $(document).ready(function () {
       },
     
       triples: function () {
-        var rdf, labels, sLabel, sResource, 
+        var labels, sLabel, sResource, 
           pLabel, pResource, pResources, pDef, range,
           oLabel, object, 
           pattern, result, i,
@@ -488,7 +447,6 @@ $(document).ready(function () {
               pResource = pResources[0];
             }
           }
-          rdf = reason($('#content').rdf());
           labels = rdf.where('?thing rdfs:label ?label');
           labels = labels.filter('label', sLabel);
           if (labels.length > 0) {
@@ -573,17 +531,17 @@ $(document).ready(function () {
     addDescription = function (resource) {
       var ind = $('#' + resource.value.fragment),
         label = ind.children('h3').text(),
-        list, empty = true, rdf = $('#content').rdf();
+        list, empty = true;
       if (ind.hasClass('open')) {
         list = ind.children('ul');
         list.empty();
-        rdf = reason(rdf);
         rdf
           .reset()
           .about(resource)
           .each(function (i, data, triples) {
             var p = this.property, pLabel,
-              o = this.value, oLabel, li,
+              o = this.value, oLabel, 
+              li, hLabel, del,
               triple = triples[0];
             if (!((p === $.rdf.label && o.type === 'literal' && o.value === label) ||
                   (p === $.rdf.type && ontology[o] !== undefined))) {
@@ -599,12 +557,25 @@ $(document).ready(function () {
               li = list
                 .append('<li />')
                 .children('li:last')
-                  .attr('class', typeof(triple.source) === 'string' ? 'auto' : 'manual')
+                  .attr('class', typeof(triple.source) === 'string' ? 'auto' : 'manual');
+              if (typeof(triple.source) !== 'string') {
+                del = li
+                  .append(' <abbr title="delete">x</abbr>')
+                  .children('abbr')
+                  .bind('click', function () {
+                    $(triple.source).removeRdfa({ property: triple.property });
+                    addDescription(resource);
+                  });
+              }
+              hLabel = li
+                .append('<span />')
+                .children('span')
                   .html(pLabel + ': ' + oLabel);
               if (o.type === 'uri' && ontology[o] === undefined && o.value.fragment !== undefined) {
-                li
+                hLabel
+                  .attr('class', 'link')
                   .bind('click', function () {
-                    $(this).parent().parent().removeClass('open');
+                    $(this).parent().parent().parent().removeClass('open');
                     $('#' + o.value.fragment).addClass('open');
                     addDescription(o);
                   });
@@ -672,7 +643,6 @@ $(document).ready(function () {
     },
     
     populateLists = function () {
-      var rdf = $('#content').rdf();
       people.empty();
       places.empty();
       rdf
@@ -731,18 +701,18 @@ $(document).ready(function () {
   });
   
   $('#notes').bind("submit", function (event) {
-    var rdf, response;
+    var newRdf, response;
     try {
-      rdf = statement.triples();
-      if (typeof(rdf) !== 'string') {
+      newRdf = statement.triples();
+      if (typeof(newRdf) !== 'string') {
         if (statement.isQuery()) {
           response = $('#response').text('');
           response.append('Answering "' + statement.val() + '"');
           response = $('#answer').text('');
           response.dialog('option', 'title', statement.val());
           response.dialog('option', 'width', '33%');
-          if (rdf.length > 0) {
-            rdf.each(function (i, data, triples) {
+          if (newRdf.length > 0) {
+            newRdf.each(function (i, data, triples) {
               var label;
               if (i > 0) {
                 response.append('<br>');
@@ -769,9 +739,9 @@ $(document).ready(function () {
           response.dialog('open');
         } else {
           response = $('#response').text('');
-          rdf = reason(rdf);
+          newRdf.reason(rules);
           response.append('OK, I know:');
-          rdf
+          newRdf
             .where('?thing a ?class')
             .each(function (i, data, triples) {
               var list, span, label;
@@ -820,6 +790,7 @@ $(document).ready(function () {
             });
         }
         statement.field.val('');
+        rdf = $('#content').rdf().reason(rules);
       }
     } catch (e) {
       console.log(e);

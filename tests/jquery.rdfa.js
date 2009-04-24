@@ -612,6 +612,68 @@ test('adding a repeat of a triple', function () {
   $('#main > p').remove();
 });
 
+module("removing RDFa from elements");
+
+test("removing RDFa from an element", function() {
+  var eventFired = false;
+  setup('<p>This document is by <span property="dc:creator">Jeni Tennison</span>.</p>');
+  var span = $('#main > p > span');
+  span.bind("rdfChange", function () {
+    eventFired = true;
+  });
+  span.removeRdfa({ property: "dc:creator" });
+  ok(eventFired, "should trigger any functions bound to the changeRDF event");
+  $('#main > p').remove();
+});
+
+test("removing a property from an element", function() {
+  setup('<p>This document is by <span property="dc:creator">Jeni Tennison</span>.</p>');
+  var span = $('#main > p > span');
+  span.removeRdfa({ property: "dc:creator" });
+  equals(span.attr('property'), undefined, "the property attribute should be removed");
+  $('#main > p').remove();
+});
+
+test("attempting to remove a property from an element when the property doesn't match", function() {
+  setup('<p>This document is by <span property="dc:creator">Jeni Tennison</span>.</p>');
+  var span = $('#main > p > span');
+  span.removeRdfa({ property: "dc:modified" });
+  equals(span.attr('property'), "dc:creator", "the property attribute should not be removed");
+  $('#main > p').remove();
+});
+
+test("removing a property from an element when the property contains multiple values", function() {
+  setup('<p>This document is by <span property="dc:creator dc:contributor">Jeni Tennison</span>.</p>');
+  var span = $('#main > p > span');
+  span.removeRdfa({ property: "dc:creator" });
+  equals(span.attr('property'), "dc:contributor", "only the relevant value should be removed");
+  $('#main > p').remove();
+});
+
+test("removing a property resource from an element", function () {
+  setup('<p>This document is by <span property="dc:creator dc:contributor">Jeni Tennison</span>.</p>');
+  var span = $('#main > p > span');
+  span.removeRdfa({ property: $.rdf.resource('<' + ns.namespaces.dc + 'creator>') });
+  equals(span.attr('property'), "dc:contributor", "only the relevant value should be removed");
+  $('#main > p').remove();
+});
+
+test("removing a relation from an element", function () {
+  setup('<p>This document is by <a rel="dc:creator" href="http://www.jenitennison.com/">Jeni Tennison</span>.</p>');
+  var span = $('#main > p > a');
+  span.removeRdfa({ property: "dc:creator" });
+  equals(span.attr('rel'), '', "The rel attribute should be removed");
+  $('#main > p').remove();
+});
+
+test("removing a type from an element", function () {
+  setup('<p>This document is by <a about="http://www.jenitennison.com/" typeof="foaf:Person">Jeni Tennison</span>.</p>');
+  var span = $('#main > p > a');
+  span.removeRdfa({ type: "foaf:Person" });
+  equals(span.attr('typeof'), undefined, "The typeof attribute should be removed");
+  $('#main > p').remove();
+});
+
 module("Testing Selectors");
 
 test('selecting nodes with a particular subject', function () {

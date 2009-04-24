@@ -93,6 +93,18 @@ h1 {
   color: #BF6930;
 }
 
+#summary abbr {
+  font: Helvetica, Arial, sans-serif;
+  border-bottom: none;
+  color: #CCCCCC;
+  margin-right: 0.5em;
+  cursor: pointer;
+}
+
+#summary .link {
+  cursor: pointer;
+}
+
 #actions {
   position: absolute;
   bottom: 0;
