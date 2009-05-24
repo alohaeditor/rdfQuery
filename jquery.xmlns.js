@@ -37,7 +37,7 @@
           } else {
             for (i = 0; i < e.attributes.length; i += 1) {
               a = e.attributes[i];
-              if (/^xmlns/.test(a.nodeName)) {
+              if (/^xmlns(:(.+))?$/.test(a.nodeName)) {
                 prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
                 ns[prefix] = $.uri(a.nodeValue);
                 found = true;

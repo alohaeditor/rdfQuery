@@ -10,7 +10,8 @@ var ns = { namespaces: {
 	foaf: "http://xmlns.com/foaf/0.1/",
 	cc: "http://creativecommons.org/ns#",
 	ex: "http://example.org/",
-	sioc: "http://rdfs.org/sioc/ns#"
+	sioc: "http://rdfs.org/sioc/ns#",
+	xhv: "http://www.w3.org/1999/xhtml/vocab#"
 }};
 
 function setup(rdfa) {
@@ -79,6 +80,12 @@ test("In property attribute", function() {
 	$('#main > p').remove();
 });
 
+test("In rel attribute", function () {
+	setup('<p>This photo was taken by <a about="photo1.jpg" rel="creator" href="#mark">Mark Birbeck</a>.</p>');
+	testTriples($('#main > p > span').rdfa(), 
+	            []);
+	$('#main > p').remove();
+});
 
 module("Reported bugs");
 
@@ -99,6 +106,59 @@ test("XMLLiteral including comments", function () {
   setup('<p property="sioc:note"><!-- ///// --><em>TODO</em></p>');
   testTriples($('#main > p').rdf(), 
               [$.rdf.triple('<> sioc:note "<!-- ///// --><em xmlns=\\"http://www.w3.org/1999/xhtml\\">TODO</em>"^^rdf:XMLLiteral .', ns)]);
+  $('#main > p').remove();
+});
+
+test("Improper whitespace in rel attribute", function () {
+  setup('<a rel="next&#x0b;prev" href="http://example.org/test.css">Test</a>');
+  testTriples($('#main > a').rdf(), []);
+  $('#main > a').remove();
+});
+
+test("Uppercase relationship name", function () {
+  setup('<a rel="NEXT" href="http://example.org/test.css">Test</a>');
+  testTriples($('#main > a').rdf(), [
+    $.rdf.triple('<> xhv:next <http://example.org/test.css> .', ns)]);
+  $('#main > a').remove();
+});
+
+test("Bogus relationship name", function () {
+  setup('<a rel="next bogus prev" href="http://example.org/test.css">Test</a>');
+  testTriples($('#main > a').rdf(), [
+    $.rdf.triple('<> xhv:next <http://example.org/test.css> .', ns),
+    $.rdf.triple('<> xhv:prev <http://example.org/test.css> .', ns)
+  ]);
+  $('#main > a').remove();
+});
+
+test("URI included in relationship", function () {
+  setup('<a rel="next http://example.org/test prev" href="http://example.org/test.css">Test</a>');
+  testTriples($('#main > a').rdf(), [
+    $.rdf.triple('<> xhv:next <http://example.org/test.css> .', ns),
+    $.rdf.triple('<> xhv:prev <http://example.org/test.css> .', ns)
+  ]);
+  $('#main > a').remove();
+});
+
+test("Uppercase prefix in CURIE", function () {
+  setup('<p XMLNS:EX="http://example.org/" property="EX:test">Test</p>');
+  testTriples($('#main > p').rdf(), []);
+  $('#main > p').remove();
+});
+
+test("Empty xmlns prefix", function () {
+  setup('<p xmlns:="http://example.org/" property=":test">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> xhv:test "Test" .', ns)
+  ]);
+  $('#main > p').remove();
+});
+
+test("With both lang and xml:lang defined", function () {
+  setup('<p xmlns:ex="http://example.org/" property="ex:test" lang="aa" xml:lang="bb">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> ex:test "Test"@aa .', ns)
+  ]);
   $('#main > p').remove();
 });
 
