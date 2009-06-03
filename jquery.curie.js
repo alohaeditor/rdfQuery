@@ -25,9 +25,9 @@
   			throw "Malformed CURIE: No namespace binding for " + prefix + " in CURIE " + curie;
 		  }
 		} else {
-		  if (opts.case === 'lower') {
+		  if (opts.charcase === 'lower') {
 		    curie = curie.toLowerCase();
-		  } else if (opts.case === 'upper') {
+		  } else if (opts.charcase === 'upper') {
 		    curie = curie.toUpperCase();
 		  }
   		if (opts.reserved.length && $.inArray(curie, opts.reserved) >= 0) {
@@ -49,7 +49,7 @@
 		reserved: [],
 		reservedNamespace: undefined,
 		defaultNamespace: undefined,
-		case: 'preserve'
+		charcase: 'preserve'
 	};
 	
 	$.safeCurie = function (safeCurie, options) {
@@ -98,7 +98,7 @@
 		],
 		reservedNamespace: 'http://www.w3.org/1999/xhtml/vocab#',
 		defaultNamespace: undefined,
-		case: 'lower'
+		charcase: 'lower'
 	};
 	
 	$.fn.safeCurie = function (safeCurie, options) {
