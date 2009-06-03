@@ -58,7 +58,7 @@ test("CURIE with no prefix that is not in the default set of prefix-less CURIEs 
 
 test("CURIE with no prefix and no colon when there is a default namespace", function() {
 	var namespace = 'http://www.example.org/';
-	var opts = {reserved: [], reservedNamespace: undefined, defaultNamespace: namespace};
+	var opts = {reserved: [], reservedNamespace: null, defaultNamespace: namespace};
 	try {
 		equals($('html').curie('foobar', opts), namespace + 'foobar');
 	} catch (e) {
@@ -66,13 +66,33 @@ test("CURIE with no prefix and no colon when there is a default namespace", func
 	}
 });
 
-test("CURIE with no prefix (but with a colon) when there is a default namespace", function() {
+test("CURIE with no prefix and no colon when there is no default namespace", function() {
+	var opts = {reserved: [], reservedNamespace: null, defaultNamespace: null};
+	try {
+	  var curie = $('html').curie('foobar', opts);
+		ok(false, 'should give an error');
+	} catch (e) {
+		ok(true, 'should give an error');
+	}
+});
+
+test("CURIE with no prefix (but with a colon) when there is a reserved namespace", function() {
 	var namespace = 'http://www.example.org/';
-	var opts = {reserved: [], reservedNamespace: undefined, defaultNamespace: namespace};
+	var opts = {reserved: [], reservedNamespace: namespace, defaultNamespace: null};
 	try {
 		equals($('html').curie(':foobar', opts), namespace + 'foobar');
 	} catch (e) {
 		ok(false, 'should not give an error');
+	}
+});
+
+test("CURIE with no prefix (but with a colon) when there is no reserved namespace", function() {
+	var opts = {reserved: [], reservedNamespace: null, defaultNamespace: null};
+	try {
+	  var curie = $('html').curie('foobar', opts);
+		ok(false, 'should give an error');
+	} catch (e) {
+		ok(true, 'should give an error');
 	}
 });
 

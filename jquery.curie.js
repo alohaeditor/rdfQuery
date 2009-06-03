@@ -18,8 +18,12 @@
 			prefix = m[2],
 			local = m[3],
 			ns = opts.namespaces[prefix];
-		if (prefix === "") {
-		  ns = opts.reservedNamespace;
+		if (prefix === "") { // This is the case of a CURIE like ":test"
+		  if (opts.reservedNamespace === undefined || opts.reservedNamespace === null) {
+		    throw "Malformed CURIE: No prefix and no default namespace for unprefixed CURIE " + curie;
+		  } else {
+  		  ns = opts.reservedNamespace;
+		  }
 		} else if (prefix) {
 		  if (ns === undefined) {
   			throw "Malformed CURIE: No namespace binding for " + prefix + " in CURIE " + curie;
@@ -33,7 +37,7 @@
   		if (opts.reserved.length && $.inArray(curie, opts.reserved) >= 0) {
   		  ns = opts.reservedNamespace;
   		  local = curie;
-      } else if (opts.defaultNamespace === undefined) {
+      } else if (opts.defaultNamespace === undefined || opts.defaultNamespace === null) {
   			// the default namespace is provided by the application; it's not clear whether
   			// the default XML namespace should be used if there's a colon but no prefix
   			throw "Malformed CURIE: No prefix and no default namespace for unprefixed CURIE " + curie;
