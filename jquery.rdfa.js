@@ -40,7 +40,7 @@
         while (a !== null) {
           name = a[1];
           value = a[2] || a[3] || a[4];
-          if (/^xmlns/.test(name)) {
+          if (/^xmlns/.test(name) && value !== '') {
             prefix = /^xmlns(:(.+))?$/.exec(name)[2] || '';
             ns[prefix] = $.uri(value);
             ns[':length'] += 1;
@@ -54,7 +54,7 @@
         attMap = e.attributes;
         for (i = 0; i < attMap.length; i += 1) {
           a = attMap[i];
-          if (/^xmlns(:(.+))?$/.test(a.nodeName)) {
+          if (/^xmlns(:(.+))?$/.test(a.nodeName) && a.nodeValue !== '') {
             prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
             ns[prefix] = $.uri(a.nodeValue);
             ns[':length'] += 1;

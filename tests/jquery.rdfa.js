@@ -167,6 +167,20 @@ test("Empty xmlns prefix", function () {
   $('#main > p').remove();
 });
 
+test("Empty inherited xmlns value", function () {
+  setup('<p xmlns:ex="" property="ex:test">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> ex:test "Test" .', ns)
+  ]);
+  $('#main > p').remove();
+});
+
+test("Empty xmlns value", function () {
+  setup('<p xmlns:ex2="" property="ex2:test">Test</p>');
+  testTriples($('#main > p').rdf(), []);
+  $('#main > p').remove();
+});
+
 test("Digit in curie", function () {
   setup('<p xmlns:ex="http://example.org/" property="ex:one2three4">Test</p>');
   testTriples($('#main > p').rdf(), [
