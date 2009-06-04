@@ -131,6 +131,19 @@ test("Bogus relationship name", function () {
   $('#main > a').remove();
 });
 
+test("Newline in rel attribute", function () {
+  setup('<a rel="next&#x20;prev&#x09;first&#x0a;last&#x0c;section&#x0d;subsection" href="http://example.org/test.css" />');
+  testTriples($('#main > a').rdf(), [
+    $.rdf.triple('<> xhv:next <http://example.org/test.css> .', ns),
+    $.rdf.triple('<> xhv:prev <http://example.org/test.css> .', ns),
+    $.rdf.triple('<> xhv:first <http://example.org/test.css> .', ns),
+    $.rdf.triple('<> xhv:last <http://example.org/test.css> .', ns),
+    $.rdf.triple('<> xhv:section <http://example.org/test.css> .', ns),
+    $.rdf.triple('<> xhv:subsection <http://example.org/test.css> .', ns)
+  ]);
+  $('#main > a').remove();
+});
+
 test("URI included in relationship", function () {
   setup('<a rel="next http://example.org/test prev" href="http://example.org/test.css">Test</a>');
   testTriples($('#main > a').rdf(), [
@@ -151,6 +164,15 @@ test("Empty xmlns prefix", function () {
   testTriples($('#main > p').rdf(), [
     $.rdf.triple('<> xhv:test "Test" .', ns)
   ]);
+  $('#main > p').remove();
+});
+
+test("Digit in curie", function () {
+  setup('<p xmlns:ex="http://example.org/" property="ex:one2three4">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> <http://example.org/one2three4> "Test" .', ns)
+  ]);
+  equals($('#main > p').rdf().databank.triples()[0].property.value, 'http://example.org/one2three4');
   $('#main > p').remove();
 });
 

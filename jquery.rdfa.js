@@ -100,7 +100,7 @@
 
     resourcesFromCuries = function (curies, elem, options) {
       var i, resource, resources = [];
-      curies = curies && curies.split ? curies.split(/[ \t\n\d]+/) : [];
+      curies = curies && curies.split ? curies.split(/[ \t\n\r\x0C]+/g) : [];
       for (i = 0; i < curies.length; i += 1) {
         if (curies[i] !== '') {
           resource = resourceFromCurie(curies[i], elem, options);
