@@ -288,7 +288,7 @@
         rels = context.forward;
         revs = context.backward;
         subject = context.subject;
-        object = context.object;
+        resource = context.object;
       } else {
         subject = subject.subject;
         if (forward.length > 0 || backward.length > 0) {
@@ -670,6 +670,9 @@
               this.attr('typeof', type);
             }
           }
+        }
+        if (atts.property === this.attr('property') && atts.rel === this.attr('rel') && atts.rev === this.attr('rev') && atts['typeof'] === this.attr('typeof')) {
+          return removeRDFa.call(this.parent(), what);
         }
       }
       this.parents().andSelf().trigger("rdfChange");

@@ -11,7 +11,8 @@ var ns = { namespaces: {
 	cc: "http://creativecommons.org/ns#",
 	ex: "http://example.org/",
 	sioc: "http://rdfs.org/sioc/ns#",
-	xhv: "http://www.w3.org/1999/xhtml/vocab#"
+	xhv: "http://www.w3.org/1999/xhtml/vocab#",
+	prism: "http://prism.talis.com/schema#"
 }};
 
 function setup(rdfa) {
@@ -196,6 +197,27 @@ test("With both lang and xml:lang defined", function () {
     $.rdf.triple('<> ex:test "Test"@aa .', ns)
   ]);
   $('#main > p').remove();
+});
+
+test("div with no attributes", function () {
+  setup('<div id="collections">' +
+        '<ol xmlns:prism="http://prism.talis.com/schema#"' +
+        'typeof="rdf:Seq" about="http://example.com/tenancies/abahhagagabdjfyegegbsh/collections">' +
+				'<li rel="rdf:_1" id="tenancies-abahhagagabdjfyegegbsh-collections-1"' +      
+				'  resource="http://example.com/tenancies/abahhagagabdjfyegegbsh/collections/1">' +
+				'  <div>' +
+				'    <input type="checkbox" id="tenancies-abahhagagabdjfyegegbsh-collections-1-hidden" property="prism:hidden"' + 
+				'datatype="xsd:boolean" content="true" checked="checked" />' +
+				'  </div>' +
+				'</li>' +
+				'</ol>' +
+				'</div>');
+	testTriples($('#collections').rdf(), [
+	  $.rdf.triple('<http://example.com/tenancies/abahhagagabdjfyegegbsh/collections> a rdf:Seq .', ns),
+	  $.rdf.triple('<http://example.com/tenancies/abahhagagabdjfyegegbsh/collections> rdf:_1 <http://example.com/tenancies/abahhagagabdjfyegegbsh/collections/1> .', ns),
+	  $.rdf.triple('<http://example.com/tenancies/abahhagagabdjfyegegbsh/collections/1> prism:hidden "true"^^xsd:boolean .', ns)
+	]);
+	$('#collections').remove();
 });
 
 module("RDFa Test Suite");
