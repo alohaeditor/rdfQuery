@@ -812,7 +812,7 @@ test("dumping in RDF/XML a triple whose subject is a blank node", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'nodeID');
+	var a = d.attributes.getNamedItem('rdf:nodeID');
 	ok(a !== undefined && a !== null, 'it should have an rdf:nodeID attribute');
 	equals(a.nodeValue, 'someone');
 });
@@ -826,8 +826,8 @@ test("dumping in RDF/XML a triple whose property is rdf:type", function() {
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
 	equals(d.namespaceURI, ns.foaf);
-	equals(d.localName, 'Person');
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'nodeID');
+	equals(d.nodeName, 'foaf:Person');
+	var a = d.attributes.getNamedItem('rdf:nodeID');
 	ok(a !== undefined && a !== null, 'it should have an rdf:nodeID attribute');
 	equals(a.nodeValue, 'someone');
 	equals(d.childNodes.length, 0, 'the rdf:type element shouldn\'t appear');
@@ -841,14 +841,14 @@ test("dumping in RDF/XML a triple whose object is a blank node", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'about');
+	var a = d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value);
 	equals(d.childNodes.length, 1);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc);
-	equals(p.localName, 'creator');
-	var a = p.attributes.getNamedItemNS(ns.rdf, 'nodeID');
+	equals(p.nodeName, 'dc:creator');
+	var a = p.attributes.getNamedItem('rdf:nodeID');
 	ok(a !== undefined && a !== null, 'it should have an rdf:nodeID attribute');
 	equals(a.nodeValue, 'someone');
 });
@@ -861,13 +861,13 @@ test("dumping in RDF/XML a triple whose object is a untyped literal", function()
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'about');
+	var a = d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value);
 	equals(d.childNodes.length, 1);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc);
-	equals(p.localName, 'creator');
+	equals(p.nodeName, 'dc:creator');
 	equals(p.childNodes.length, 1);
 	equals(p.childNodes[0].nodeValue, 'Jeni');
 });
@@ -880,16 +880,16 @@ test("dumping in RDF/XML a triple whose object is a typed literal", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'about');
+	var a = d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value);
 	equals(d.childNodes.length, 1);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc);
-	equals(p.localName, 'created');
+	equals(p.nodeName, 'dc:created');
 	equals(p.childNodes.length, 1);
 	equals(p.childNodes[0].nodeValue, '2009-01-01');
-	var a = p.attributes.getNamedItemNS(ns.rdf, 'datatype');
+	var a = p.attributes.getNamedItem('rdf:datatype');
 	ok(a !== undefined && a !== null, 'it should have an rdf:datatype attribute');
 	equals(a.nodeValue, ns.xsd + 'date');
 });
@@ -902,16 +902,16 @@ test("dumping in RDF/XML a triple whose object is a literal with a language", fu
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'about');
+	var a = d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value);
 	equals(d.childNodes.length, 1);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc);
-	equals(p.localName, 'creator');
+	equals(p.nodeName, 'dc:creator');
 	equals(p.childNodes.length, 1);
 	equals(p.childNodes[0].nodeValue, 'Jeni');
-	var a = p.attributes.getNamedItemNS(ns.xml, 'lang');
+	var a = p.attributes.getNamedItem('xml:lang');
 	ok(a !== undefined && a !== null, 'it should have an xml:lang attribute');
 	equals(a.nodeValue, 'en');
 });
@@ -924,21 +924,21 @@ test("dumping in RDF/XML a triple whose object is an XML Literal", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1, 'the rdf:RDF element should have one child node');
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'about');
+	var a = d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value, 'the about attribute should hold the subject');
 	equals(d.childNodes.length, 1, 'the description element should have one child node');
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc, 'the property element should be in the dublin core namespace');
-	equals(p.localName, 'title', 'the property element should be called title');
-	var a = p.attributes.getNamedItemNS(ns.rdf, 'parseType');
+	equals(p.nodeName, 'dc:title', 'the property element should be called title');
+	var a = p.attributes.getNamedItem('rdf:parseType');
 	ok(a !== undefined && a !== null, 'it should have an rdf:parseType attribute');
 	equals(a.nodeValue, 'Literal');
 	equals(p.childNodes.length, 3, 'the property element should have three child nodes');
 	equals(p.childNodes[0].nodeValue, 'E = mc', 'the first child node should be a text node with the value E = mc');
 	var s = p.childNodes[1];
 	equals(s.namespaceURI, 'http://www.w3.org/1999/xhtml', 'the second child should be in the XHTML namespace');
-	equals(s.localName, 'sup', 'the second child should be a sup element');
+	equals(s.nodeName, 'sup', 'the second child should be a sup element');
 	var a = s.attributes.getNamedItem('xmlns');
 	ok(a !== undefined && a !== null, 'it should have an xmlns attribute');
 	equals(a.nodeValue, 'http://www.w3.org/1999/xhtml', 'the xmlns attribute should have an XHTML namespace declaration on it');
@@ -962,7 +962,7 @@ test("creating a new databank", function() {
 	equals(data.tripleStore[triples[1].subject].length, 1);
 	equals(data.tripleStore[triples[1].subject][0], triples[1]);
 	equals(data.size(), 2);
-	
+
 	var e = data.dump();
 	ok(e[triples[0].subject.value] !== undefined, 'the dump should have a property equal to the subject of the first triple');
 	ok(e[triples[1].subject.value] !== undefined, 'the dump should have a property equals to the subject of the second triple');
@@ -970,45 +970,45 @@ test("creating a new databank", function() {
 	ok(e[triples[1].subject.value][triples[1].property.value], 'expecting { subject: { property: { value }}}');
 	equals(e[triples[0].subject.value][triples[0].property.value][0].type, 'uri');
 	equals(e[triples[0].subject.value][triples[0].property.value][0].value, 'http://www.blogger.com/profile/1109404');
-	
+
 	var x = data.dump({ format: 'application/rdf+xml', namespaces: namespaces });
 	equals(x.documentElement.nodeName, 'rdf:RDF');
 	var r = x.documentElement;
-	
-	var xmlnsRdf = r.attributes.getNamedItemNS(ns.xmlns, 'rdf');
+
+	var xmlnsRdf = r.attributes.getNamedItem('xmlns:rdf');
 	ok(xmlnsRdf !== undefined && xmlnsRdf !== null, 'it should have an xmlns:rdf declaration');
 	equals(xmlnsRdf.nodeValue, ns.rdf);
-	var xmlnsDc = r.attributes.getNamedItemNS(ns.xmlns, 'dc');
+       var xmlnsDc = r.attributes.getNamedItem('xmlns:dc');
 	ok(xmlnsDc !== undefined && xmlnsDc !== null, 'it should have an xmlns:dc declaration');
 	equals(xmlnsDc.nodeValue, ns.dc);
-	var xmlnsFoaf = r.attributes.getNamedItemNS(ns.xmlns, 'foaf');
+	var xmlnsFoaf = r.attributes.getNamedItem('xmlns:foaf');
 	ok(xmlnsFoaf !== undefined && xmlnsFoaf !== null, 'it should have an xmlns:foaf declaration');
 	equals(xmlnsFoaf.nodeValue, ns.foaf);
-	
+
 	equals(r.childNodes.length, 2);
 	var d = r.childNodes[0];
 	equals(d.namespaceURI, ns.rdf);
-	equals(d.localName, 'Description');
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'about');
+	equals(d.nodeName, 'rdf:Description');
+	var a = d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triples[0].subject.value);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc);
-	equals(p.localName, 'creator');
-	var a = p.attributes.getNamedItemNS(ns.rdf, 'resource');
+	equals(p.nodeName, 'dc:creator');
+	var a = p.attributes.getNamedItem('rdf:resource');
 	ok(a !== undefined && a !== null, 'it should have an rdf:resource attribute');
 	equals(a.nodeValue, triples[0].object.value);
-	
+
 	var d = r.childNodes[1];
 	equals(d.namespaceURI, ns.rdf);
-	equals(d.localName, 'Description');
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'about');
+	equals(d.nodeName, 'rdf:Description');
+	var a = d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triples[1].subject.value);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.foaf);
-	equals(p.localName, 'img');
-	var a = p.attributes.getNamedItemNS(ns.rdf, 'resource');
+	equals(p.nodeName, 'foaf:img');
+	var a = p.attributes.getNamedItem('rdf:resource');
 	ok(a !== undefined && a !== null, 'it should have an rdf:resource attribute');
 	equals(a.nodeValue, triples[1].object.value);
 });
@@ -1018,7 +1018,7 @@ test("loading JSON/RDF into a databank", function() {
     'http://example.com/aReallyGreatBook': {
       'http://purl.org/dc/elements/1.1/title': [ { type: 'literal', value: 'A Really Great Book' } ],
       'http://purl.org/dc/elements/1.1/creator': [ { type: 'bnode', value: '_:creator' } ],
-      'http://purl.org/dc/terms/issued': [ { type: 'literal', value: '2004-01-19', 
+      'http://purl.org/dc/terms/issued': [ { type: 'literal', value: '2004-01-19',
                                              datatype: 'http://www.w3.org/2001/XMLSchema#date' } ]
     },
     '_:creator': {
@@ -1031,22 +1031,34 @@ test("loading JSON/RDF into a databank", function() {
   ok(databank.size(), 5);
 });
 
+function parseFromString(xml){
+  var doc;
+  try {
+    doc = new ActiveXObject("Microsoft.XMLDOM");
+    doc.async = "false";
+    doc.loadXML(xml);
+  } catch(e) {
+    var parser = new DOMParser();
+    doc = parser.parseFromString(xml, 'text/xml');
+  }
+  return doc;
+};
+
 test("loading RDF/XML into a databank", function() {
-  var xml = 
+  var xml =
     '<rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
     '    xmlns:dc="http://purl.org/dc/elements/1.1/"                         ' +
     '    rdf:about="http://www.w3.org/TR/rdf-syntax-grammar">                ' +
     '  <dc:title>RDF/XML Syntax Specification (Revised)</dc:title>           ' +
     '</rdf:Description>                                                      ';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 1);
   var triple = databank.triples()[0];
-  equals(triple.subject.value, 'http://www.w3.org/TR/rdf-syntax-grammar');
-  equals(triple.property.value, ns.dc + 'title');
-  equals(triple.object.value, 'RDF/XML Syntax Specification (Revised)');
+  equals(triple.subject.value.toString(), 'http://www.w3.org/TR/rdf-syntax-grammar');
+  equals(triple.property.value.toString(), ns.dc + 'title');
+  equals(triple.object.value.toString(), 'RDF/XML Syntax Specification (Revised)');
 });
 
 test("loading RDF/XML with (anonymous) blank nodes into a databank", function () {
@@ -1063,8 +1075,7 @@ test("loading RDF/XML with (anonymous) blank nodes into a databank", function ()
     '    </rdf:Description>' +
     '  </ex:editor>' +
     '</rdf:Description>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 2);
@@ -1094,8 +1105,7 @@ test("loading RDF/XML with multiple property elements", function () {
     '  </ex:editor>' +
     '  <dc:title>RDF/XML Syntax Specification (Revised)</dc:title>' +
     '</rdf:Description>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 4);
@@ -1115,8 +1125,7 @@ test("loading RDF/XML with an rdf:resource attribute", function () {
     '  </ex:editor>' +
     '  <dc:title>RDF/XML Syntax Specification (Revised)</dc:title>' +
     '</rdf:Description>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 4);
@@ -1135,8 +1144,7 @@ test("loading RDF/XML with property attributes", function () {
     '    </rdf:Description>' +
     '  </ex:editor>' +
     '</rdf:Description>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 4);
@@ -1156,8 +1164,7 @@ test("loading RDF/XML whose document element is an rdf:RDF element", function ()
     '    </ex:editor>' +
     '  </rdf:Description>' +
     '</rdf:RDF>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 4);
@@ -1172,8 +1179,7 @@ test("loading RDF/XML with xml:lang attributes in it", function () {
     '  <dc:description>Das Buch ist außergewöhnlich</dc:description>' +
     '  <dc:title xml:lang="en">The Tree</dc:title>' +
     '</rdf:Description>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 3);
@@ -1194,8 +1200,7 @@ test("loading RDF/XML containing XML literals", function () {
     '    </ex:prop>' +
     '  </rdf:Description>' +
     '</rdf:RDF>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 1);
@@ -1210,8 +1215,7 @@ test("loading RDF/XML with a property whose value has a datatype", function () {
     '  xmlns:ex="http://www.example.org/">' +
     '  <ex:size rdf:datatype="http://www.w3.org/2001/XMLSchema#int">123</ex:size>' +
     '</rdf:Description>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 1);
@@ -1233,8 +1237,7 @@ test("loading RDF/XML with identified blank nodes", function () {
     '    <ex:homePage rdf:resource="http://purl.org/net/dajobe/"/>' +
     '  </rdf:Description>' +
     '</rdf:RDF>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 4);
@@ -1256,8 +1259,7 @@ test("loading RDF/XML with rdf:parseType='Resource'", function () {
     '    <ex:homePage rdf:resource="http://purl.org/net/dajobe/"/>' +
     '  </ex:editor>' +
     '</rdf:Description>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 4);
@@ -1274,8 +1276,7 @@ test("loading RDF/XML with a property element having property attributes", funct
   	'	   dc:title="RDF/XML Syntax Specification (Revised)">' +
     '  <ex:editor ex:fullName="Dave Beckett" />' +
     '</rdf:Description>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 3);
@@ -1290,8 +1291,7 @@ test("loading RDF/XML with typed node elements", function () {
     '    <dc:title>A marvelous thing</dc:title>' +
     '  </ex:Document>' +
     '</rdf:RDF>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   equals(databank.size(), 2);
@@ -1308,8 +1308,7 @@ test("loading RDF/XML with xml:base and rdf:ID attributes", function () {
     '    <ex:prop rdf:resource="fruit/apple"/>' +
     '  </rdf:Description>' +
     '</rdf:RDF>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   var triples = databank.triples();
@@ -1326,8 +1325,7 @@ test("loading RDF/XML with rdf:li elements", function () {
     '    <rdf:li rdf:resource="http://example.org/pear"/>' +
     '  </rdf:Seq>' +
     '</rdf:RDF>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   var triples = databank.triples();
@@ -1338,7 +1336,7 @@ test("loading RDF/XML with rdf:li elements", function () {
 });
 
 test("loading RDF/XML with parseType='Collection'", function() {
-  var xml = 
+  var xml =
     '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
     '         xmlns:ex="http://example.org/stuff/1.0/">' +
     '  <rdf:Description rdf:about="http://example.org/basket">' +
@@ -1349,8 +1347,7 @@ test("loading RDF/XML with parseType='Collection'", function() {
     '    </ex:hasFruit>' +
     '  </rdf:Description>' +
     '</rdf:RDF>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   var triples = databank.triples();
@@ -1391,8 +1388,7 @@ test("loading RDF/XML with rdf:IDs to reify triples", function() {
     '    <ex:prop rdf:ID="triple1">blah</ex:prop>' +
     '  </rdf:Description>' +
     '</rdf:RDF>';
-  var parser = new DOMParser();
-  var doc = parser.parseFromString(xml, 'text/xml');
+  var doc = parseFromString(xml);
   var databank = $.rdf.databank();
   databank.load(doc);
   var triples = databank.triples();
@@ -1444,7 +1440,7 @@ test("describing a resource that is not the object of any triples, and the subje
   var d1 = books.describe(['<http://example.com/aBookCritic>']);
   equals(d1.length, 2);
   equals(d1[0], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/likes> <http://example.com/aReallyGreatBook> .'));
-  equals(d1[1], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/dislikes> <http://example.com/anotherGreatBook> .'));  
+  equals(d1[1], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/dislikes> <http://example.com/anotherGreatBook> .'));
 });
 
 test("describing a resource that is also the object of two triples", function () {
