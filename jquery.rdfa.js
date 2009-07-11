@@ -35,15 +35,15 @@
       }
       while (string.length > 0) {
         m = /([^&]*)(&([^;]+);)(.*)/g.exec(string);
-	if (m === null) {
+	      if (m === null) {
           result += string;
-	  break;
+	        break;
         }
         result += m[1];
         entity = m[3];
         string = m[4];
         if (entity[0] === '#') {
-	  if (entity[1] === 'x') {
+	        if (entity[1] === 'x') {
               result += String.fromCharCode(parseInt(entity.substring(2), 16));
           } else {
               result += String.fromCharCode(parseInt(entity.substring(1), 10));
@@ -52,23 +52,23 @@
           switch(entity) {
             case 'amp':
               result += '&';
-            break;
+              break;
             case 'nbsp':
               result += String.fromCharCode(160);
               break;
             case 'quot':
-	      result += '"';
+	            result += '"';
               break;
-	    case 'apos':
-	      result += "'";
-	      break;
+      	    case 'apos':
+      	      result += "'";
+      	      break;
             default:
               result += '&' + entity + ';';
           }
         }
       }
       return result;
-    }
+    },
 
     getAttributes = function (elem) {
       var i, e, a, tag, name, value, attMap, prefix,
