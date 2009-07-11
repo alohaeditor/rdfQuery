@@ -28,6 +28,48 @@
     
     docResource = $.rdf.resource('<>'),
 
+    parseEntities = function (string) {
+      var result = "", m, entity;
+      if (!/&/.test(string)) { 
+      	 return string; 
+      }
+      while (string.length > 0) {
+        m = /([^&]*)(&([^;]+);)(.*)/g.exec(string);
+	if (m === null) {
+          result += string;
+	  break;
+        }
+        result += m[1];
+        entity = m[3];
+        string = m[4];
+        if (entity[0] === '#') {
+	  if (entity[1] === 'x') {
+              result += String.fromCharCode(parseInt(entity.substring(2), 16));            
+          } else {
+              result += String.fromCharCode(parseInt(entity.substring(1), 10));
+          }
+        } else {
+          switch(entity) {
+            case 'amp':
+              result += '&';
+            break;
+            case 'nbsp':
+              result += String.fromCharCode(160);
+              break;
+            case 'quot':
+	      result += '"';
+              break;
+	    case 'apos':
+	      result += "'";
+	      break;
+            default:
+              result += '&' + entity + ';';
+          }
+        }
+      }
+      return result;
+    }
+
     getAttributes = function (elem) {
       var i, e, a, tag, name, value, attMap, prefix,
         ns = {}, atts = {};
@@ -45,7 +87,7 @@
             ns[prefix] = $.uri(value);
             ns[':length'] += 1;
           } else if (/about|href|src|resource|property|typeof|content|datatype|rel|rev|lang|xml:lang/.test(name)) {
-            atts[name] = value;
+            atts[name] = parseEntities(value);
           }
           a = attRegex.exec(tag);
         }
