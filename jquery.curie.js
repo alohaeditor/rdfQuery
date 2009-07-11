@@ -18,7 +18,7 @@
 			prefix = m[2],
 			local = m[3],
 			ns = opts.namespaces[prefix];
-		if (prefix === "") { // This is the case of a CURIE like ":test"
+		if (/^:.+/.test(curie)) { // This is the case of a CURIE like ":test"
 		  if (opts.reservedNamespace === undefined || opts.reservedNamespace === null) {
 		    throw "Malformed CURIE: No prefix and no default namespace for unprefixed CURIE " + curie;
 		  } else {
