@@ -81,4 +81,43 @@ test("a dateTime with a bad number of days in a month", function() {
 	}
 });
 
+test("a valid dateTime on a leap year", function() {
+	try {
+		$.typedValue('2008-02-29T21:02:00', xsdNs + 'dateTime');
+		ok(true, "should not be an error");
+	} catch (e) {
+		if (e.name === 'InvalidValue') {
+			ok(false, "should not raise an error");
+		} else {
+			throw e;
+		}
+	}
+});
+
+test("an invalid dateTime on a year divisible by 100", function() {
+	try {
+		$.typedValue('1990-02-29T21:02:00', xsdNs + 'dateTime');
+		ok(false, "should be an error");
+	} catch (e) {
+		if (e.name === 'InvalidValue') {
+			ok(true, "should raise an error");
+		} else {
+			throw e;
+		}
+	}
+});
+
+test("a valid dateTime on a leap year divisible by 400", function() {
+	try {
+		$.typedValue('2008-02-29T21:02:00', xsdNs + 'dateTime');
+		ok(true, "should not be an error");
+	} catch (e) {
+		if (e.name === 'InvalidValue') {
+			ok(false, "should not raise an error");
+		} else {
+			throw e;
+		}
+	}
+});
+
 })(jQuery);

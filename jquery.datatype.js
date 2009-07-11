@@ -124,6 +124,19 @@
 			}
 			try {
 				year = year < 100 ? Math.abs(year) + 1000 : year;
+				month = parseInt(m[2], 10);
+				day = parseInt(m[3], 10);
+				if (day > 31) {
+				  return false;
+				} else if (day > 30 && !(month === 1 || month === 3 || month === 5 || month === 7 || month === 8 || month === 10 || month === 12)) {
+				  return false;
+				} else if (month === 2) {
+				  if (day > 29) {
+				    return false;
+				  } else if (day === 29 && (year % 4 !== 0 || (year % 100 === 0 && year % 400 !== 0))) {
+				    return false;
+				  }
+				}
 				date = '' + year + '/' + m[2] + '/' + m[3] + ' ' + m[4] + ':' + m[5] + ':' + m[7] + ' ' + tz;
 				date = new Date(date);
 				return true;
