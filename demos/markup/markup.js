@@ -10,210 +10,86 @@ $(document).ready(function () {
       biografr: "http://biografr.com/ontology#"
     },
     
-    ontology = {
-      '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>': {
-        type: 'relation',
-        aliases: ['a', 'kind of']
-      },
-      '<http://www.w3.org/2000/01/rdf-schema#label>': {
-        type: 'property',
-        aliases: ['aka', 'also known as']
-      },
-      '<http://xmlns.com/foaf/0.1/Person>': {
-        type: 'class',
-        aliases: ['person']
-      },
-      '<http://xmlns.com/foaf/0.1/firstName>': {
-        type: 'property',
-        aliases: ['first name', 'forename']
-      },
-      '<http://xmlns.com/foaf/0.1/givenname>': {
-        type: 'property',
-        aliases: ['middle name']
-      },
-      '<http://xmlns.com/foaf/0.1/surname>': {
-        type: 'property',
-        aliases: ['surname', 'last name']
-      },
-      '<http://www.w3.org/2006/vcard/ns#Address>': {
-        type: 'class',
-        aliases: ['place', 'address']
-      },
-      '<http://www.w3.org/2006/vcard/ns#street-address>': {
-        type: 'property',
-        aliases: ['house', 'street']
-      },
-      '<http://www.w3.org/2006/vcard/ns#locality>': {
-        type: 'property',
-        aliases: ['town', 'city']
-      },
-      '<http://www.w3.org/2006/vcard/ns#region>': {
-        type: 'property',
-        aliases: ['county', 'area']
-      },
-      '<http://www.w3.org/2006/vcard/ns#country>': {
-        type: 'property',
-        aliases: ['country']
-      },
-      '<http://biografr.com/ontology#hasBirthPlace>': {
-        type: 'relation',
-        range: '<http://www.w3.org/2006/vcard/ns#Address>',
-        aliases: ['born in', 'birth place', 'born']
-      },
-      '<http://biografr.com/ontology#bornOn>': {
-        type: 'property',
-        range: '<http://www.w3.org/2001/XMLSchema#date>',
-        aliases: ['birth date', 'date of birth', 'born on', 'born']
-      },
-      '<http://biografr.com/ontology#gender>': {
-        type: 'property',
-        aliases: ['gender', 'sex']
-      },
-      '<http://biografr.com/ontology#hasGrandparent>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['grandparent']
-      },
-      '<http://biografr.com/ontology#hasGrandmother>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['grandmother', 'grandma', 'nan', 'granny']
-      },
-      '<http://biografr.com/ontology#hasGrandfather>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['grandfather', 'grandpa']
-      },
-      '<http://biografr.com/ontology#hasGrandchild>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['grandchild']
-      },
-      '<http://biografr.com/ontology#hasGrandson>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['grandson']
-      },
-      '<http://biografr.com/ontology#hasGranddaughter>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['granddaughter']
-      },
-      '<http://biografr.com/ontology#hasParent>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['parent']
-      },
-      '<http://biografr.com/ontology#hasFather>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['father', 'dad']
-      },
-      '<http://biografr.com/ontology#hasMother>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['mother', 'mum']
-      },
-      '<http://biografr.com/ontology#hasChild>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['child']
-      },
-      '<http://biografr.com/ontology#hasSon>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['son']
-      },
-      '<http://biografr.com/ontology#hasDaughter>': {
-        type: 'relation',
-        range: '<http://xmlns.com/foaf/0.1/Person>',
-        aliases: ['daughter']
-      }
-    },
+    ontology = $.rdf.ontology({ namespaces: ns })
+      .property('rdf:type', { labels: ['a', 'kind of'], range: $.rdfs.Class })
+      .property('rdfs:label', { labels: ['aka', 'also known as'] })
+      .type('foaf:Person', { labels: ['person'] })
+      .property('foaf:firstName', { labels: ['first name', 'forename'], domain: 'foaf:Person' })
+      .property('foaf:givenname', { labels: ['middle name'], domain: 'foaf:Person' })
+      .property('foaf:surname', { labels: ['surname', 'last name'], domain: 'foaf:Person' })
+      .type('vcard:Address', { labels: ['place', 'address'] })
+      .property('vcard:street-address', { labels: ['house', 'street'], domain: 'vcard:Address' })
+      .property('vcard:locality', { labels: ['town', 'city'], domain: 'vcard:Address' })
+      .property('vcard:region', { labels: ['county', 'area'], domain: 'vcard:Address' })
+      .property('vcard:country', { domain: 'vcard:Address' })
+      .property('biografr:hasBirthPlace', { labels: ['born in', 'birth place', 'born'], domain: 'foaf:Person', range: 'vcard:Address' })
+      .property('biografr:bornOn', { labels: ['birth date', 'date of birth', 'born on', 'born'], domain: 'foaf:Person', datatype: 'xsd:date' })
+      .property('biografr:gender', { labels: ['gender', 'sex'], domain: 'foaf:Person' })
+      .property('biografr:hasGrandparent', { 
+        labels: ['grandparent'], 
+        domain: 'foaf:Person', 
+        range: 'foaf:Person',
+        inverse: 'biografr:hasGrandchild' })
+      .property('biografr:hasGrandmother', { 
+        labels: ['grandmother', 'grandma', 'nan', 'granny'], 
+        superproperty: 'biografr:hasGrandparent' })
+      .property('biografr:hasGrandfather', { labels: ['grandfather', 'grandpa'], superproperty: 'biografr:hasGrandparent' })
+      .property('biografr:hasGrandchild', { labels: ['grandchild'], domain: 'foaf:Person', range: 'foaf:Person' })
+      .property('biografr:hasGrandson', { labels: ['grandson'], superproperty: 'biografr:hasGrandchild' })
+      .property('biografr:hasGranddaughter', { labels: ['granddaughter'], superproperty: 'biografr:hasGranddaughter' })
+      .property('biografr:hasParent', { labels: ['parent'], domain: 'foaf:Person', range: 'foaf:Person' })
+      .property('biografr:hasFather', { labels: ['father', 'dad'], superproperty: 'biografr:hasParent' })
+      .property('biografr:hasMother', { labels: ['mother', 'mum'], superproperty: 'biografr:hasParent' })
+      .property('biografr:hasChild', { labels: ['child'], domain: 'foaf:Person', range: 'foaf:Person' })
+      .property('biografr:hasSon', { labels: ['son'], superproperty: 'biografr:hasChild' })
+      .property('biografr:hasDaughter', { labels: ['daughter'], superproperty: 'biografr:hasChild' });
     
     rules = $.rdf.ruleset()
-      .prefix('foaf', ns.foaf)
       .prefix('biografr', ns.biografr)
       .add('?child biografr:hasFather ?father',
-           ['?child a foaf:Person',
-            '?father a foaf:Person',
-            '?child biografr:hasParent ?father', 
-            '?father biografr:hasChild ?child',
+           ['?father biografr:hasChild ?child',
             '?father biografr:gender "male"'])
       .add('?child biografr:hasMother ?mother',
-           ['?child a foaf:Person',
-            '?mother a foaf:Person',
-            '?child biografr:hasParent ?mother',
-            '?mother biografr:hasChild ?child',
+           ['?mother biografr:hasChild ?child',
             '?mother biografr:gender "female"'])
       .add(['?gchild biografr:hasParent ?parent',
             '?parent biografr:hasParent ?gparent'],
-           ['?gchild a foaf:Person',
-            '?gparent a foaf:Person',
-            '?gchild biografr:hasGrandparent ?gparent',
+           ['?gchild biografr:hasGrandparent ?gparent',
             '?gparent biografr:hasGrandchild ?gchild'])
       .add(['?parent biografr:hasChild ?child',
             '?child biografr:gender "male"'],
-           ['?parent a foaf:Person',
-            '?child a foaf:Person',
-            '?parent biografr:hasSon ?child'])
+           '?parent biografr:hasSon ?child')
       .add(['?parent biografr:hasChild ?child',
             '?child biografr:gender "female"'],
-           ['?parent a foaf:Person',
-            '?child a foaf:Person',
-            '?parent biografr:hasDaughter ?child'])
+           '?parent biografr:hasDaughter ?child')
       .add('?parent biografr:hasSon ?child',
-           ['?parent a foaf:Person',
-            '?child a foaf:Person',
-            '?parent biografr:hasChild ?child',
+           ['?parent biografr:hasChild ?child',
             '?child biografr:gender "male"'])
       .add('?parent biografr:hasDaughter ?child',
-           ['?parent a foaf:Person',
-            '?child a foaf:Person',
-            '?parent biografr:hasChild ?child',
+           ['?parent biografr:hasChild ?child',
             '?child biografr:gender "female"'])
       .add(['?gparent biografr:hasGrandchild ?gchild',
             '?gchild biografr:gender "male"'],
-           ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gparent biografr:hasGrandson ?gchild'])
+           '?gparent biografr:hasGrandson ?gchild')
       .add(['?gparent biografr:hasGrandchild ?gchild',
             '?gchild biografr:gender "female"'],
-           ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gparent biografr:hasGranddaughter ?gchild'])
+           '?gparent biografr:hasGranddaughter ?gchild')
       .add('?gparent biografr:hasGrandson ?gchild',
-           ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gparent biografr:hasGrandchild ?gchild',
-            '?gchild biografr:gender "male"'])
+           '?gchild biografr:gender "male"')
       .add('?gparent biografr:hasGranddaughter ?gchild',
-           ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gparent biografr:hasGrandchild ?gchild',
-            '?gchild biografr:gender "female"'])
+           '?gchild biografr:gender "female"')
       .add(['?gchild biografr:hasGrandparent ?gparent',
             '?gparent biografr:gender "male"'],
-           ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gchild biografr:hasGrandfather ?gparent'])
+           '?gchild biografr:hasGrandfather ?gparent')
       .add(['?gchild biografr:hasGrandparent ?gparent',
             '?gparent biografr:gender "female"'],
-           ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gchild biografr:hasGrandmother ?gparent'])
+           '?gchild biografr:hasGrandmother ?gparent')
       .add('?gchild biografr:hasGrandfather ?gparent',
-           ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gchild biografr:hasGrandparent ?gparent',
-            '?gparent biografr:gender "male"'])
+           '?gparent biografr:gender "male"')
       .add('?gchild biografr:hasGrandmother ?gparent',
-           ['?gparent a foaf:Person',
-            '?gchild a foaf:Person',
-            '?gchild biografr:hasGrandparent ?gparent',
-            '?gparent biografr:gender "female"']),
+           '?gparent biografr:gender "female"'),
   
-    rdf = $('#content').rdf().reason(rules),
+    rdf = $('#content').rdf().reason(ontology, { rules: rules }),
   
     /* S is a O */
     isAregex = /^\s*(.*\S)(?:'s|\s+(?:was|is|are|were))\s+an?\s+(\S.*\S)\.?\s*$/,
@@ -310,10 +186,11 @@ $(document).ready(function () {
       }
     },
     
-    resourceLabel = function (resource) {
-      var q = rdf
-        .prefix('rdfs', ns.rdfs)
-        .where(resource + ' rdfs:label ?label');
+    resourceLabel = function (resource, scope) {
+      var scope = scope || rdf,
+        q = scope
+          .prefix('rdfs', ns.rdfs)
+          .where(resource + ' rdfs:label ?label');
       if (q.length > 0) {
         return q.get(0).label.value;
       } else {
@@ -332,18 +209,20 @@ $(document).ready(function () {
     },
     
     englishProperty = function (prop) {
-      return ontology[prop].aliases[0];
+      return ontology.property(prop).label();
     },
     
-    englishObject = function (object) {
+    englishObject = function (object, scope) {
       if (object.type === 'uri') {
-        if (ontology[object]) {
-          return ontology[object].aliases[0];
+        if (ontology.type(object)) {
+          return ontology.type(object).label();
+        } else if (ontology.property(object)) {
+          return ontology.property(object).label();
         } else {
-          return resourceLabel(object);
+          return resourceLabel(object, scope);
         }
       } else if (object.type === 'bnode') {
-        return resourceLabel(object);
+        return resourceLabel(object, scope);
       } else {
         return object.value;
       }
@@ -409,8 +288,8 @@ $(document).ready(function () {
               return 'I don\'t recognise "' + pLabel + '".';
             } else if (pResources.length === 1) {
               pResource = pResources[0];
-              if (ontology[pResource].type !== 'property' && ontology[pResource].type !== 'relation') {
-                return '"' + pLabel + '" is a ' + ontology[pResource].type + ' and I was expecting a property or relation.';
+              if (ontology.type(pResource)) {
+                return '"' + pLabel + '" is a class and I was expecting a property.';
               }
             } else {
               if (/^\s*Where/.test(this.val())) {
@@ -423,8 +302,8 @@ $(document).ready(function () {
               pResources = [];
               for (i = 0; i < aliases[pLabel].length; i += 1) {
                 pResource = aliases[pLabel][i];
-                pDef = ontology[pResource];
-                if (pDef !== undefined && (pDef.type === 'property' || pDef.type === 'relation')) {
+                pDef = ontology.property(pResource);
+                if (pDef !== undefined) {
                   if (range === undefined || pDef.range === range) {
                     pResources.push(pResource);
                   }
@@ -482,15 +361,14 @@ $(document).ready(function () {
               return 'I don\'t recognise "' + pLabel + '".';
             } else if (pResources.length === 1) {
               pResource = pResources[0];
-              if (ontology[pResource].type !== 'property' && ontology[pResource].type !== 'relation') {
-                return '"' + pLabel + '" is a ' + ontology[pResource].type + ' and I was expecting a property or relation.';
+              if (pResource.type === 'class') {
+                return '"' + pLabel + '" is a class and I was expecting a property.';
               }
             } else {
               pResources = [];
               for (i = 0; i < aliases[pLabel].length; i += 1) {
                 pResource = aliases[pLabel][i];
-                pDef = ontology[pResource];
-                if (pDef.type === 'property' || pDef.type === 'relation') {
+                if (ontology.property(pResource) !== undefined) {
                   pResources.push(pResource);
                 }
               }
@@ -515,7 +393,7 @@ $(document).ready(function () {
           triple = labelTriple(sLabel);
           triples.push(triple);
           sResource = triple.subject;
-          if (ontology[pResource] && ontology[pResource].type === 'relation') {
+          if (ontology.property(pResource) && ontology.property(pResource).range !== undefined) {
             triple = labelTriple(oLabel);
             triples.push(triple);
             object = triple.subject;
@@ -544,13 +422,13 @@ $(document).ready(function () {
               li, hLabel, del,
               triple = triples[0];
             if (!((p === $.rdf.label && o.type === 'literal' && o.value === label) ||
-                  (p === $.rdf.type && ontology[o] !== undefined))) {
+                  (p === $.rdf.type && ontology.type(o) !== undefined))) {
               empty = false;
-              pLabel = ontology[p] === undefined ? p.value.fragment : ontology[p].aliases[0];
+              pLabel = ontology.property(p) === undefined ? p.value.fragment : ontology.property(p).label();
               if (o.type === 'literal') {
                 oLabel = o.value;
-              } else if (ontology[o] !== undefined) {
-                oLabel = ontology[o].aliases[0];
+              } else if (ontology.type(o) !== undefined) {
+                oLabel = ontology.type(o).label();
               } else {
                 oLabel = resourceLabel(o);
               }
@@ -564,6 +442,7 @@ $(document).ready(function () {
                   .children('abbr')
                   .bind('click', function () {
                     $(triple.source).removeRdfa({ property: triple.property });
+                    rdf = $('#content').rdf().reason(rules);
                     addDescription(resource);
                   });
               }
@@ -571,7 +450,7 @@ $(document).ready(function () {
                 .append('<span />')
                 .children('span')
                   .html(pLabel + ': ' + oLabel);
-              if (o.type === 'uri' && ontology[o] === undefined && o.value.fragment !== undefined) {
+              if (o.type === 'uri' && ontology.type(o) === undefined && o.value.fragment !== undefined) {
                 hLabel
                   .attr('class', 'link')
                   .bind('click', function () {
@@ -666,12 +545,24 @@ $(document).ready(function () {
       $(this).parent('li').toggleClass('open');
     });
   
-  $.each(ontology, function (resource, description) {
-    $.each(description.aliases, function (i, alias) {
+  ontology.type().each(function () {
+    var c = this;
+    $.each(this.labels, function (i, alias) {
       if (aliases[alias] === undefined) {
-        aliases[alias] = [resource];
+        aliases[alias] = [c];
       } else {
-        aliases[alias].push(resource);
+        aliases[alias].push(c);
+      }
+    });
+  });
+  
+  ontology.property().each(function () {
+    var p = this;
+    $.each(this.labels, function (i, alias) {
+      if (aliases[alias] === undefined) {
+        aliases[alias] = [p];
+      } else {
+        aliases[alias].push(p);
       }
     });
   });
@@ -718,11 +609,11 @@ $(document).ready(function () {
                 response.append('<br>');
               }
               if (this.result.type === 'uri') {
-                if (ontology[this.result]) {
-                  label = ontology[this.result].aliases[0];
-                  if (ontology[this.result].type === 'class') {
-                    response.append(/^aeiou/.test(label) ? 'an ' : 'a ');
-                  }
+                if (ontology.type(this.result)) {
+                  label = ontology.type(this.result).label();
+                  response.append(/^aeiou/.test(label) ? 'an ' : 'a ');
+                } else if (ontology.property(this.result)) {
+                  label = ontology.property(this.result).label();
                 } else {
                   label = resourceLabel(this.result);
                 }
@@ -747,7 +638,7 @@ $(document).ready(function () {
               var list, span, label;
               span = findSpan(this.thing);
               if (span.length === 0) {
-                label = resourceLabel(this.thing, rdf);
+                label = resourceLabel(this.thing, newRdf);
                 span = markupText.call($('#content'), label.toString());
                 if (span === undefined) {
                   span = $('#meta').append('<span />').children('span:last');
@@ -767,21 +658,21 @@ $(document).ready(function () {
             .reset()
             .where('?thing ?prop ?val')
             .filter(function () {
-              return ontology[this.thing] === undefined;
+              return ontology.type(this.thing) === undefined && ontology.property(this.thing) === undefined;
             })
             .each(function (i, data, triples) {
               markupTriple(triples[0]);
             })
             .each(function () {
-              var sLabel = englishObject(this.thing);
+              var sLabel = englishObject(this.thing, newRdf);
               if (this.prop !== $.rdf.label) {
                 response.append('<br>');
                 if (this.val.type === 'literal') {
-                  response.append(sLabel + '\'s ' + englishProperty(this.prop) + ' is ' + englishObject(this.val));
+                  response.append(sLabel + '\'s ' + englishProperty(this.prop) + ' is ' + englishObject(this.val, newRdf));
                 } else if (this.prop === $.rdf.type) {
-                  response.append(sLabel + ' is a ' + englishObject(this.val));
+                  response.append(sLabel + ' is a ' + englishObject(this.val, newRdf));
                 } else {
-                  response.append(englishObject(this.val) + ' is ' + sLabel + '\'s ' + englishProperty(this.prop));
+                  response.append(englishObject(this.val, newRdf) + ' is ' + sLabel + '\'s ' + englishProperty(this.prop));
                 }
               } else if (sLabel !== this.val.value) {
                 response.append('<br>');

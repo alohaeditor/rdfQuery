@@ -670,7 +670,6 @@ bday:
 	gleaner = function (options) {
 		var trips = [];
 		var vcards = testForVcardClass();
-
   		for (i = 0; i < vcards.triples().length; i += 1) {
 			//alert(vcards.triples()[i]);
 			trips.push(vcards.triples()[i]);

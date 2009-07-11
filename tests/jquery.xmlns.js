@@ -37,10 +37,11 @@ test("on an element that inherits namespaces", function() {
 });
 
 test("on a sequence of two elements", function() {
-	var namespaces = $('body, html').xmlns();
-	ok(true, "it should give the namespaces on the first of the elements")
+  var elems = $('body, html');
+	var namespaces = elems.xmlns();
 	equals(namespaces.dc, ns.dc);
-	equals(namespaces.foaf, ns.foaf);
+	// This changed with jQuery 1.3.2
+	equals(namespaces.foaf, 'http://www.example.org/foaf'); 
 	equals(namespaces[''], ns.html);
 	for (n in namespaces) {
 		if (n !== 'dc' && n !== 'foaf' && n !== '') {
@@ -68,7 +69,8 @@ test("when the namespace is a relative URI", function() {
 });
 
 test("when the context is more than one element", function() {
-	equals($('body, html').xmlns('foaf'), ns.foaf, "it should return the namespace from the first of the elements");
+  // This changed in jQuery 1.3.2 to return the elements in the order they appear on the page
+	equals($('body, html').xmlns('foaf'), 'http://www.example.org/foaf', "it should return the namespace from the first of the elements");
 });
 
 test("when the namespace hasn't been declared", function() {
