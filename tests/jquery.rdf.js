@@ -1262,7 +1262,6 @@ test("loading RDF/XML with rdf:parseType='Resource'", function () {
   databank.load(doc);
   equals(databank.size(), 4);
   var triples = databank.triples();
-  console.log(triples);
   equals(triples[1].object, triples[2].subject);
 });
 

@@ -215,7 +215,7 @@ testcases: http://microformats.org/tests/hcard/
 	
 	setup('<p class="vcard"><span class="fn n"><span class="given-name">John</span> <span class="family-name">Doe</span></span><a class="url" href="/home/blah">my website</a></p>');
     	var q = $('#main').rdf();
-    	q = q.where('?person foaf:homepage <'+$.uri.base()+'/home/blah>');
+    	q = q.where('?person foaf:homepage <'+$.uri.resolve('/home/blah')+'>');
 		equals(q.length, 1, 'local url for homepage');
 		teardown();
 	});

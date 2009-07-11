@@ -127,6 +127,33 @@ test("when executing a rule where one of the conditions is a function", function
   equals(name.value, 'Jeni');
 });
 
+test("when executing a rule where one of the conditions is a function on a resource", function () {
+  var hits = 0, person = $.rdf.resource('<#me>'),
+    rule = $.rdf.rule(['?person foaf:name ?name', function () { return this.person === person; }], 
+      function () { hits += 1; }, 
+      { namespaces: ns }),
+    data = $.rdf.databank().prefix('foaf', ns.foaf);
+  data.add('<#me> foaf:name "Jeni"')
+    .add('<#you> foaf:name "Someone"');
+  rule.run(data);
+  equals(hits, 1);
+});
+
+test("when executing a rule where one of the conditions is a function comparing two resources", function () {
+  var hits = 0, person = $.rdf.resource('<#me>'),
+    rule = $.rdf.rule(['?vintage ex:hasVintageYear ?vintageYear1', '?vintage ex:hasVintageYear ?vintageYear2', function () { return this.vintageYear1.type === 'uri' && this.vintageYear2.type === 'uri'; }], 
+      function () { hits += 1; }, 
+      { namespaces: ns }),
+    data = $.rdf.databank();
+  data.prefix('ex', ns.ex)
+    .add('ex:SomeVintage ex:hasVintageYear ex:2007')
+    .add('ex:SomeVintage ex:hasVintageYear ex:TwoThousandSeven');
+  rule.run(data);
+  equals(hits, 3);
+});
+
+
+
 test("when executing a rule where the rhs contains blank nodes", function () {
   var rule = $.rdf.rule(
       ['?person a foaf:Person',
