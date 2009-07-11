@@ -1,6 +1,6 @@
 /*
  * jQuery RDFa @VERSION
- * 
+ *
  * Copyright (c) 2008 Jeni Tennison
  * Licensed under the MIT (MIT-LICENSE.txt)
  *
@@ -14,7 +14,7 @@
 /*global jQuery */
 (function ($) {
 
-  var 
+  var
     ns = {
       rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
       xsd: "http://www.w3.org/2001/XMLSchema#"
@@ -25,13 +25,13 @@
     rdfaCurieDefaults = $.fn.curie.defaults,
 
     attRegex = /\s([^ =]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^ >]+))/g,
-    
+
     docResource = $.rdf.resource('<>'),
 
     parseEntities = function (string) {
       var result = "", m, entity;
-      if (!/&/.test(string)) { 
-      	 return string; 
+      if (!/&/.test(string)) {
+      	 return string;
       }
       while (string.length > 0) {
         m = /([^&]*)(&([^;]+);)(.*)/g.exec(string);
@@ -44,7 +44,7 @@
         string = m[4];
         if (entity[0] === '#') {
 	  if (entity[1] === 'x') {
-              result += String.fromCharCode(parseInt(entity.substring(2), 16));            
+              result += String.fromCharCode(parseInt(entity.substring(2), 16));
           } else {
               result += String.fromCharCode(parseInt(entity.substring(1), 10));
           }
@@ -82,7 +82,7 @@
         while (a !== null) {
           name = a[1];
           value = a[2] || a[3] || a[4];
-          if (/^xmlns/.test(name) && value !== '') {
+          if (/^xmlns/.test(name) && name !== 'xmlns:' && value !== '') {
             prefix = /^xmlns(:(.+))?$/.exec(name)[2] || '';
             ns[prefix] = $.uri(value);
             ns[':length'] += 1;
@@ -121,7 +121,7 @@
     resourceFromUri = function (uri) {
       return $.rdf.resource(uri);
     },
-    
+
     resourceFromCurie = function (curie, elem, options) {
       if (curie.substring(0, 2) === '_:') {
         return $.rdf.blank(curie);
@@ -133,7 +133,7 @@
         }
       }
     },
-    
+
     resourceFromSafeCurie = function (safeCurie, elem, options) {
       var m = /^\[([^\]]+)\]$/.exec(safeCurie),
         base = options.base || elem.base();
@@ -217,7 +217,7 @@
       }
       return { subject: subject, skip: skip };
     },
-    
+
     getLang = function (elem, context) {
       var lang;
       context = context || {};
@@ -243,11 +243,11 @@
 
     entity = function (c) {
       switch (c) {
-      case '<': 
+      case '<':
         return '&lt;';
-      case '"': 
+      case '"':
         return '&quot;';
-      case '&': 
+      case '&':
         return '&amp;';
       }
     },
@@ -272,7 +272,7 @@
             }
             attRegex.lastIndex = 0;
           } else {
-            atts = e.attributes;          
+            atts = e.attributes;
             for (i = 0; i < atts.length; i += 1) {
               a = atts.item(i);
               string += ' ' + a.nodeName + '="';
@@ -299,11 +299,11 @@
       });
       return string;
     },
-    
+
     rdfa = function (context) {
-      var i, subject, resource, lang, datatype, content, 
+      var i, subject, resource, lang, datatype, content,
         types, object, triple, parent,
-        properties, rels, revs, 
+        properties, rels, revs,
         forward, backward,
         triples = [],
         attsAndNs, atts, namespaces, ns,
@@ -349,7 +349,7 @@
         for (i = 0; i < types.length; i += 1) {
           triple = $.rdf.triple(subject, $.rdf.type, types[i], { source: this[0] });
           triples.push(triple);
-        } 
+        }
         properties = resourcesFromCuries(atts.property, this, context.curieOptions);
         if (properties.length > 0) {
           datatype = atts.datatype;
@@ -410,15 +410,15 @@
       });
       return triples;
     },
-    
+
     gleaner = function (options) {
       var type, atts;
       if (options && options.about !== undefined) {
         atts = getAttributes(this).atts;
         if (options.about === null) {
-          return atts.property !== undefined || 
-                 atts.rel !== undefined || 
-                 atts.rev !== undefined || 
+          return atts.property !== undefined ||
+                 atts.rel !== undefined ||
+                 atts.rev !== undefined ||
                  atts['typeof'] !== undefined;
         } else {
           return getSubject(this, {atts: atts}).subject.value === options.about;
@@ -433,9 +433,9 @@
         return rdfa.call(this);
       }
     },
-    
+
     nsCounter = 1,
-    
+
     createCurieAttr = function (elem, attr, uri) {
       var m, curie, value;
       try {
@@ -460,7 +460,7 @@
         elem.attr(attr, curie);
       }
     },
-    
+
     createResourceAttr = function (elem, attr, resource) {
       var ref;
       if (resource.type === 'bnode') {
@@ -470,7 +470,7 @@
       }
       elem.attr(attr, ref);
     },
-    
+
     createSubjectAttr = function (elem, subject) {
       var s = getSubject(elem).subject;
       if (subject !== s) {
@@ -478,7 +478,7 @@
       }
       elem.removeData('rdfa.subject');
     },
-    
+
     createObjectAttr = function (elem, object) {
       var o = getObjectResource(elem);
       if (object !== o) {
@@ -486,14 +486,14 @@
       }
       elem.removeData('rdfa.objectResource');
     },
-    
+
     resetLang = function (elem, lang) {
       elem.wrapInner('<span></span>')
         .children('span')
         .attr('lang', lang);
       return elem;
     },
-    
+
     addRDFa = function (triple) {
       var hasContent, hasRelation, hasRDFa, overridableObject, span,
         subject, sameSubject,
@@ -663,7 +663,7 @@
       this.parents().andSelf().trigger("rdfChange");
       return span;
     },
-    
+
     removeRDFa = function (what) {
       var span, atts, property, rel, rev, type,
         ns = this.xmlns();
