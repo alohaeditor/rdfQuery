@@ -254,17 +254,17 @@ test("Test 0008", function() {
 });
 
 test("Test 0009", function() {
-	$('head').append('<link about="http://example.org/people#Person1" rev="foaf:knows" href="http://example.org/people#Person2" />');
+	$('head').append('<link about="http://example.org/people#Person1" rev="dc:knows" href="http://example.org/people#Person2" />');
 	testTriples($('link[about]').rdfa(), 
-	            [$.rdf.triple('<http://example.org/people#Person2> foaf:knows <http://example.org/people#Person1> .', ns)]);
+	            [$.rdf.triple('<http://example.org/people#Person2> dc:knows <http://example.org/people#Person1> .', ns)]);
 	$('link[about]').remove();
 });
 
 test("Test 0010", function() {
-	$('head').append('<link about="http://example.org/people#Person1" rel="foaf:knows" rev="foaf:knows" href="http://example.org/people#Person2" />');
+	$('head').append('<link about="http://example.org/people#Person1" rel="dc:knows" rev="dc:knows" href="http://example.org/people#Person2" />');
 	testTriples($('link[about]').rdfa(), 
-  	[$.rdf.triple('<http://example.org/people#Person1> foaf:knows <http://example.org/people#Person2> .', ns),
-  	 $.rdf.triple('<http://example.org/people#Person2> foaf:knows <http://example.org/people#Person1> .', ns)]);
+  	[$.rdf.triple('<http://example.org/people#Person1> dc:knows <http://example.org/people#Person2> .', ns),
+  	 $.rdf.triple('<http://example.org/people#Person2> dc:knows <http://example.org/people#Person1> .', ns)]);
 	$('link[about]').remove();
 });
 

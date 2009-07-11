@@ -7,7 +7,13 @@ var ns = {
 	html: "http://www.w3.org/1999/xhtml",
 	dc: "http://purl.org/dc/elements/1.1/",
 	foaf: "http://xmlns.com/foaf/0.1/",
-	cc: "http://creativecommons.org/ns#"
+	cc: "http://creativecommons.org/ns#",
+	ex: "http://example.org/",
+	sioc: "http://rdfs.org/sioc/ns#",
+	xhv: "http://www.w3.org/1999/xhtml/vocab#",
+	prism: "http://prism.talis.com/schema#",
+	xsd: "http://www.w3.org/2001/XMLSchema#",
+	rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 }
 
 module("When getting all namespaces");
@@ -17,8 +23,13 @@ test("on an element with three namespaces declared on it, including an empty one
 	equals(namespaces.dc, ns.dc);
 	equals(namespaces.foaf, 'http://www.example.org/foaf');
 	equals(namespaces[''], ns.html);
+	equals(namespaces.rdf, ns.rdf);
+	equals(namespaces.cc, ns.cc);
+	equals(namespaces.ex, ns.ex);
+	equals(namespaces.sioc, ns.sioc);
+	
 	for (n in namespaces) {
-		if (n !== 'dc' && n !== 'foaf' && n !== '') {
+		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd' ) {
 			ok(false, 'unexpected namespace: ' + n + '=' + namespaces[n]);
 		}
 	}
@@ -30,7 +41,7 @@ test("on an element that inherits namespaces", function() {
 	equals(namespaces.foaf, ns.foaf);
 	equals(namespaces[''], ns.html);
 	for (n in namespaces) {
-		if (n !== 'dc' && n !== 'foaf' && n !== '') {
+		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd') {
 			ok(false, 'unexpected namespace: ' + n + '=' + namespaces[n]);
 		}
 	}
@@ -44,7 +55,7 @@ test("on a sequence of two elements", function() {
 	equals(namespaces.foaf, 'http://www.example.org/foaf'); 
 	equals(namespaces[''], ns.html);
 	for (n in namespaces) {
-		if (n !== 'dc' && n !== 'foaf' && n !== '') {
+		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd') {
 			ok(false, 'unexpected namespace: ' + n + '=' + namespaces[n]);
 		}
 	}
@@ -65,7 +76,7 @@ test("on an element that redeclares the namespace", function() {
 });
 
 test("when the namespace is a relative URI", function() {
-	equals('' + $('#main').xmlns('ex'), '' + $.uri('foo'));
+	equals('' + $('#relativeUri').xmlns('non'), '' + $.uri('foo'));
 });
 
 test("when the context is more than one element", function() {
@@ -74,7 +85,7 @@ test("when the context is more than one element", function() {
 });
 
 test("when the namespace hasn't been declared", function() {
-	equals($('body').xmlns('cc'), undefined);
+	equals($('body').xmlns('lic'), undefined);
 });
 
 module("When setting a namespace");

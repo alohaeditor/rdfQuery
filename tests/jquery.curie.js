@@ -4,6 +4,7 @@
 (function($){
 
 var ns = {
+	
 	xhv: "http://www.w3.org/1999/xhtml/vocab#",
 	dc: "http://purl.org/dc/elements/1.1/",
 	foaf: "http://xmlns.com/foaf/0.1/",
@@ -36,7 +37,7 @@ test("CURIE on element with other ancestor declaration", function() {
 
 test("CURIE on element without declaration for the prefix", function() {
 	try {
-		$('body').curie('cc:license');
+		$('body').curie('lic:license');
 		ok(false, 'should give an error');
 	} catch (e) {
 	  ok(true, 'should give an error');
