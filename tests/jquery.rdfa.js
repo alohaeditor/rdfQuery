@@ -780,7 +780,7 @@ test("removing a relation from an element", function () {
   setup('<p>This document is by <a rel="dc:creator" href="http://www.jenitennison.com/">Jeni Tennison</span>.</p>');
   var span = $('#main > p > a');
   span.removeRdfa({ property: "dc:creator" });
-  equals(span.attr('rel'), '', "The rel attribute should be removed");
+  ok(span.attr('rel') === '' || span.attr('rel') === undefined, "The rel attribute should be removed");
   $('#main > p').remove();
 });
 
