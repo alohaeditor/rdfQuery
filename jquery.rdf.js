@@ -1083,10 +1083,10 @@
       dump = createRdfXml(triples, opts);
       if (serialize) {
         if (dump.xml) {
-          return dump.xml;
+          return dump.xml.replace(/\s+$/,'');
         } else {
       		serializer = new XMLSerializer();
-      		return serializer.serializeToString(dump);          
+      		return serializer.serializeToString(dump);
         }
       } else {
         return dump;
