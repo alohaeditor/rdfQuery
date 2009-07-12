@@ -1,7 +1,7 @@
 /*
  * jQuery RDF Rules @VERSION
  * 
- * Copyright (c) 2008 Jeni Tennison
+ * Copyright (c) 2008,2009 Jeni Tennison
  * Licensed under the MIT (MIT-LICENSE.txt)
  *
  * Depends:
@@ -111,10 +111,10 @@
     init: function (lhs, rhs, options) {
       var opts = $.extend({}, $.rdf.rule.defaults, options),
         lhsWildcards = [], rhsBlanks = false;
-      if (typeof lhs === 'string') {
+      if (!$.isArray(lhs)) {
         lhs = [lhs];
       }
-      if (typeof rhs === 'string') {
+      if (!$.isArray(rhs)) {
         rhs = [rhs];
       }
       this.lhs = $.map(lhs, function (p) {
@@ -123,7 +123,7 @@
         } else if ($.isFunction(p)) {
           return p;
         } else {
-          p = $.rdf.pattern(p, opts);
+          p = typeof p === 'string' ? $.rdf.pattern(p, opts) : p;
           if (typeof p.subject === 'string') {
             lhsWildcards.push(p.subject);
           }
@@ -137,11 +137,9 @@
         }
       });
       lhsWildcards = $.unique(lhsWildcards);
-      if ($.isFunction(rhs)) {
-        this.rhs = rhs;
-      } else {
-        this.rhs = $.map(rhs, function (p) {
-          p = $.rdf.pattern(p, opts);
+      this.rhs = $.map(rhs, function (p) {
+        if (!$.isFunction(p)) {
+          p = typeof p === 'string' ? $.rdf.pattern(p, opts) : p;
           if ((typeof p.subject === 'string' && $.inArray(p.subject, lhsWildcards) === -1) ||
               (typeof p.property === 'string' && $.inArray(p.property, lhsWildcards) === -1) ||
               (typeof p.object === 'string' && $.inArray(p.object, lhsWildcards) === -1)) {
@@ -149,9 +147,9 @@
           } else if (p.subject.type === 'bnode' || p.property.type === 'bnode' || p.object.type === 'bnode') {
             rhsBlanks = true;
           }
-          return p;
-        });
-      }
+        }
+        return p;
+      });
       this.rhsBlanks = rhsBlanks;
       this.cache = {};
       return this;

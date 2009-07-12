@@ -1,7 +1,7 @@
 /*
  * jQuery RDF @VERSION
  *
- * Copyright (c) 2008 Jeni Tennison
+ * Copyright (c) 2008,2009 Jeni Tennison
  * Licensed under the MIT (MIT-LICENSE.txt)
  *
  * Depends:
@@ -9,6 +9,7 @@
  *  jquery.xmlns.js
  *  jquery.datatype.js
  *  jquery.curie.js
+ *  jquery.json.js
  */
 /*global jQuery */
 (function ($) {
@@ -374,11 +375,7 @@
     parseJson = function (data) {
       var s, subject, p, property, o, object, i, opts, triples = [];
       for (s in data) {
-        if (s.substring(0, 2) === '_:') {
-          subject = $.rdf.blank(s);
-        } else {
-          subject = $.rdf.resource('<' + s + '>');
-        }
+        subject = (s.substring(0, 2) === '_:') ? $.rdf.blank(s) : $.rdf.resource('<' + s + '>');
         for (p in data[s]) {
           property = $.rdf.resource('<' + p + '>');
           for (i = 0; i < data[s][p].length; i += 1) {
@@ -410,15 +407,15 @@
       var doc = parent.ownerDocument,
         a;
       if (namespace !== undefined && namespace !== null) {
-	if (doc.createAttributeNS) {
-	  a = doc.createAttributeNS(namespace, name);
+      	if (doc.createAttributeNS) {
+      	  a = doc.createAttributeNS(namespace, name);
           a.nodeValue = value;
           parent.attributes.setNamedItemNS(a);
-	} else {
-	  a = doc.createNode(2, name, namespace);
-	  a.nodeValue = value;
-	  parent.attributes.setNamedItem(a);
-	}
+      	} else {
+      	  a = doc.createNode(2, name, namespace);
+      	  a.nodeValue = value;
+      	  parent.attributes.setNamedItem(a);
+      	}
       } else {
         a = doc.createAttribute(name);
         a.nodeValue = value;
@@ -442,25 +439,25 @@
         if (/:/.test(name)) {
           prefix = /([^:]+):/.exec(name)[1];
         }
-	addAttribute = true;
+        addAttribute = true;
       }
       if (document.implementation &&
           document.implementation.createDocument) {
         doc = document.implementation.createDocument(namespace, name, null);
-	if (addAttribute) {
+	      if (addAttribute) {
           createXmlnsAtt(doc.documentElement, namespace, prefix);
-	}
+	      }
         return doc;
       } else {
-	doc = new ActiveXObject("Microsoft.XMLDOM");
-	doc.async = "false";
-	if (prefix === undefined) {
-	  xmlns = ' xmlns="' + namespace + '"';
-	} else {
-	  xmlns = ' xmlns:' + prefix + '="' + namespace + '"';
-	}
-	doc.loadXML('<' + name + xmlns + '/>');
-	return doc;
+      	doc = new ActiveXObject("Microsoft.XMLDOM");
+      	doc.async = "false";
+      	if (prefix === undefined) {
+      	  xmlns = ' xmlns="' + namespace + '"';
+      	} else {
+      	  xmlns = ' xmlns:' + prefix + '="' + namespace + '"';
+      	}
+      	doc.loadXML('<' + name + xmlns + '/>');
+      	return doc;
       }
     },
 
@@ -468,11 +465,7 @@
       var doc = parent.ownerDocument,
         e;
       if (namespace !== undefined && namespace !== null) {
-	if (doc.createElementNS) {
-	  e = doc.createElementNS(namespace, name);
-	} else {
-	  e = doc.createNode(1, name, namespace);
-	}
+        e = doc.createElementNS ? doc.createElementNS(namespace, name) : doc.createNode(1, name, namespace);
       } else {
         e = doc.createElement(name);
       }
@@ -491,12 +484,12 @@
     appendXML = function (parent, xml) {
       var parser, doc, i, child;
       try {
-	doc = new ActiveXObject('Microsoft.XMLDOM');
-	doc.async = "false";
-	doc.loadXML('<temp>' + xml + '</temp>');
+      	doc = new ActiveXObject('Microsoft.XMLDOM');
+      	doc.async = "false";
+      	doc.loadXML('<temp>' + xml + '</temp>');
       } catch(e) {
-	parser = new DOMParser();
-	doc = parser.parseFromString('<temp>' + xml + '</temp>', 'text/xml');
+      	parser = new DOMParser();
+      	doc = parser.parseFromString('<temp>' + xml + '</temp>', 'text/xml');
       }
       for (i = 0; i < doc.documentElement.childNodes.length; i += 1) {
         parent.appendChild(doc.documentElement.childNodes[i].cloneNode(true));
@@ -576,60 +569,48 @@
     },
 
     getDefaultNamespacePrefix = function(namespaceUri){
-      switch(namespaceUri)	       {
-      case 'http://www.w3.org/1999/02/22-rdf-syntax-ns':
-	return 'rdf';
-      case 'http://www.w3.org/XML/1998/namespace':
-	return 'xml';
-      case 'http://www.w3.org/2000/xmlns/':
-	return 'xmlns';
-      default:
-	throw ('No default prefix mapped for namespace ' + namespaceUri);
+      switch (namespaceUri) {
+        case 'http://www.w3.org/1999/02/22-rdf-syntax-ns':
+  	      return 'rdf';
+        case 'http://www.w3.org/XML/1998/namespace':
+  	      return 'xml';
+        case 'http://www.w3.org/2000/xmlns/':
+  	      return 'xmlns';
+        default:
+  	      throw ('No default prefix mapped for namespace ' + namespaceUri);
       }
     },
 
     hasAttributeNS  = function(elem, namespace, name){
       var basename;
       if (elem.hasAttributeNS) {
-	return elem.hasAttributeNS(namespace, name);
+	      return elem.hasAttributeNS(namespace, name);
       } else {
-	try {
-	  if (/:/.test(name)) {
-	    basename = /:(.+)$/.exec(name)[1];
-	  } else {
-	    basename = name;
-	  }
-	  return elem.attributes.getQualifiedItem(basename, namespace) !== null;
-	} catch (e) {
-	  return elem.getAttribute(getDefaultNamespacePrefix(namespace) + ':' + name) !== null;
-	}
+      	try {
+      	  basename = /:/.test(name) ? /:(.+)$/.exec(name)[1] : name;
+      	  return elem.attributes.getQualifiedItem(basename, namespace) !== null;
+      	} catch (e) {
+      	  return elem.getAttribute(getDefaultNamespacePrefix(namespace) + ':' + name) !== null;
+      	}
       }
     },
 
     getAttributeNS = function(elem, namespace, name){
       var basename;
       if (elem.getAttributeNS) {
-	return elem.getAttributeNS(namespace, name);
+	      return elem.getAttributeNS(namespace, name);
       } else {
-	try {
-	  if (/:/.test(name)) {
-	    basename = /:(.+)$/.exec(name)[1];
-	  } else {
-	    basename = name;
-	  }
-	  return elem.attributes.getQualifiedItem(basename, namespace).nodeValue;
-	} catch (e) {
-	  return elem.getAttribute(getDefaultNamespacePrefix(namespace) + ':' + name);
-	}
+      	try {
+      	  basename = /:/.test(name) ? /:(.+)$/.exec(name)[1] : name;
+      	  return elem.attributes.getQualifiedItem(basename, namespace).nodeValue;
+      	} catch (e) {
+      	  return elem.getAttribute(getDefaultNamespacePrefix(namespace) + ':' + name);
+      	}
       }
     },
 
     getLocalName = function(elem){
-      if (elem.localName) {
-	return elem.localName;
-      } else {
-	return elem.baseName;
-      }
+      return elem.localName || elem.baseName;
     },
 
     parseRdfXmlSubject = function (elem, base) {
@@ -669,8 +650,8 @@
         if (p.namespaceURI !== undefined &&
             p.namespaceURI !== 'http://www.w3.org/2000/xmlns/' &&
             p.namespaceURI !== 'http://www.w3.org/XML/1998/namespace' &&
-	    p.prefix !== 'xmlns' &&
-	    p.prefix !== 'xml') {
+	          p.prefix !== 'xmlns' &&
+	          p.prefix !== 'xml') {
           if (p.namespaceURI !== rdfNs) {
             property = $.rdf.resource('<' + p.namespaceURI + getLocalName(p) + '>');
             object = $.rdf.literal('"' + p.nodeValue + '"', literalOpts);
@@ -704,15 +685,15 @@
           } else if (hasAttributeNS(p, rdfNs, 'parseType')) {
             parseType = getAttributeNS(p, rdfNs, 'parseType');
             if (parseType === 'Literal') {
-	      try {
-		serializer = new XMLSerializer();
-		o = serializer.serializeToString(p.getElementsByTagName('*')[0]);
-	      } catch(e) {
-	        o = "";
-		for(var n = 0; n < p.childNodes.length; n++) {
-		  o += p.childNodes[i].xml;
-		}
-	      }
+      	      try {
+            		serializer = new XMLSerializer();
+            		o = serializer.serializeToString(p.getElementsByTagName('*')[0]);
+      	      } catch (e) {
+      	        o = "";
+            		for (j = 0; j < p.childNodes.length; j += 1) {
+            		  o += p.childNodes[j].xml;
+            		}
+      	      }
               object = $.rdf.literal(o, { datatype: rdfNs + 'XMLLiteral' });
             } else if (parseType === 'Resource') {
               oTriples = parseRdfXmlDescription(p, false, base, lang);
@@ -1055,6 +1036,14 @@
       }));
     },
 
+    dump: function (options) {
+      var triples = $.map(this.matches, function (match) {
+        return match.triples;
+      });
+      options = $.extend({ namespaces: this.databank.namespaces, base: this.databank.base }, options || {});
+      return $.rdf.dump(triples, options);
+    },
+
     get: function (num) {
       return (num === undefined) ? $.makeArray(this) : this[num];
     },
@@ -1084,11 +1073,24 @@
 
   $.rdf.dump = function (triples, opts) {
     var opts = $.extend({}, $.rdf.dump.defaults, opts || {}),
-      format = opts.format;
+      format = opts.format,
+      serialize = opts.serialize,
+      dump;
     if (format === 'application/json') {
-      return createJson(triples, opts);
+      dump = createJson(triples, opts);
+      return serialize ? $.toJSON(dump) : dump;
     } else if (format === 'application/rdf+xml') {
-      return createRdfXml(triples, opts);
+      dump = createRdfXml(triples, opts);
+      if (serialize) {
+        if (dump.xml) {
+          return dump.xml;
+        } else {
+      		serializer = new XMLSerializer();
+      		return serializer.serializeToString(dump);          
+        }
+      } else {
+        return dump;
+      }
     } else {
       throw "Unrecognised dump format: " + format + ". Expected application/json or application/rdf+xml.";
     }
@@ -1096,6 +1098,7 @@
 
   $.rdf.dump.defaults = {
     format: 'application/json',
+    serialize: false,
     namespaces: {}
   }
 

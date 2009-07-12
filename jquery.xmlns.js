@@ -1,7 +1,7 @@
 /*
  * jQuery CURIE @VERSION
  * 
- * Copyright (c) 2008 Jeni Tennison
+ * Copyright (c) 2008,2009 Jeni Tennison
  * Licensed under the MIT (MIT-LICENSE.txt)
  *
  * Depends:
@@ -25,7 +25,19 @@
       if (prefix === undefined) { // get the in-scope declarations on the first element
         if (ns === undefined) {
           ns = {};
-          if (e.outerHTML !== undefined) {
+          if (e.attributes) {
+            for (i = 0; i < e.attributes.length; i += 1) {
+              a = e.attributes[i];
+              if (/^xmlns(:(.+))?$/.test(a.nodeName)) {
+                prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
+                value = a.nodeValue;
+                if (prefix === '' || value !== '') {
+                  ns[prefix] = $.uri(a.nodeValue);
+                  found = true;
+                }
+              }
+            }
+          } else {
             tag = /<[^>]+>/.exec(e.outerHTML);
             a = xmlnsRegex.exec(tag);
             while (a !== null) {
@@ -38,18 +50,6 @@
               a = xmlnsRegex.exec(tag);
             }
             xmlnsRegex.lastIndex = 0;
-          } else {
-            for (i = 0; i < e.attributes.length; i += 1) {
-              a = e.attributes[i];
-              if (/^xmlns(:(.+))?$/.test(a.nodeName)) {
-                prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
-                value = a.nodeValue;
-                if (prefix === '' || value !== '') {
-                  ns[prefix] = $.uri(a.nodeValue);
-                  found = true;
-                }
-              }
-            }
           }
           inherited = inherited || (e.parentNode.nodeType === 1 ? elem.parent().xmlns() : {});
           ns = found ? $.extend({}, inherited, ns) : inherited;

@@ -802,6 +802,21 @@ test("getting the difference between two top-level queries", function () {
   equals(diff2.databank.triples()[0], $.rdf.triple('_:b foaf:surname "Jones"', { namespaces: { foaf: ns.foaf }}));
 });
 
+test("dumping the result of a query", function () {
+  var rdf = $.rdf()
+    .prefix('dc', ns.dc)
+    .prefix('foaf', ns.foaf)
+  	.add('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+  	.add('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .')
+  	.add('<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .')
+  	.add('<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .')
+    .about('<http://www.blogger.com/profile/1109404>');
+  equals(rdf.length, 2, "there are two triples about <http://www.blogger.com/profile/1109404>");
+  var dump = rdf.dump();
+  ok(dump['http://www.blogger.com/profile/1109404'] !== undefined, 'there should be a property for the subject');
+  equals(dump['http://www.blogger.com/profile/1109404'][ns.foaf + 'img'].length, 2);
+});
+
 module("Dumping Databanks");
 
 test("dumping in RDF/XML a triple whose subject is a blank node", function() {
@@ -815,6 +830,19 @@ test("dumping in RDF/XML a triple whose subject is a blank node", function() {
 	var a = d.attributes.getNamedItem('rdf:nodeID');
 	ok(a !== undefined && a !== null, 'it should have an rdf:nodeID attribute');
 	equals(a.nodeValue, 'someone');
+});
+
+test("dumping a serialised version of RDF/XML", function() {
+  var namespaces = { foaf: ns.foaf };
+  var triple = $.rdf.triple('_:someone foaf:name "Jeni"', { namespaces: namespaces });
+  var dump = $.rdf.dump([triple], { format: 'application/rdf+xml', serialize: true, namespaces: namespaces });
+  equals(dump, 
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" ' +
+    'xmlns:foaf="http://xmlns.com/foaf/0.1/">' +
+    '<rdf:Description rdf:nodeID="someone">' +
+    '<foaf:name>Jeni</foaf:name>' +
+    '</rdf:Description>' +
+    '</rdf:RDF>');
 });
 
 test("dumping in RDF/XML a triple whose property is rdf:type", function() {
@@ -970,6 +998,9 @@ test("creating a new databank", function() {
 	ok(e[triples[1].subject.value][triples[1].property.value], 'expecting { subject: { property: { value }}}');
 	equals(e[triples[0].subject.value][triples[0].property.value][0].type, 'uri');
 	equals(e[triples[0].subject.value][triples[0].property.value][0].value, 'http://www.blogger.com/profile/1109404');
+
+  var j = data.dump({ serialize: true });
+  equals(j, '{"' + triples[0].subject.value + '": {"http://purl.org/dc/elements/1.1/creator": [{"type": "uri", "value": "http://www.blogger.com/profile/1109404"}]}, "http://www.blogger.com/profile/1109404": {"http://xmlns.com/foaf/0.1/img": [{"type": "uri", "value": "' + triples[0].subject.value + '"}]}}');
 
 	var x = data.dump({ format: 'application/rdf+xml', namespaces: namespaces });
 	equals(x.documentElement.nodeName, 'rdf:RDF');

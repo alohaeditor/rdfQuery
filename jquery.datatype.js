@@ -1,7 +1,7 @@
 /*
  * jQuery CURIE @VERSION
  * 
- * Copyright (c) 2008 Jeni Tennison
+ * Copyright (c) 2008,2009 Jeni Tennison
  * Licensed under the MIT (MIT-LICENSE.txt)
  *
  * Depends:

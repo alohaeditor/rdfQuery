@@ -1,7 +1,7 @@
 /*
  * jQuery RDFa @VERSION
  *
- * Copyright (c) 2008 Jeni Tennison
+ * Copyright (c) 2008,2009 Jeni Tennison
  * Licensed under the MIT (MIT-LICENSE.txt)
  *
  * Depends:
@@ -75,9 +75,22 @@
         ns = {}, atts = {};
       e = elem[0];
       ns[':length'] = 0;
-      tag = e.outerHTML;
-      if (tag !== undefined) {
-        tag = /<[^>]+>/.exec(tag);
+      if (e.attributes) {
+        attMap = e.attributes;
+        for (i = 0; i < attMap.length; i += 1) {
+          a = attMap[i];
+          if (/^xmlns(:(.+))?$/.test(a.nodeName) && a.nodeValue !== '') {
+            prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
+            ns[prefix] = $.uri(a.nodeValue);
+            ns[':length'] += 1;
+          } else if (/rel|rev|lang|xml:lang/.test(a.nodeName)) {
+            atts[a.nodeName] = a.nodeValue === '' ? undefined : a.nodeValue;
+          } else if (/about|href|src|resource|property|typeof|content|datatype/.test(a.nodeName)) {
+            atts[a.nodeName] = a.nodeValue === null ? undefined : a.nodeValue;
+          }
+        }
+      } else {
+        tag = /<[^>]+>/.exec(e.outerHTML);
         a = attRegex.exec(tag);
         while (a !== null) {
           name = a[1];
@@ -92,20 +105,6 @@
           a = attRegex.exec(tag);
         }
         attRegex.lastIndex = 0;
-      } else {
-        attMap = e.attributes;
-        for (i = 0; i < attMap.length; i += 1) {
-          a = attMap[i];
-          if (/^xmlns(:(.+))?$/.test(a.nodeName) && a.nodeValue !== '') {
-            prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
-            ns[prefix] = $.uri(a.nodeValue);
-            ns[':length'] += 1;
-          } else if (/rel|rev|lang|xml:lang/.test(a.nodeName)) {
-            atts[a.nodeName] = a.nodeValue === '' ? undefined : a.nodeValue;
-          } else if (/about|href|src|resource|property|typeof|content|datatype/.test(a.nodeName)) {
-            atts[a.nodeName] = a.nodeValue === null ? undefined : a.nodeValue;
-          }
-        }
       }
       return { atts: atts, namespaces: ns };
     },
