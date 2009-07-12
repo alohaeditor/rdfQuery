@@ -7,12 +7,45 @@
  * Depends:
  *  jquery.uri.js
  */
+/**
+ * @fileOverview XML Namespace processing
+ * @author <a href="mailto:jeni@jenitennison.com">Jeni Tennison</a>
+ * @copyright (c) 2008,2009 Jeni Tennison
+ * @license MIT license (MIT-LICENSE.txt)
+ * @version 1.0
+ * @requires jquery.uri.js
+ */
+
 /*global jQuery */
 (function ($) {
 
   var 
     xmlnsRegex = /\sxmlns(?::([^ =]+))?\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 
+/**
+ * Returns the namespaces declared in the scope of the first selected element, or
+ * adds a namespace declaration to all selected elements. Pass in no parameters
+ * to return all namespaces bindings on the first selected element. If only 
+ * the prefix parameter is specified, this method will return the namespace
+ * URI that is bound to the specified prefix on the first element in the selection
+ * If the prefix and uri parameters are both specified, this method will
+ * add the binding of the specified prefix and namespace URI to all elements
+ * in the selection.
+ * @methodOf jQuery#
+ * @name jQuery.xmlns
+ * @param {String} [prefix] Restricts the namespaces returned to only the namespace with the specified namespace prefix.
+ * @param {String} [uri]    Adds a namespace declaration to the selected elements that maps the specified prefix to the specified namespace.
+ * @param {Object} [inherited] A map of inherited namespace bindings.
+ * @example 
+ * // Retrieve all of the namespace bindings on the HTML document element
+ * var nsMap = $('html').xmlns();
+ * @example
+ * // Retrieve the namespace URI mapped to the 'dc' prefix on the HTML document element
+ * var dcNamespace = $('html').xmlns('dc');
+ * @example
+ * // Create a namespace declaration that binds the 'dc' prefix to the URI 'http://purl.org/dc/elements/1.1/'
+ * $('html').xmlns('dc', 'http://purl.org/dc/elements/1.1/');
+ */
   $.fn.xmlns = function (prefix, uri, inherited) {
     var 
       elem = this.eq(0),
@@ -75,7 +108,23 @@
       return this.attr(decl, uri);
     }
   };
-  
+
+/**
+ * Removes one or more XML namespace bindings from the selected elements.
+ * @methodOf jQuery#
+ * @name jQuery.removeXmlns
+ * @param {String|Object|String[]} prefix The prefix(es) of the XML namespace bindings that are to be removed from the selected elements.
+ * @example
+ * // Remove the foaf namespace declaration from the body element:
+ * $('body').removeXmlns('foaf');
+ * @example
+ * // Remove the foo and bar namespace declarations from all h2 elements
+ * $('h2').removeXmlns(['foo', 'bar']);
+ * @example
+ * // Remove the foo and bar namespace declarations from all h2 elements
+ * var namespaces = { foo : 'http://www.example.org/foo', bar : 'http://www.example.org/bar' };
+ * $('h2').removeXmlns(namespaces);
+ */
   $.fn.removeXmlns = function (prefix) {
     var decl, p, i;
     if (typeof prefix === 'object') {
