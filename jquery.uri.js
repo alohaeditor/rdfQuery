@@ -1,11 +1,22 @@
 /*
- * jQuery URIs @VERSION
+ * $ URIs @VERSION
  * 
  * Copyright (c) 2008,2009 Jeni Tennison
  * Licensed under the MIT (MIT-LICENSE.txt)
  *
  */
-/*global jQuery */
+/**
+ * @fileOverview $ URIs
+ * @author <a href="mailto:jeni@jenitennison.com">Jeni Tennison</a>
+ * @copyright (c) 2008,2009 Jeni Tennison
+ * @license MIT license (MIT-LICENSE.txt)
+ * @version 1.0
+ */
+/**
+ * @class
+ * @name jQuery
+ * @exports $ as jQuery
+ */
 (function ($) {
 
   var
@@ -62,6 +73,13 @@
       }
     };
 
+  /**
+   * Creates a new jQuery.uri object. This should be invoked as a method rather than constructed using new.
+   * @class Represents a URI
+   * @param {String} [relative='']
+   * @param {String|jQuery.uri} [base] Defaults to the base URI of the page
+   * @example uri = jQuery.uri('/my/file.html');
+   */
   $.uri = function (relative, base) {
     var uri;
     relative = relative || '';
@@ -111,10 +129,20 @@
       return this;
     },
   
+    /**
+     * Resolves a relative URI relative to this URI
+     * @param {String} relative
+     * @returns jQuery.uri
+     */
     resolve: function (relative) {
       return $.uri(relative, this);
     },
     
+    /**
+     * Creates a relative URI giving the path from this URI to the absolute URI passed as a parameter
+     * @param {String|jQuery.uri} absolute
+     * @returns String
+     */
     relative: function (absolute) {
       var aPath, bPath, i = 0, j, resultPath = [], result = '';
       if (typeof absolute === 'string') {
@@ -155,6 +183,10 @@
       return '';
     },
   
+    /**
+     * Returns the URI as an absolute string
+     * @returns String
+     */
     toString: function () {
       var result = '';
       if (this._string) {
@@ -174,22 +206,47 @@
 
   $.uri.fn.init.prototype = $.uri.fn;
 
+  /**
+   * Creates a {@link jQuery.uri} from a known-to-be-absolute URI
+   * @param {String}
+   * @returns $.uri
+   */
   $.uri.absolute = function (uri) {
     return $.uri(uri, {});
   };
 
+  /**
+   * Creates a {@link jQuery.uri} from a relative URI and an optional base URI
+   * @see jQuery.uri
+   */
   $.uri.resolve = function (relative, base) {
     return $.uri(relative, base);
   };
   
+  /**
+   * Creates a string giving the relative path from a base URI to an absolute URI
+   * @param {String} absolute
+   * @param {String} base
+   * @returns String
+   */
   $.uri.relative = function (absolute, base) {
     return $.uri(base, {}).relative(absolute);
   };
   
+  /**
+   * Returns the base URI of the page
+   * @returns jQuery.uri
+   */
   $.uri.base = function () {
     return $(document).base();
   };
   
+  /**
+   * Returns the base URI in scope for the first selected element
+   * @methodOf jQuery#
+   * @name jQuery.base
+   * @example baseURI = $('img').base();
+   */
   $.fn.base = function () {
     var base = $(this).parents().andSelf().find('base').attr('href'),
       doc = $(this)[0].ownerDocument || document,
