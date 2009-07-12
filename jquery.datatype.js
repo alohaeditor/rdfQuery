@@ -1,24 +1,105 @@
 /*
  * jQuery CURIE @VERSION
- * 
+ *
  * Copyright (c) 2008,2009 Jeni Tennison
  * Licensed under the MIT (MIT-LICENSE.txt)
  *
  * Depends:
  *	jquery.uri.js
  */
-/*global jQuery */
+/**
+ * @fileOverview XML Schema datatype handling
+ * @author <a href="mailto:jeni@jenitennison.com">Jeni Tennison</a>
+ * @copyright (c) 2008,2009 Jeni Tennison
+ * @license MIT license (MIT-LICENSE.txt)
+ * @version 1.0
+ * @requires jquery.uri.js
+ */
+
 (function ($) {
 
+   /**
+    * Creates a new jQuery.typedValue object. This should be invoked as a method
+    * rather than constructed using new.
+    * @class Represents a value with an XML Schema datatype
+    * @param {String} value The string representation of the value
+    * @param {String} datatype The XML Schema datatype URI
+    * @example intValue = jQuery.typedValue('42', 'http://www.w3.org/2001/XMLSchema#integer');
+    */
 	$.typedValue = function (value, datatype) {
 		return $.typedValue.fn.init(value, datatype);
 	};
-	
+
 	$.typedValue.fn = $.typedValue.prototype = {
+	  /**
+	   * The string representation of the value
+	   * @memberOf jQuery.typedValue#
+	   */
 		representation: undefined,
+	  /**
+	   * The value as an object. The type of the object will
+	   * depend on the XML Schema datatype URI specified
+	   * in the constructor. The following table lists the mappings
+	   * currently supported:
+	   * <table>
+	   *   <tr>
+	   *   <th>XML Schema Datatype</th>
+	   *   <th>Value type</th>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#string</td>
+	   *     <td>string</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#boolean</td>
+	   *     <td>bool</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#decimal</td>
+	   *     <td>string</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#integer</td>
+	   *     <td>int</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#int</td>
+	   *     <td>int</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#float</td>
+	   *     <td>float</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#double</td>
+	   *     <td>float</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#dateTime</td>
+	   *     <td>string</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#date</td>
+	   *     <td>string</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#gMonthDay</td>
+	   *     <td>string</td>
+	   *   </tr>
+	   *   <tr>
+	   *     <td>http://www.w3.org/2001/XMLSchema#anyURI</td>
+	   *     <td>string</td>
+	   *   </tr>
+	   * </table>
+	   * @memberOf jQuery.typedValue#
+	   */
 		value: undefined,
+	  /**
+	   * The XML Schema datatype URI for the value's datatype
+	   * @memberOf jQuery.typedValue#
+	   */
 		datatype: undefined,
-		
+
 		init: function (value, datatype) {
 			if ($.typedValue.valid(value, datatype)) {
 				this.representation = value;
@@ -33,7 +114,7 @@
 			}
 		}
 	};
-	
+
 	$.typedValue.fn.init.prototype = $.typedValue.fn;
 
 	$.typedValue.types = {};
@@ -41,46 +122,52 @@
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#string'] = {
 		regex: /^.*$/,
 		strip: false,
+		/** @ignore */
 		value: function (v) {
 			return v;
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#boolean'] = {
 		regex: /^(?:true|false|1|0)$/,
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			return v === 'true' || v === '1';
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#decimal'] = {
 		regex: /^[\-\+]?(?:[0-9]+\.[0-9]*|\.[0-9]+|[0-9]+)$/,
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			return v;
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#integer'] = {
 		regex: /^[\-\+]?[0-9]+$/,
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			return parseInt(v, 10);
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#int'] = {
 		regex: /^[\-\+]?[0-9]+$/,
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			return parseInt(v, 10);
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#float'] = {
 		regex: /^(?:[\-\+]?(?:[0-9]+\.[0-9]*|\.[0-9]+|[0-9]+)(?:[eE][\-\+]?[0-9]+)?|[\-\+]?INF|NaN)$/,
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			if (v === '-INF') {
 				return -1 / 0;
@@ -91,29 +178,32 @@
 			}
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#double'] = {
 		regex: $.typedValue.types['http://www.w3.org/2001/XMLSchema#float'].regex,
 		strip: true,
 		value: $.typedValue.types['http://www.w3.org/2001/XMLSchema#float'].value
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#duration'] = {
 		regex: /^([\-\+])?P(?:([0-9]+)Y)?(?:([0-9]+)M)?(?:([0-9]+)D)?(?:T(?:([0-9]+)H)?(?:([0-9]+)M)?(?:([0-9]+(?:\.[0-9]+))?S)?)$/,
+		/** @ignore */
 		validate: function (v) {
 			var m = this.regex.exec(v);
 			return m[2] || m[3] || m[4] || m[5] || m[6] || m[7];
 		},
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			return v;
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#dateTime'] = {
 		regex: /^(-?[0-9]{4,})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):(([0-9]{2})(\.([0-9]+))?)((?:[\-\+]([0-9]{2}):([0-9]{2}))|Z)?$/,
+		/** @ignore */
 		validate: function (v) {
-			var 
+			var
 				m = this.regex.exec(v),
 				year = parseInt(m[1], 10),
 				tz = m[10] === undefined || m[10] === 'Z' ? '+0000' : m[10].replace(/:/, ''),
@@ -145,15 +235,17 @@
 			}
 		},
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			return v;
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#date'] = {
 		regex: /^(-?[0-9]{4,})-([0-9]{2})-([0-9]{2})((?:[\-\+]([0-9]{2}):([0-9]{2}))|Z)?$/,
+		/** @ignore */
 		validate: function (v) {
-			var 
+			var
 				m = this.regex.exec(v),
 				year = parseInt(m[1], 10),
 				month = parseInt(m[2], 10),
@@ -169,15 +261,17 @@
 			}
 		},
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			return v;
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#gMonthDay'] = {
 		regex: /^--([0-9]{2})-([0-9]{2})((?:[\-\+]([0-9]{2}):([0-9]{2}))|Z)?$/,
+		/** @ignore */
 		validate: function (v) {
-			var 
+			var
 				m = this.regex.exec(v),
 				month = parseInt(m[1], 10),
 				day = parseInt(m[2], 10),
@@ -195,14 +289,16 @@
 			}
 		},
 		strip: true,
+		/** @ignore */
 		value: function (v) {
 			return v;
 		}
 	};
-	
+
 	$.typedValue.types['http://www.w3.org/2001/XMLSchema#anyURI'] = {
 		regex: /^.*$/,
 		strip: true,
+		/** @ignore */
 		value: function (v, options) {
 			var opts = $.extend({}, $.typedValue.defaults, options);
 			return $.uri.resolve(v, opts.base);
