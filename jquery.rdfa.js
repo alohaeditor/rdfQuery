@@ -11,7 +11,18 @@
  *  jquery.datatype.js
  *  jquery.rdf.js
  */
-/*global jQuery */
+/**
+ * @fileOverview jQuery RDFa processing
+ * @author <a href="mailto:jeni@jenitennison.com">Jeni Tennison</a>
+ * @copyright (c) 2008,2009 Jeni Tennison
+ * @license MIT license (MIT-LICENSE.txt)
+ * @version 1.0
+ * @requires jquery.uri.js
+ * @requires jquery.xmlns.js
+ * @requires jquery.curie.js
+ * @requires jquery.datatype.js
+ * @requires jquery.rdf.js
+ */
 (function ($) {
 
   var
@@ -720,6 +731,23 @@
       return this;
     };
 
+  /**
+   * Creates a {@link jQuery.rdf} object containing the RDF triples
+   * parsed from the RDFa found in the current jQuery selection or
+   * adds the specified triple as RDFa markup on each member of 
+   * the current jQuery selection.
+   * @methodOf jQuery#
+   * @name jQuery#rdfa
+   * @param {jQuery.rdf.triple} [triple] The RDF triple to be added
+   *        to each item in the jQuery selection. 
+   * @example
+   * // Extract RDFa markup from all span elements contained inside #main
+   * rdf = $('#main > span').rdfa();
+   * @example
+   * // Add RDFa markup to a particular document element
+   *  var span = $('#main > p > span');
+   *  span.rdfa('&lt;> dc:date "2008-10-19"^^xsd:date .');
+   */
   $.fn.rdfa = function (triple) {
     if (triple === undefined) {
       var triples = $.map($(this), function (elem) {
@@ -734,6 +762,26 @@
     }
   };
 
+  /**
+   * Removes matching RDFa markup from 
+   * each of the items in the current jQuery selection.
+   * The input parameter can be either an object or an array of
+   * object. See the examples for the forms of object that
+   * are supported by this method. 
+   * @methodOf jQuery#
+   * @name jQuery#removeRdfa
+   * @param {Object|Object[]} triple The RDFa markup items to be removed
+   * from the items in the jQuery selection.
+   * @example 
+   * // To remove a property resource or relation from an element 
+   * $('#main > p > a').removeRdfa({ property: "dc:creator" });
+   * @example
+   * // To remove a type from an element
+   * $('#main >p > a').removeRdfa({ type: "foaf:Person" });
+   * @example
+   * // To remove multiple triples from an element
+   * $('#main > p > a').removeRdfa([{ property: "foaf:depicts" }, { property: "dc:creator" }]);
+   */
   $.fn.removeRdfa = function (triple) {
     $(this).each(function () {
       removeRDFa.call($(this), triple);
