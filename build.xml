@@ -1,33 +1,113 @@
 <?xml version="1.0"?>
-<project name="rdfquery" basedir=".">
+<project name="rdfquery" basedir="." default="all">
+    
+    <loadfile property="VERSION" srcfile="version.txt" description="Version to build" >
+      <filterchain>
+        <striplinebreaks/>
+      </filterchain>
+    </loadfile>
     
     
     <property name="DOCS_DIR" value="./docs" description="API documentation"/>
-    <property name="LIB_DIR" value="./lib" />    
-    <property name="JSDOC_TOOLKIT" value="${LIB_DIR}/jsdoc-toolkit/" />    
-
-    <target name="doc">
-            <!-- jsdoc-toolkit ant taks is currently broken, so we directly run --> 
-            <echo message="Generating Documentation:" />
-            <java jar="${JSDOC_TOOLKIT}/jsrun.jar" fork="true" failonerror="true">
-                <arg value="${JSDOC_TOOLKIT}/app/run.js" />
-                <arg value="-t=${JSDOC_TOOLKIT}/templates/jsdoc" />
-                <arg value="-d=${DOCS_DIR}" />
-                <arg value="jquery.uri.js" />
-                <arg value="jquery.xmlns.js"/>
-                <arg value="jquery.datatype.js"/>
-                <arg value="jquery.curie.js"/>
-                <arg value="jquery.rdf.js"/>
-                <arg value="jquery.rdfa.js"/>
-                <arg value="jquery.rules.js"/>
-            </java> 
-        </target>
-
-
-    <target name="clean">
-        <echo message="Deleting distribution and API documentation"/>
-        <delete dir="${DIST_DIR}/*" />
-        <delete dir="${DOCS_DIR}/*" />
+    <property name="DIST_DIR" value="./dist"/>
+    <property name="LIB_DIR" value="./lib"/>
+    <property name="JSDOC_TOOLKIT_DIR" value="${LIB_DIR}/jsdoc-toolkit/"/>
+    <property name="YUI" value="${LIB_DIR}/yui-compressor/yuicompressor-2.4.2.jar" />
+    
+    <!-- Names for output -->
+    <property name="JS" value="${DIST_DIR}/js/" />
+    <property name="JS_MIN" value="${DIST_DIR}/minimised/" />
+    
+    <target name="all" depends="init, doc, dist"/>
+    
+    <target name="doc" description="generates documentation for core rdfQuery">
+        <!-- jsdoc-toolkit ant taks is currently broken, so we directly run -->
+        <echo message="Generating Documentation:"/>
+        <java jar="${JSDOC_TOOLKIT_DIR}/jsrun.jar" fork="true" failonerror="true">
+            <arg value="${JSDOC_TOOLKIT_DIR}/app/run.js"/>
+            <arg value="-t=${JSDOC_TOOLKIT_DIR}/templates/jsdoc"/>
+            <arg value="-d=${DOCS_DIR}"/>
+            <arg value="jquery.uri.js"/>
+            <arg value="jquery.xmlns.js"/>
+            <arg value="jquery.datatype.js"/>
+            <arg value="jquery.curie.js"/>
+            <arg value="jquery.rdf.js"/>
+            <arg value="jquery.rdfa.js"/>
+            <arg value="jquery.rules.js"/>
+        </java>
     </target>
     
+    <target name="dist">
+        <antcall target="combine" />
+        <antcall target="minimise" />
+        
+        <zip destfile="${DIST_DIR}/jquery.rdfquery-${VERSION}.zip">
+            <zipfileset dir="${JS}" includes="*.js" prefix="${JS}"/>
+            <zipfileset dir="${JS_MIN}" includes="*.js" prefix="${JS_MIN}"/>
+            <zipfileset dir="${DOCS_DIR}" includes="**/**" prefix="${DOCS_DIR}"/>
+        </zip>
+    </target>
+    
+    <target name="combine" description="combines js files into three different files representing the three different packages for distribution">
+        <echo message="Building rdfQuery Core Distribution" />
+        <concat destfile="${JS}/jquery.rdfquery.core-${VERSION}.js">
+            <fileset dir="." includes="jquery.uri.js" />
+            <fileset dir="." includes="jquery.xmlns.js" />
+            <fileset dir="." includes="jquery.datatype.js" />
+            <fileset dir="." includes="jquery.curie.js" />
+            <fileset dir="." includes="jquery.rdf.js" />
+        </concat>
+        
+        <echo message="Building rdfQuery RDFa Distribution" />
+        <concat destfile="${JS}/jquery.rdfquery.rdfa-${VERSION}.js">
+            <fileset dir="${JS}/" includes="jquery.rdfquery.core-${VERSION}.js" />
+            <fileset dir="." includes="jquery.rdfa.js" />            
+        </concat>
+        
+        <echo message="Building rdfQuery Rules Distribution" />
+        <concat destfile="${JS}/jquery.rdfquery.rules-${VERSION}.js">
+            <fileset dir="${JS}/" includes="jquery.rdfquery.rdfa-${VERSION}.js" />
+            <fileset dir="." includes="jquery.rules.js" />            
+        </concat>
+    </target>
+
+    <target name="minimise">
+        <echo message="Minimising rdfQuery Core Distribution" />
+        <echo message="Minimising rdfQuery RDFa Distribution" />
+        <echo message="Minimising rdfQuery Rules Distribution" />
+
+        <antcall target="minimiseJSFile">
+            <param name="inputFile" value="${JS}/jquery.rdfquery.core-${VERSION}.js" />
+            <param name="outputFile" value="${JS_MIN}/jquery.rdfquery.core.min-${VERSION}.js" />
+        </antcall>        
+        <antcall target="minimiseJSFile">
+            <param name="inputFile" value="${JS}/jquery.rdfquery.rdfa-${VERSION}.js" />
+            <param name="outputFile" value="${JS_MIN}/jquery.rdfquery.rdfa.min-${VERSION}.js" />
+        </antcall>
+        <antcall target="minimiseJSFile">
+            <param name="inputFile" value="${JS}/jquery.rdfquery.rules-${VERSION}.js" />
+            <param name="outputFile" value="${JS_MIN}/jquery.rdfquery.rules.min-${VERSION}.js" />
+        </antcall>
+    </target>
+
+    <target name="minimiseJSFile">
+        <java jar="${YUI}" fork="true" failonerror="true">
+            <arg line="--type js" />
+            <arg line="-o ${outputFile}" />
+            <arg value="${inputFile}" />
+        </java>
+    </target>
+    
+    <target name="clean" description="">
+        <echo message="Deleting distribution and API documentation"/>
+        <delete dir="${DIST_DIR}"/>
+        <delete dir="${DOCS_DIR}"/>
+    </target>
+    
+    <target name="init" depends="clean">
+        <mkdir dir="${DIST_DIR}" />
+        <mkdir dir="${DIST_DIR}/js" />
+        <mkdir dir="${DIST_DIR}/minimised" />
+        <mkdir dir="${DOCS_DIR}" />
+    </target>
 </project>
