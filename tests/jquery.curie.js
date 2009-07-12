@@ -4,7 +4,7 @@
 (function($){
 
 var ns = {
-	
+
 	xhv: "http://www.w3.org/1999/xhtml/vocab#",
 	dc: "http://purl.org/dc/elements/1.1/",
 	foaf: "http://xmlns.com/foaf/0.1/",
@@ -113,4 +113,12 @@ test("creating a CURIE from an appropriate namespace declaration", function() {
   equals($('body').createCurie(ns.foaf + 'img'), 'foaf:img');
 });
 
+test("creating a CURIE in the reserved namespace", function() {
+  equals($('body').createCurie(ns.xhv+'foo'), ':foo');
+});
+
+test("creating a CURIE in the reserved namespace with a reserved local name", function(){
+  equals($('body').createCurie(ns.xhv+'cite'), 'cite');
+});
+   
 })(jQuery);
