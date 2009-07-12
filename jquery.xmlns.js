@@ -25,7 +25,7 @@
       if (prefix === undefined) { // get the in-scope declarations on the first element
         if (ns === undefined) {
           ns = {};
-          if (e.attributes) {
+          if (e.attributes && e.attributes.getNamedItemNS) {
             for (i = 0; i < e.attributes.length; i += 1) {
               a = e.attributes[i];
               if (/^xmlns(:(.+))?$/.test(a.nodeName)) {

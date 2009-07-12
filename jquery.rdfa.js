@@ -42,8 +42,8 @@
         result += m[1];
         entity = m[3];
         string = m[4];
-        if (entity[0] === '#') {
-	        if (entity[1] === 'x') {
+        if (entity.charAt(0) === '#') {
+	        if (entity.charAt(1) === 'x') {
               result += String.fromCharCode(parseInt(entity.substring(2), 16));
           } else {
               result += String.fromCharCode(parseInt(entity.substring(1), 10));
@@ -75,7 +75,7 @@
         ns = {}, atts = {};
       e = elem[0];
       ns[':length'] = 0;
-      if (e.attributes) {
+      if (e.attributes && e.attributes.getNamedItemNS) {
         attMap = e.attributes;
         for (i = 0; i < attMap.length; i += 1) {
           a = attMap[i];
