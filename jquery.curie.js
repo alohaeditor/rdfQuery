@@ -29,18 +29,14 @@
     * @param {string} [options.reservedNamespace='http://www.w3.org/1999/xhtml/vocab#'] The namespace to apply to a CURIE that has no prefix and either starts with a colon or is in the list of reserved local names
     * @param {string} [options.defaultNamespace]  The namespace to apply to a CURIE with no prefix which is not mapped to the reserved namespace by the rules given above.
     * @param {Object} [options.namespaces] A map of namespace bindings used to map CURIE prefixes to URIs.
-    * @param {string[]} [options.reserved=['alternate', 'appendix', 'bookmark', 'cite', 'chapter', 'contents', 'copyright',
-      'first', 'glossary', 'help', 'icon', 'index', 'last', 'license', 'meta', 'next',
-      'p3pv1', 'prev', 'role', 'section', 'stylesheet', 'subsection', 'start', 'top', 'up']]
-                        A list of local names that will always be mapped to the URI specified by reservedNamespace.
-    * @param {string} [options.charcase='preserve'] Specifies the case of the returned URI. Acceptable values are:
+    * @param {string[]} [options.reserved=['alternate', 'appendix', 'bookmark', 'cite', 'chapter', 'contents', 'copyright', 'first', 'glossary', 'help', 'icon', 'index', 'last', 'license', 'meta', 'next', 'p3pv1', 'prev', 'role', 'section', 'stylesheet', 'subsection', 'start', 'top', 'up']] A list of local names that will always be mapped to the URI specified by reservedNamespace.
+    * @param {string} [options.charcase='lower'] Specifies whether the curie's case is altered before it's interpreted. Acceptable values are:
     * <dl>
-    * <dt>lower</dt><dd>Force the URI string to lower case.</dd>
-    * <dt>upper</dt><dd>Force the URI string to upper case.</dd>
-    * <dt>preserve</dt><dd>Preserve the case of the original namespace and the local name part of the CURIE string.</dd>
+    * <dt>lower</dt><dd>Force the CURIE string to lower case.</dd>
+    * <dt>upper</dt><dd>Force the CURIE string to upper case.</dd>
+    * <dt>preserve</dt><dd>Preserve the original case of the CURIE. Note that this might not be possible if the CURIE has been taken from an HTML attribute value because of the case conversions performed automatically by browsers. For this reason, it's a good idea to avoid mixed-case CURIEs within RDFa.</dd>
     * </dl>
-    * If any other value is provided or the option is not specified, a default value of 'preserve' will be assumed.
-    * @return A new {@link jQuery.uri} object representing the full absolute URI specified by the CURIE.
+    * @returns {jQuery.uri} A new {@link jQuery.uri} object representing the full absolute URI specified by the CURIE.
     */
   $.curie = function (curie, options) {
     var
@@ -102,14 +98,13 @@
       'first', 'glossary', 'help', 'icon', 'index', 'last', 'license', 'meta', 'next',
       'p3pv1', 'prev', 'role', 'section', 'stylesheet', 'subsection', 'start', 'top', 'up']]
                         A list of local names that will always be mapped to the URI specified by reservedNamespace.
-    * @param {string} [options.charcase='preserve'] Specifies the case of the returned URI. Acceptable values are:
+    * @param {string} [options.charcase='lower'] Specifies whether the curie's case is altered before it's interpreted. Acceptable values are:
     * <dl>
-    * <dt>lower</dt><dd>Force the URI string to lower case.</dd>
-    * <dt>upper</dt><dd>Force the URI string to upper case.</dd>
-    * <dt>preserve</dt><dd>Preserve the case of the original namespace and the local name part of the CURIE string.</dd>
+    * <dt>lower</dt><dd>Force the CURIE string to lower case.</dd>
+    * <dt>upper</dt><dd>Force the CURIE string to upper case.</dd>
+    * <dt>preserve</dt><dd>Preserve the original case of the CURIE. Note that this might not be possible if the CURIE has been taken from an HTML attribute value because of the case conversions performed automatically by browsers. For this reason, it's a good idea to avoid mixed-case CURIEs within RDFa.</dd>
     * </dl>
-    * If any other value is provided or the option is not specified, a default value of 'preserve' will be assumed.
-    * @return A new {@link jQuery.uri} object representing the full absolute URI specified by the CURIE.
+    * @returns {jQuery.uri} A new {@link jQuery.uri} object representing the full absolute URI specified by the CURIE.
     */
   $.safeCurie = function (safeCurie, options) {
     var m = /^\[([^\]]+)\]$/.exec(safeCurie);
@@ -134,14 +129,13 @@
       'first', 'glossary', 'help', 'icon', 'index', 'last', 'license', 'meta', 'next',
       'p3pv1', 'prev', 'role', 'section', 'stylesheet', 'subsection', 'start', 'top', 'up']]
                         A list of local names that will always be mapped to the URI specified by reservedNamespace.
-    * @param {string} [options.charcase='preserve'] Specifies the case of the returned URI. Acceptable values are:
+    * @param {string} [options.charcase='lower'] Specifies the case normalisation done to the CURIE. Acceptable values are:
     * <dl>
-    * <dt>lower</dt><dd>Force the URI string to lower case.</dd>
-    * <dt>upper</dt><dd>Force the URI string to upper case.</dd>
-    * <dt>preserve</dt><dd>Preserve the case of the original namespace and the local name part of the CURIE string.</dd>
+    * <dt>lower</dt><dd>Normalise the CURIE to lower case.</dd>
+    * <dt>upper</dt><dd>Normalise the CURIE to upper case.</dd>
+    * <dt>preserve</dt><dd>Preserve the original case of the CURIE. Note that this might not be possible if the CURIE has been taken from an HTML attribute value because of the case conversions performed automatically by browsers. For this reason, it's a good idea to avoid mixed-case CURIEs within RDFa.</dd>
     * </dl>
-    * If any other value is provided or the option is not specified, a default value of 'preserve' will be assumed.
-    * @return A new {@link jQuery.uri} object representing the full absolute URI specified by the CURIE.
+    * @returns {jQuery.uri} A new {@link jQuery.uri} object representing the full absolute URI specified by the CURIE.
     */
   $.createCurie = function (uri, options) {
     var opts = $.extend({}, $.curie.defaults, options || {}),
@@ -181,6 +175,7 @@
     *        The namespace declarations declared on the current jQuery
     *        selection (and inherited from any ancestor elements) will automatically
     *        be included in the options.namespaces property.
+    * @returns {jQuery.uri}
     * @see jQuery.curie
     */
   $.fn.curie = function (curie, options) {
@@ -201,6 +196,7 @@
     *        The namespace declarations declared on the current jQuery
     *        selection (and inherited from any ancestor elements) will automatically
     *        be included in the options.namespaces property.
+    * @returns {jQuery.uri}
     * @see jQuery.safeCurie
     */
   $.fn.safeCurie = function (safeCurie, options) {
@@ -214,12 +210,13 @@
     *
     * @methodOf jQuery#
     * @name jQuery#createCurie
-    * @param {String} uri The URI string to be converted to a CURIE
+    * @param {String|jQuery.uri} uri The URI string to be converted to a CURIE
     * @param {Object} options the CURIE parsing options.
     *        See {@link jQuery.createCurie} for details of the supported options.
     *        The namespace declarations declared on the current jQuery
     *        selection (and inherited from any ancestor elements) will automatically
     *        be included in the options.namespaces property.
+    * @returns {String}
     * @see jQuery.createCurie
     */
   $.fn.createCurie = function (uri, options) {

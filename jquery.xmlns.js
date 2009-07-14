@@ -32,10 +32,11 @@
  * add the binding of the specified prefix and namespace URI to all elements
  * in the selection.
  * @methodOf jQuery#
- * @name jQuery.xmlns
+ * @name jQuery#xmlns
  * @param {String} [prefix] Restricts the namespaces returned to only the namespace with the specified namespace prefix.
- * @param {String} [uri]    Adds a namespace declaration to the selected elements that maps the specified prefix to the specified namespace.
+ * @param {String|jQuery.uri} [uri] Adds a namespace declaration to the selected elements that maps the specified prefix to the specified namespace.
  * @param {Object} [inherited] A map of inherited namespace bindings.
+ * @returns {Object|jQuery.uri|jQuery}
  * @example 
  * // Retrieve all of the namespace bindings on the HTML document element
  * var nsMap = $('html').xmlns();
@@ -112,8 +113,9 @@
 /**
  * Removes one or more XML namespace bindings from the selected elements.
  * @methodOf jQuery#
- * @name jQuery.removeXmlns
+ * @name jQuery#removeXmlns
  * @param {String|Object|String[]} prefix The prefix(es) of the XML namespace bindings that are to be removed from the selected elements.
+ * @returns {jQuery} The original jQuery object.
  * @example
  * // Remove the foaf namespace declaration from the body element:
  * $('body').removeXmlns('foaf');

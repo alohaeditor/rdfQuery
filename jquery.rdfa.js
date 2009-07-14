@@ -42,19 +42,19 @@
     parseEntities = function (string) {
       var result = "", m, entity;
       if (!/&/.test(string)) {
-      	 return string;
+         return string;
       }
       while (string.length > 0) {
         m = /([^&]*)(&([^;]+);)(.*)/g.exec(string);
-	      if (m === null) {
+        if (m === null) {
           result += string;
-	        break;
+          break;
         }
         result += m[1];
         entity = m[3];
         string = m[4];
         if (entity.charAt(0) === '#') {
-	        if (entity.charAt(1) === 'x') {
+          if (entity.charAt(1) === 'x') {
               result += String.fromCharCode(parseInt(entity.substring(2), 16));
           } else {
               result += String.fromCharCode(parseInt(entity.substring(1), 10));
@@ -68,11 +68,11 @@
               result += String.fromCharCode(160);
               break;
             case 'quot':
-	            result += '"';
+              result += '"';
               break;
-      	    case 'apos':
-      	      result += "'";
-      	      break;
+            case 'apos':
+              result += "'";
+              break;
             default:
               result += '&' + entity + ';';
           }
@@ -235,9 +235,9 @@
         lang = context.atts.lang;
         lang = lang || context.atts['xml:lang'];
       } else {
-      	lang = elem[0].getAttribute('lang');
-      	lang = (lang === null || lang === '') ? elem[0].getAttribute('xml:lang') : lang;
-      	lang = (lang === null || lang === '') ? undefined : lang;
+        lang = elem[0].getAttribute('lang');
+        lang = (lang === null || lang === '') ? elem[0].getAttribute('xml:lang') : lang;
+        lang = (lang === null || lang === '') ? undefined : lang;
       }
       if (lang === undefined) {
         if (context.lang) {
@@ -732,19 +732,16 @@
     };
 
   /**
-   * Creates a {@link jQuery.rdf} object containing the RDF triples
-   * parsed from the RDFa found in the current jQuery selection or
-   * adds the specified triple as RDFa markup on each member of 
-   * the current jQuery selection.
+   * Creates a {@link jQuery.rdf} object containing the RDF triples parsed from the RDFa found in the current jQuery selection or adds the specified triple as RDFa markup on each member of the current jQuery selection. To create an {@link jQuery.rdf} object, you will usually want to use {@link jQuery#rdf} instead, as this may perform other useful processing (such as of microformats used within the page).
    * @methodOf jQuery#
    * @name jQuery#rdfa
-   * @param {jQuery.rdf.triple} [triple] The RDF triple to be added
-   *        to each item in the jQuery selection. 
+   * @param {jQuery.rdf.triple} [triple] The RDF triple to be added to each item in the jQuery selection. 
+   * @returns {jQuery.rdf}
    * @example
    * // Extract RDFa markup from all span elements contained inside #main
    * rdf = $('#main > span').rdfa();
    * @example
-   * // Add RDFa markup to a particular document element
+   * // Add RDFa markup to a particular element
    *  var span = $('#main > p > span');
    *  span.rdfa('&lt;> dc:date "2008-10-19"^^xsd:date .');
    */
@@ -763,15 +760,12 @@
   };
 
   /**
-   * Removes matching RDFa markup from 
-   * each of the items in the current jQuery selection.
-   * The input parameter can be either an object or an array of
-   * object. See the examples for the forms of object that
-   * are supported by this method. 
+   * Removes the specified RDFa markup from each of the items in the current jQuery selection. The input parameter can be either an object or an array of objects. The objects can either have a <code>type</code> property, in which case the specified type is removed from the RDFa provided on the selected elements, or a <code>property</code> property, in which case the specified property is removed from the RDFa provided on the selected elements.
    * @methodOf jQuery#
    * @name jQuery#removeRdfa
    * @param {Object|Object[]} triple The RDFa markup items to be removed
    * from the items in the jQuery selection.
+   * @returns {jQuery} The original jQuery object.
    * @example 
    * // To remove a property resource or relation from an element 
    * $('#main > p > a').removeRdfa({ property: "dc:creator" });

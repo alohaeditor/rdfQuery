@@ -11,7 +11,19 @@
  *  jquery.curie.js
  *  jquery.json.js
  */
-/*global jQuery */
+/**
+ * @fileOverview jQuery RDF
+ * @author <a href="mailto:jeni@jenitennison.com">Jeni Tennison</a>
+ * @copyright (c) 2008,2009 Jeni Tennison
+ * @license MIT license (MIT-LICENSE.txt)
+ * @version 1.0
+ */
+/**
+ * @exports $ as jQuery
+ */
+/**
+ * @ignore
+ */
 (function ($) {
 
   var
@@ -407,15 +419,15 @@
       var doc = parent.ownerDocument,
         a;
       if (namespace !== undefined && namespace !== null) {
-      	if (doc.createAttributeNS) {
-      	  a = doc.createAttributeNS(namespace, name);
+        if (doc.createAttributeNS) {
+          a = doc.createAttributeNS(namespace, name);
           a.nodeValue = value;
           parent.attributes.setNamedItemNS(a);
-      	} else {
-      	  a = doc.createNode(2, name, namespace);
-      	  a.nodeValue = value;
-      	  parent.attributes.setNamedItem(a);
-      	}
+        } else {
+          a = doc.createNode(2, name, namespace);
+          a.nodeValue = value;
+          parent.attributes.setNamedItem(a);
+        }
       } else {
         a = doc.createAttribute(name);
         a.nodeValue = value;
@@ -444,20 +456,20 @@
       if (document.implementation &&
           document.implementation.createDocument) {
         doc = document.implementation.createDocument(namespace, name, null);
-	      if (addAttribute) {
+        if (addAttribute) {
           createXmlnsAtt(doc.documentElement, namespace, prefix);
-	      }
+        }
         return doc;
       } else {
-      	doc = new ActiveXObject("Microsoft.XMLDOM");
-      	doc.async = "false";
-      	if (prefix === undefined) {
-      	  xmlns = ' xmlns="' + namespace + '"';
-      	} else {
-      	  xmlns = ' xmlns:' + prefix + '="' + namespace + '"';
-      	}
-      	doc.loadXML('<' + name + xmlns + '/>');
-      	return doc;
+        doc = new ActiveXObject("Microsoft.XMLDOM");
+        doc.async = "false";
+        if (prefix === undefined) {
+          xmlns = ' xmlns="' + namespace + '"';
+        } else {
+          xmlns = ' xmlns:' + prefix + '="' + namespace + '"';
+        }
+        doc.loadXML('<' + name + xmlns + '/>');
+        return doc;
       }
     },
 
@@ -484,12 +496,12 @@
     appendXML = function (parent, xml) {
       var parser, doc, i, child;
       try {
-      	doc = new ActiveXObject('Microsoft.XMLDOM');
-      	doc.async = "false";
-      	doc.loadXML('<temp>' + xml + '</temp>');
+        doc = new ActiveXObject('Microsoft.XMLDOM');
+        doc.async = "false";
+        doc.loadXML('<temp>' + xml + '</temp>');
       } catch(e) {
-      	parser = new DOMParser();
-      	doc = parser.parseFromString('<temp>' + xml + '</temp>', 'text/xml');
+        parser = new DOMParser();
+        doc = parser.parseFromString('<temp>' + xml + '</temp>', 'text/xml');
       }
       for (i = 0; i < doc.documentElement.childNodes.length; i += 1) {
         parent.appendChild(doc.documentElement.childNodes[i].cloneNode(true));
@@ -571,41 +583,41 @@
     getDefaultNamespacePrefix = function(namespaceUri){
       switch (namespaceUri) {
         case 'http://www.w3.org/1999/02/22-rdf-syntax-ns':
-  	      return 'rdf';
+          return 'rdf';
         case 'http://www.w3.org/XML/1998/namespace':
-  	      return 'xml';
+          return 'xml';
         case 'http://www.w3.org/2000/xmlns/':
-  	      return 'xmlns';
+          return 'xmlns';
         default:
-  	      throw ('No default prefix mapped for namespace ' + namespaceUri);
+          throw ('No default prefix mapped for namespace ' + namespaceUri);
       }
     },
 
     hasAttributeNS  = function(elem, namespace, name){
       var basename;
       if (elem.hasAttributeNS) {
-	      return elem.hasAttributeNS(namespace, name);
+        return elem.hasAttributeNS(namespace, name);
       } else {
-      	try {
-      	  basename = /:/.test(name) ? /:(.+)$/.exec(name)[1] : name;
-      	  return elem.attributes.getQualifiedItem(basename, namespace) !== null;
-      	} catch (e) {
-      	  return elem.getAttribute(getDefaultNamespacePrefix(namespace) + ':' + name) !== null;
-      	}
+        try {
+          basename = /:/.test(name) ? /:(.+)$/.exec(name)[1] : name;
+          return elem.attributes.getQualifiedItem(basename, namespace) !== null;
+        } catch (e) {
+          return elem.getAttribute(getDefaultNamespacePrefix(namespace) + ':' + name) !== null;
+        }
       }
     },
 
     getAttributeNS = function(elem, namespace, name){
       var basename;
       if (elem.getAttributeNS) {
-	      return elem.getAttributeNS(namespace, name);
+        return elem.getAttributeNS(namespace, name);
       } else {
-      	try {
-      	  basename = /:/.test(name) ? /:(.+)$/.exec(name)[1] : name;
-      	  return elem.attributes.getQualifiedItem(basename, namespace).nodeValue;
-      	} catch (e) {
-      	  return elem.getAttribute(getDefaultNamespacePrefix(namespace) + ':' + name);
-      	}
+        try {
+          basename = /:/.test(name) ? /:(.+)$/.exec(name)[1] : name;
+          return elem.attributes.getQualifiedItem(basename, namespace).nodeValue;
+        } catch (e) {
+          return elem.getAttribute(getDefaultNamespacePrefix(namespace) + ':' + name);
+        }
       }
     },
 
@@ -650,8 +662,8 @@
         if (p.namespaceURI !== undefined &&
             p.namespaceURI !== 'http://www.w3.org/2000/xmlns/' &&
             p.namespaceURI !== 'http://www.w3.org/XML/1998/namespace' &&
-	          p.prefix !== 'xmlns' &&
-	          p.prefix !== 'xml') {
+            p.prefix !== 'xmlns' &&
+            p.prefix !== 'xml') {
           if (p.namespaceURI !== rdfNs) {
             property = $.rdf.resource('<' + p.namespaceURI + getLocalName(p) + '>');
             object = $.rdf.literal('"' + p.nodeValue + '"', literalOpts);
@@ -685,15 +697,15 @@
           } else if (hasAttributeNS(p, rdfNs, 'parseType')) {
             parseType = getAttributeNS(p, rdfNs, 'parseType');
             if (parseType === 'Literal') {
-      	      try {
-            		serializer = new XMLSerializer();
-            		o = serializer.serializeToString(p.getElementsByTagName('*')[0]);
-      	      } catch (e) {
-      	        o = "";
-            		for (j = 0; j < p.childNodes.length; j += 1) {
-            		  o += p.childNodes[j].xml;
-            		}
-      	      }
+              try {
+                serializer = new XMLSerializer();
+                o = serializer.serializeToString(p.getElementsByTagName('*')[0]);
+              } catch (e) {
+                o = "";
+                for (j = 0; j < p.childNodes.length; j += 1) {
+                  o += p.childNodes[j].xml;
+                }
+              }
               object = $.rdf.literal(o, { datatype: rdfNs + 'XMLLiteral' });
             } else if (parseType === 'Resource') {
               oTriples = parseRdfXmlDescription(p, false, base, lang);
@@ -800,13 +812,30 @@
     }
   };
 
-  // Trying to follow jQuery's general pattern, to get the same effect
+  /**
+   * <p>Creates a new jQuery.rdf object. This should be invoked as a method rather than constructed using new; indeed you will usually want to generate these objects using a method such as {@link jQuery#rdf} or {@link jQuery.rdf#where}.</p>
+   * @class <p>A jQuery.rdf object represents the results of a query over its {@link jQuery.rdf#databank}. The results of a query are a sequence of objects which represent the bindings of values to the variables used in filter expressions specified using {@link jQuery.rdf#where} or {@link jQuery.rdf#optional}. Each of the objects in this sequence has associated with it a set of triples that are the sources for the variable bindings, which you can get at using {@link jQuery.rdf#sources}.</p>
+    * <p>The {@link jQuery.rdf} object itself is a lot like a {@link jQuery} object. It has a {@link jQuery.rdf#length} and the individual matches can be accessed using <code>[<var>n</var>]</code>, but you can also iterate through the matches using {@link jQuery.rdf#map} or {@link jQuery.rdf#each}.</p>
+    * <p>{@link jQuery.rdf} is designed to mirror the functionality of <a href="http://www.w3.org/TR/rdf-sparql-query/">SPARQL</a> while providing an interface that's familiar and easy to use for jQuery programmers.</p>
+   * @param {Object} [options]
+   * @param {jQuery.rdf.databank} [options.databank] The databank that this query should operate over.
+   * @param {jQuery.rdf.triple[]} [options.triples] A set of triples over which the query operates; this is only used if options.databank isn't specified, in which case a new databank with these triples is generated.
+   * @param {Object} [options.namespaces] An object representing a set of namespace bindings. Rather than passing this in when you construct the {@link jQuery.rdf} instance, you will usually want to use the {@link jQuery.rdf#prefix} method.
+   * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the query.
+   * @returns {jQuery.rdf}
+   * @example rdf = jQuery.rdf();
+   * @see jQuery#rdf
+   */
   $.rdf = function (options) {
     return new $.rdf.fn.init(options);
   };
 
   $.rdf.fn = $.rdf.prototype = {
-    rdfquery: '0.4',
+    /**
+     * The version of rdfQuery.
+     * @type String
+     */
+    rdfquery: '0.9',
 
     init: function (options) {
       var databanks;
@@ -817,6 +846,10 @@
       this.top = this.parent === undefined && this.union === undefined;
       if (this.union === undefined) {
         if (options.databank === undefined) {
+          /**
+           * The databank over which this query operates.
+           * @type jQuery.rdf.databank
+           */
           this.databank = this.parent === undefined ? $.rdf.databank(options.triples, options) : this.parent.databank;
         } else {
           this.databank = options.databank;
@@ -837,6 +870,10 @@
       this.filterExp = options.filter;
       this.alphaMemory = [];
       this.matches = [];
+      /**
+       * The number of matches represented by the {@link jQuery.rdf} object.
+       * @type Integer
+       */
       this.length = 0;
       if (this.filterExp !== undefined) {
         if (!$.isFunction(this.filterExp)) {
@@ -848,6 +885,14 @@
       return this;
     },
 
+    /**
+     * Sets or returns the base URI of the {@link jQuery.rdf#databank}.
+     * @param {String|jQuery.uri} [base]
+     * @returns A {@link jQuery.uri} if no base URI is specified, otherwise returns this {@link jQuery.rdf} object.
+     * @example baseURI = jQuery('html').rdf().base();
+     * @example jQuery('html').rdf().base('http://www.example.org/');
+     * @see jQuery.rdf.databank#base
+     */
     base: function (base) {
       if (base === undefined) {
         return this.databank.base();
@@ -857,6 +902,15 @@
       }
     },
 
+    /**
+     * Sets or returns a namespace binding on the {@link jQuery.rdf#databank}.
+     * @param {String} [prefix]
+     * @param {String} [namespace]
+     * @returns {Object|jQuery.uri|jQuery.rdf} If no prefix or namespace is specified, returns an object providing all namespace bindings on the {@link jQuery.rdf.databank}. If a prefix is specified without a namespace, returns the {@link jQuery.uri} associated with that prefix. Otherwise returns this {@link jQuery.rdf} object after setting the namespace binding.
+     * @example namespace = jQuery('html').rdf().prefix('foaf');
+     * @example jQuery('html').rdf().prefix('foaf', 'http://xmlns.com/foaf/0.1/');
+     * @see jQuery.rdf.databank#prefix
+     */
     prefix: function (prefix, namespace) {
       if (namespace === undefined) {
         return this.databank.prefix(prefix);
@@ -866,6 +920,29 @@
       }
     },
 
+    /**
+     * Adds a triple to the {@link jQuery.rdf#databank} or another {@link jQuery.rdf} object to create a union.
+     * @param {String|jQuery.rdf.triple|jQuery.rdf.pattern|jQuery.rdf} triple The triple, {@link jQuery.rdf.pattern} or {@link jQuery.rdf} object to be added to this one. If the triple is a {@link jQuery.rdf} object, the two queries are unioned together. If the triple is a string, it's parsed as a {@link jQuery.rdf.pattern}. The pattern will be completed using the current matches on the {@link jQuery.rdf} object to create multiple triples, one for each set of bindings.
+     * @param {Object} [options]
+     * @param {Object} [options.namespaces] An object representing a set of namespace bindings used to interpret CURIEs within the triple. Defaults to the namespace bindings defined on the {@link jQuery.rdf#databank}.
+     * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the triple. Defaults to the base URI defined on the {@link jQuery.rdf#databank}.
+     * @returns {jQuery.rdf} This {@link jQuery.rdf} object.
+     * @example
+     * var rdf = $.rdf()
+     *   .prefix('dc', ns.dc)
+     *   .prefix('foaf', ns.foaf)
+     *   .add('&lt;photo1.jpg> dc:creator &lt;http://www.blogger.com/profile/1109404> .')
+     *   .add('&lt;http://www.blogger.com/profile/1109404> foaf:img &lt;photo1.jpg> .');
+     * @example
+     * var rdfA = $.rdf()
+     *   .prefix('dc', ns.dc)
+     *   .add('&lt;photo1.jpg> dc:creator "Jane"');
+     * var rdfB = $.rdf()
+     *   .prefix('foaf', ns.foaf)
+     *   .add('&lt;photo1.jpg> foaf:depicts "Jane"');
+     * var rdf = rdfA.add(rdfB);
+     * @see jQuery.rdf.databank#add
+     */
     add: function (triple, options) {
       var query, databank;
       if (triple.rdfquery !== undefined) {
@@ -906,6 +983,21 @@
       return this;
     },
 
+    /**
+     * Removes a triple or several triples from the {@link jQuery.rdf#databank}.
+     * @param {String|jQuery.rdf.triple|jQuery.rdf.pattern} triple The triple to be removed, or a {@link jQuery.rdf.pattern} that matches the triples that should be removed.
+     * @param {Object} [options]
+     * @param {Object} [options.namespaces] An object representing a set of namespace bindings used to interpret any CURIEs within the triple or pattern. Defaults to the namespace bindings defined on the {@link jQuery.rdf#databank}.
+     * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the triple or pattern. Defaults to the base URI defined on the {@link jQuery.rdf#databank}.
+     * @returns {jQuery.rdf} The {@link jQuery.rdf} object itself.
+     * @example
+     * var rdf = $('html').rdf()
+     *   .prefix('foaf', ns.foaf)
+     *   .where('?person foaf:givenname ?gname')
+     *   .where('?person foaf:family_name ?fname')
+     *   .remove('?person foaf:family_name ?fname');
+     * @see jQuery.rdf.databank#remove
+     */
     remove: function (triple, options) {
       if (typeof triple === 'string') {
         options = $.extend({}, { base: this.base(), namespaces: this.prefix() }, options);
@@ -925,15 +1017,47 @@
       return this;
     },
 
+    /**
+     * Loads some data into the {@link jQuery.rdf#databank}
+     * @param data
+     * @param {Object} [options]
+     * @see jQuery.rdf.databank#load
+     */
     load: function (data, options) {
       this.databank.load(data, options);
       return this;
     },
 
+    /**
+     * Creates a new {@link jQuery.rdf} object whose databank contains all the triples in this object's databank except for those in the argument's databank.
+     * @param {jQuery.rdf} query
+     * @see jQuery.rdf.databank#except
+     */
     except: function (query) {
       return $.rdf({ databank: this.databank.except(query.databank) });
     },
 
+    /**
+     * Creates a new {@link jQuery.rdf} object that is the result of filtering the matches on this {@link jQuery.rdf} object based on the filter that's passed into it.
+     * @param {String|jQuery.rdf.pattern} filter An expression that filters the triples in the {@link jQuery.rdf#databank} to locate matches based on the matches on this {@link jQuery.rdf} object. If it's a string, the filter is parsed as a {@link jQuery.rdf.pattern}.
+     * @param {Object} [options]
+     * @param {Object} [options.namespaces] An object representing a set of namespace bindings used to interpret any CURIEs within the pattern. Defaults to the namespace bindings defined on the {@link jQuery.rdf#databank}.
+     * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the pattern. Defaults to the base URI defined on the {@link jQuery.rdf#databank}.
+     * @param {boolean} [options.optional] Not usually used (use {@link jQuery.rdf#optional} instead).
+     * @returns {jQuery.rdf} A new {@link jQuery.rdf} object whose {@link jQuery.rdf#parent} is this {@link jQuery.rdf}.
+     * @see jQuery.rdf#optional
+     * @see jQuery.rdf#filter
+     * @see jQuery.rdf#about
+     * @example
+     * var rdf = $.rdf()
+     *   .prefix('foaf', ns.foaf)
+     *   .add('_:a foaf:givenname   "Alice" .')
+     *   .add('_:a foaf:family_name "Hacker" .')
+     *   .add('_:b foaf:givenname   "Bob" .')
+     *   .add('_:b foaf:family_name "Hacker" .')
+     *   .where('?person foaf:family_name "Hacker"')
+     *   .where('?person foaf:givenname "Bob");
+     */ 
     where: function (filter, options) {
       var query, base, namespaces, optional;
       options = options || {};
@@ -948,18 +1072,102 @@
       return query;
     },
 
+    /**
+     * Creates a new {@link jQuery.rdf} object whose set of bindings might optionally include those based on the filter pattern.
+     * @param {String|jQuery.rdf.pattern} filter An pattern for a set of bindings that might be added to those in this {@link jQuery.rdf} object.
+     * @param {Object} [options]
+     * @param {Object} [options.namespaces] An object representing a set of namespace bindings used to interpret any CURIEs within the pattern. Defaults to the namespace bindings defined on the {@link jQuery.rdf#databank}.
+     * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the pattern. Defaults to the base URI defined on the {@link jQuery.rdf#databank}.
+     * @returns {jQuery.rdf} A new {@link jQuery.rdf} object whose {@link jQuery.rdf#parent} is this {@link jQuery.rdf}.
+     * @see jQuery.rdf#where
+     * @see jQuery.rdf#filter
+     * @see jQuery.rdf#about
+     * @example
+     * var rdf = $.rdf()
+     *   .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+     *   .prefix('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
+     *   .add('_:a  rdf:type        foaf:Person .')
+     *   .add('_:a  foaf:name       "Alice" .')
+     *   .add('_:a  foaf:mbox       &lt;mailto:alice@example.com> .')
+     *   .add('_:a  foaf:mbox       &lt;mailto:alice@work.example> .')
+     *   .add('_:b  rdf:type        foaf:Person .')
+     *   .add('_:b  foaf:name       "Bob" .')
+     *   .where('?x foaf:name ?name')
+     *   .optional('?x foaf:mbox ?mbox');
+     */
     optional: function (filter, options) {
       return this.where(filter, $.extend({}, options || {}, { optional: true }));
     },
 
+    /**
+     * Creates a new {@link jQuery.rdf} object whose set of bindings include <code>property</code> and <code>value</code> for every triple that is about the specified resource.
+     * @param {String|jQuery.rdf.resource} resource The subject of the matching triples.
+     * @param {Object} [options]
+     * @param {Object} [options.namespaces] An object representing a set of namespace bindings used to interpret the resource if it's a CURIE. Defaults to the namespace bindings defined on the {@link jQuery.rdf#databank}.
+     * @param {String|jQuery.uri} [options.base] The base URI used to interpret the resource if it's a relative URI (wrapped in <code>&lt;</code> and <code>&gt;</code>). Defaults to the base URI defined on the {@link jQuery.rdf#databank}.
+     * @returns {jQuery.rdf} A new {@link jQuery.rdf} object whose {@link jQuery.rdf#parent} is this {@link jQuery.rdf}.
+     * @see jQuery.rdf#where
+     * @see jQuery.rdf#optional
+     * @see jQuery.rdf#filter
+     * @example
+     * var rdf = $.rdf()
+     *   .prefix('dc', ns.dc)
+     *   .prefix('foaf', ns.foaf)
+     *   .add('&lt;photo1.jpg> dc:creator &lt;http://www.blogger.com/profile/1109404> .')
+     *   .add('&lt;http://www.blogger.com/profile/1109404> foaf:img &lt;photo1.jpg> .')
+     *   .add('&lt;photo2.jpg> dc:creator &lt;http://www.blogger.com/profile/1109404> .')
+     *   .add('&lt;http://www.blogger.com/profile/1109404> foaf:img &lt;photo2.jpg> .')
+     *   .about('&lt;http://www.blogger.com/profile/1109404>');
+     */
     about: function (resource, options) {
       return this.where(resource + ' ?property ?value', options);
     },
 
+    /**
+     * Creates a new {@link jQuery.rdf} object whose set of bindings include only those that satisfy some arbitrary condition. There are two main ways to call this method: with two arguments in which case the first is a binding to be tested and the second represents a condition on the test, or with one argument which is a function that should return true for acceptable bindings.
+     * @param {Function|String} property <p>In the two-argument version, this is the name of a property to be tested against the condition specified in the second argument. In the one-argument version, this is a function in which <code>this</code> is an object whose properties are a set of {@link jQuery.rdf.resource}, {@link jQuery.rdf.literal} or {@link jQuery.rdf.blank} objects and whose arguments are:</p>
+     * <dl>
+     *   <dt>i</dt>
+     *   <dd>The index of the set of bindings amongst the other matches</dd>
+     *   <dt>bindings</dt>
+     *   <dd>An object representing the bindings (the same as <code>this</code>)</dd>
+     *   <dt>triples</dt>
+     *   <dd>The {@link jQuery.rdf.triple}s that underly this set of bindings</dd>
+     * </dl>
+     * @param {RegExp|String} condition In the two-argument version of this function, the condition that the property's must match. If it is a regular expression, the value must match the regular expression. If it is a {@link jQuery.rdf.literal}, the value of the literal must match the property's value. Otherwise, they must be the same resource.
+     * @returns {jQuery.rdf} A new {@link jQuery.rdf} object whose {@link jQuery.rdf#parent} is this {@link jQuery.rdf}.
+     * @see jQuery.rdf#where
+     * @see jQuery.rdf#optional
+     * @see jQuery.rdf#about
+     * @example
+     * var rdf = $.rdf()
+     *   .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+     *   .add('_:a foaf:surname "Jones" .')
+     *   .add('_:b foaf:surname "Macnamara" .')
+     *   .add('_:c foaf:surname "O\'Malley"')
+     *   .add('_:d foaf:surname "MacFee"')
+     *   .where('?person foaf:surname ?surname')
+     *     .filter('surname', /^Ma?c/)
+     *       .each(function () { scottish.push(this.surname.value); })
+     *     .end()
+     *     .filter('surname', /^O'/)
+     *       .each(function () { irish.push(this.surname.value); })
+     *     .end();
+     * @example
+     * var rdf = $.rdf()
+     *   .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+     *   .add('_:a foaf:surname "Jones" .')
+     *   .add('_:b foaf:surname "Macnamara" .')
+     *   .add('_:c foaf:surname "O\'Malley"')
+     *   .add('_:d foaf:surname "MacFee"')
+     *   .where('?person foaf:surname ?surname')
+     *   .filter(function () { return this.surname !== "Jones"; })
+     */
     filter: function (property, condition) {
       var func, query;
       if (typeof property === 'string') {
         if (condition.constructor === RegExp) {
+          /** @ignore func */
           func = function () {
             return condition.test(this[property].value);
           };
@@ -976,6 +1184,16 @@
       return query;
     },
 
+    /**
+     * Filters the variable bindings held by this {@link jQuery.rdf} object down to those listed in the bindings parameter. This mirrors the <a href="http://www.w3.org/TR/rdf-sparql-query/#select">SELECT</a> form in SPARQL.
+     * @param {String[]} [bindings] The variables that you're interested in. The returned objects will only contain those variables. If bindings is undefined, you will get all the variable bindings in the returned objects.
+     * @returns {Object[]} An array of objects with the properties named by the bindings parameter.
+     * @example
+     * var filtered = rdf
+     *   .where('?photo dc:creator ?creator')
+     *   .where('?creator foaf:img ?photo');
+     * var selected = rdf.select(['creator']);
+     */
     select: function (bindings) {
       var s = [], i, j;
       for (i = 0; i < this.length; i += 1) {
@@ -991,6 +1209,18 @@
       return s;
     },
 
+    /**
+     * Provides <a href="http://n2.talis.com/wiki/Bounded_Descriptions_in_RDF#Simple_Concise_Bounded_Description">simple concise bounded descriptions</a> of the resources or bindings that are passed in the argument. This mirrors the <a href="http://www.w3.org/TR/rdf-sparql-query/#describe">DESCRIBE</a> form in SPARQL.
+     * @param {(String|jQuery.rdf.resource)[]} bindings An array that can contain strings, {@link jQuery.rdf.resource}s or a mixture of the two. Any strings that begin with a question mark (<code>?</code>) are taken as variable names; each matching resource is described by the function.
+     * @returns {jQuery} A {@link jQuery} object that contains {@link jQuery.rdf.triple}s that describe the listed resources.
+     * @see jQuery.rdf.databank#describe
+     * @example
+     * $.rdf.dump($('html').rdf().describe(['<photo1.jpg>']));
+     * @example
+     * $('html').rdf()
+     *   .where('?person foaf:img ?picture')
+     *   .describe(['?photo'])
+     */
     describe: function (bindings) {
       var i, j, binding, resources = [];
       for (i = 0; i < bindings.length; i += 1) {
@@ -1007,12 +1237,39 @@
       return this.databank.describe(resources);
     },
 
+    /**
+     * Returns a new {@link jQuery.rdf} object that contains only one set of variable bindings. This is designed to mirror the <a href="http://docs.jquery.com/Traversing/eq#index">jQuery#eq</a> method.
+     * @param {Integer} n The index number of the match that should be selected.
+     * @returns {jQuery.rdf} A new {@link jQuery.rdf} object with just that match.
+     * @example
+     * var rdf = $.rdf()
+     *   .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+     *   .add('_:a  foaf:name       "Alice" .')
+     *   .add('_:a  foaf:homepage   <http://work.example.org/alice/> .')
+     *   .add('_:b  foaf:name       "Bob" .')
+     *   .add('_:b  foaf:mbox       <mailto:bob@work.example> .')
+     *   .where('?x foaf:name ?name')
+     *   .eq(1);
+     */
     eq: function (n) {
       return this.filter(function (i) {
         return i === n;
       });
     },
 
+    /**
+     * Returns a {@link jQuery.rdf} object that includes no filtering (and therefore has no matches) over the {@link jQuery.rdf#databank}.
+     * @returns {jQuery.rdf} An empty {@link jQuery.rdf} object.
+     * @example
+     * $('html').rdf()
+     *   .where('?person foaf:family_name "Hacker"')
+     *   .where('?person foaf:givenname "Alice"')
+     *   .each(...do something with Alice Hacker...)
+     *   .reset()
+     *   .where('?person foaf:family_name "Jones"')
+     *   .where('?person foaf:givenname "Bob"')
+     *   .each(...do something with Bob Jones...);
+     */
     reset: function () {
       var query = this;
       while (query.parent !== undefined) {
@@ -1021,14 +1278,42 @@
       return query;
     },
 
+    /**
+     * Returns the parent {@link jQuery.rdf} object, which is equivalent to undoing the most recent filtering operation (such as {@link jQuery.rdf#where} or {@link jQuery.rdf#filter}). This is designed to mirror the <a href="http://docs.jquery.com/Traversing/end">jQuery#end</a> method.
+     * @returns {jQuery.rdf}
+     * @example
+     * $('html').rdf()
+     *   .where('?person foaf:family_name "Hacker"')
+     *   .where('?person foaf:givenname "Alice"')
+     *   .each(...do something with Alice Hacker...)
+     *   .end()
+     *   .where('?person foaf:givenname "Bob"')
+     *   .each(...do something with Bob Hacker...);
+     */
     end: function () {
       return this.parent;
     },
 
+    /**
+     * Returns the number of matches in this {@link jQuery.rdf} object (equivalent to {@link jQuery.rdf#length}).
+     * @returns {Integer} The number of matches in this {@link jQuery.rdf} object.
+     * @see jQuery.rdf#length
+     */
     size: function () {
       return this.length;
     },
 
+    /**
+     * Gets the triples that form the basis of the variable bindings that are the primary product of {@link jQuery.rdf}. Getting hold of the triples can be useful for understanding the facts that form the basis of the variable bindings.
+     * @returns {jQuery} A {@link jQuery} object containing arrays of {@link jQuery.rdf.triple} objects. A {@link jQuery} object is returned so that you can easily iterate over the contents.
+     * @example
+     * $('html').rdf()
+     *   .where('?thing a foaf:Person')
+     *   .sources()
+     *   .each(function () {
+     *     ...do something with the array of triples... 
+     *   });
+     */
     sources: function () {
       return $($.map(this.matches, function (match) {
         // return an array-of-an-array because arrays automatically get expanded by $.map()
@@ -1036,6 +1321,11 @@
       }));
     },
 
+    /**
+     * Dumps the triples that form the basis of the variable bindings that are the primary product of {@link jQuery.rdf} into a format that can be shown to the user or sent to a server.
+     * @param {Object} [options] Options that control the formatting of the triples. See {@link jQuery.rdf.dump} for details.
+     * @see jQuery.rdf.dump
+     */
     dump: function (options) {
       var triples = $.map(this.matches, function (match) {
         return match.triples;
@@ -1044,24 +1334,74 @@
       return $.rdf.dump(triples, options);
     },
 
+    /**
+     * Either returns the item specified by the argument or turns the {@link jQuery.rdf} object into an array. This mirrors the <a href="http://docs.jquery.com/Core/get">jQuery#get</a> method.
+     * @param {Integer} [num] The number of the item to be returned.
+     * @returns {Object[]|Object} Returns either a single Object representing variable bindings or an array of such.
+     * @example
+     * $('html').rdf()
+     *   .where('?person a foaf:Person')
+     *   .get(0)
+     *   .subject
+     *   .value;
+     */
     get: function (num) {
       return (num === undefined) ? $.makeArray(this) : this[num];
     },
 
-    each: function (callback, args) {
+    /**
+     * Iterates over the matches held by the {@link jQuery.rdf} object and performs a function on each of them. This mirrors the <a href="http://docs.jquery.com/Core/each">jQuery#each</a> method.
+     * @param {Function} callback A function that is called for each match on the {@link jQuery.rdf} object. Within the function, <code>this</code> is set to the object representing the variable bindings. The function can take up to three parameters:
+     * <dl>
+     *   <dt>i</dt><dd>The index of the match amongst the other matches.</dd>
+     *   <dt>bindings</dt><dd>An object representing the variable bindings for the match, the same as <code>this</code>.</dd>
+     *   <dt>triples</dt><dd>An array of {@link jQuery.rdf.triple}s associated with the particular match.</dd>
+     * </dl>
+     * @returns {jQuery.rdf} The {@link jQuery.rdf} object.
+     * @see jQuery.rdf#map
+     * @example
+     * var rdf = $('html').rdf()
+     *   .where('?photo dc:creator ?creator')
+     *   .where('?creator foaf:img ?photo')
+     *   .each(function () {
+     *     photos.push(this.photo.value);
+     *   });
+     */
+    each: function (callback) {
       $.each(this.matches, function (i, match) {
         callback.call(match.bindings, i, match.bindings, match.triples);
       });
       return this;
     },
 
+    /**
+     * Iterates over the matches held by the {@link jQuery.rdf} object and creates a new {@link jQuery} object that holds the result of applying the passed function to each one. This mirrors the <a href="http://docs.jquery.com/Traversing/map">jQuery#map</a> method.
+     * @param {Function} callback A function that is called for each match on the {@link jQuery.rdf} object. Within the function, <code>this</code> is set to the object representing the variable bindings. The function can take up to three parameters and should return some kind of value:
+     * <dl>
+     *   <dt>i</dt><dd>The index of the match amongst the other matches.</dd>
+     *   <dt>bindings</dt><dd>An object representing the variable bindings for the match, the same as <code>this</code>.</dd>
+     *   <dt>triples</dt><dd>An array of {@link jQuery.rdf.triple}s associated with the particular match.</dd>
+     * </dl>
+     * @returns {jQuery} A jQuery object holding the results of the function for each of the matches on the original {@link jQuery.rdf} object.
+     * @example
+     * var photos = $('html').rdf()
+     *   .where('?photo dc:creator ?creator')
+     *   .where('?creator foaf:img ?photo')
+     *   .map(function () {
+     *     return this.photo.value;
+     *   });
+     */
     map: function (callback) {
       return $($.map(this.matches, function (match, i) {
         // in the callback, "this" is the bindings, and the arguments are swapped from $.map()
         return callback.call(match.bindings, i, match.bindings, match.triples);
-  		}));
+      }));
     },
 
+    /**
+     * Returns a {@link jQuery} object that wraps this {@link jQuery.rdf} object.
+     * @returns {jQuery}
+     */
     jquery: function () {
       return $(this);
     }
@@ -1071,8 +1411,28 @@
 
   $.rdf.gleaners = [];
 
-  $.rdf.dump = function (triples, opts) {
-    var opts = $.extend({}, $.rdf.dump.defaults, opts || {}),
+  /**
+   * Dumps the triples passed as the first argument into a format that can be shown to the user or sent to a server.
+   * @param {jQuery.rdf.triple[]} triples An array (or {@link jQuery} object) of {@link jQuery.rdf.triple}s.
+   * @param {Object} [options] Options that control the format of the dump.
+   * @param {String} [options.format='application/json'] The mime type of the format of the dump. The supported formats are:
+   * <table>
+   *   <tr><th>mime type</th><th>description</th></tr>
+   *   <tr>
+   *     <td><code>application/json</code></td>
+   *     <td>An <a href="http://n2.talis.com/wiki/RDF_JSON_Specification">RDF/JSON</a> object</td>
+   *   </tr>
+   *   <tr>
+   *     <td><code>application/rdf+xml</code></td>
+   *     <td>An DOMDocument node holding XML in <a href="http://www.w3.org/TR/rdf-syntax-grammar/">RDF/XML syntax</a></td>
+   *   </tr>
+   * </table>
+   * @param {Object} [options.namespaces={}] A set of namespace bindings used when mapping resource URIs to CURIEs or QNames (particularly in a RDF/XML serialisation).
+   * @param {boolean} [options.serialize=false] If true, rather than creating an Object, the function will return a string which is ready to display or send to a server.
+   * @returns {Object|String} The alternative representation of the triples.
+   */
+  $.rdf.dump = function (triples, options) {
+    var opts = $.extend({}, $.rdf.dump.defaults, options || {}),
       format = opts.format,
       serialize = opts.serialize,
       dump;
@@ -1085,8 +1445,8 @@
         if (dump.xml) {
           return dump.xml.replace(/\s+$/,'');
         } else {
-      		serializer = new XMLSerializer();
-      		return serializer.serializeToString(dump);
+          serializer = new XMLSerializer();
+          return serializer.serializeToString(dump);
         }
       } else {
         return dump;
@@ -1102,6 +1462,13 @@
     namespaces: {}
   }
 
+  /**
+   * Gleans RDF triples from the nodes held by the {@link jQuery} object, puts them into a {@link jQuery.rdf.databank} and returns a {@link jQuery.rdf} object that allows you to query and otherwise manipulate them. The mechanism for gleaning RDF triples from the web page depends on the rdfQuery modules that have been included. The core version of rdfQuery doesn't support any gleaners; other versions support a RDFa gleaner, and there are some modules available for common microformats.
+   * @methodOf jQuery#
+   * @name jQuery#rdf
+   * @returns {jQuery.rdf} An empty query over the triples stored within the page.
+   * @example $('#content').rdf().databank.dump();
+   */
   $.fn.rdf = function () {
     var triples = [];
     if ($(this)[0] && $(this)[0].nodeType === 9) {
@@ -1149,10 +1516,16 @@
   });
 
 
-/*
- * Triplestores aka Databanks
- */
-
+  /**
+   * <p>Creates a new jQuery.rdf.databank object. This should be invoked as a method rather than constructed using new; indeed you will not usually want to generate these objects directly, but manipulate them through a {@link jQuery.rdf} object.</p>
+   * @class Represents a triplestore, holding a bunch of {@link jQuery.rdf.triple}s.
+   * @param {(String|jQuery.rdf.triple)[]} [triples=[]] An array of triples to store in the databank.
+   * @param {Object} [options] Initialisation of the databank.
+   * @param {Object} [options.namespaces] An object representing a set of namespace bindings used when interpreting the CURIEs in strings representing triples. Rather than passing this in when you construct the {@link jQuery.rdf.databank} instance, you will usually want to use the {@link jQuery.rdf.databank#prefix} method.
+   * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the strings representing triples.
+   * @returns {jQuery.rdf.databank} The newly-created databank.
+   * @see jQuery.rdf
+   */
   $.rdf.databank = function (triples, options) {
     return new $.rdf.databank.fn.init(triples, options);
   };
@@ -1177,7 +1550,13 @@
       }
       return this;
     },
-
+    
+    /**
+     * Sets or returns the base URI of the {@link jQuery.rdf.databank}.
+     * @param {String|jQuery.uri} [base]
+     * @returns A {@link jQuery.uri} if no base URI is specified, otherwise returns this {@link jQuery.rdf.databank} object.
+     * @see jQuery.rdf#base
+     */
     base: function (base) {
       if (this.union === undefined) {
         if (base === undefined) {
@@ -1196,6 +1575,13 @@
       }
     },
 
+    /**
+     * Sets or returns a namespace binding on the {@link jQuery.rdf.databank}.
+     * @param {String} [prefix]
+     * @param {String} [namespace]
+     * @returns {Object|jQuery.uri|jQuery.rdf} If no prefix or namespace is specified, returns an object providing all namespace bindings on the {@link jQuery.rdf#databank}. If a prefix is specified without a namespace, returns the {@link jQuery.uri} associated with that prefix. Otherwise returns this {@link jQuery.rdf} object after setting the namespace binding.
+     * @see jQuery.rdf#prefix
+     */
     prefix: function (prefix, uri) {
       var namespaces = {};
       if (this.union === undefined) {
@@ -1224,6 +1610,15 @@
       }
     },
 
+    /**
+     * Adds a triple to the {@link jQuery.rdf.databank} or another {@link jQuery.rdf.databank} object to create a union.
+     * @param {String|jQuery.rdf.triple|jQuery.rdf.databank} triple The triple or {@link jQuery.rdf.databank} object to be added to this one. If the triple is a {@link jQuery.rdf.databank} object, the two databanks are unioned together. If the triple is a string, it's parsed as a {@link jQuery.rdf.triple}.
+     * @param {Object} [options]
+     * @param {Object} [options.namespaces] An object representing a set of namespace bindings used to interpret CURIEs within the triple. Defaults to the namespace bindings defined on the {@link jQuery.rdf.databank}.
+     * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the triple. Defaults to the base URI defined on the {@link jQuery.rdf.databank}.
+     * @returns {jQuery.rdf.databank} This {@link jQuery.rdf.databank} object.
+     * @see jQuery.rdf#add
+     */
     add: function (triple, options) {
       var base = (options && options.base) || this.base(),
         namespaces = $.extend({}, this.prefix(), (options && options.namespaces) || {}),
@@ -1266,6 +1661,15 @@
       }
     },
 
+    /**
+     * Removes a triple from the {@link jQuery.rdf.databank}.
+     * @param {String|jQuery.rdf.triple} triple The triple to be removed.
+     * @param {Object} [options]
+     * @param {Object} [options.namespaces] An object representing a set of namespace bindings used to interpret any CURIEs within the triple. Defaults to the namespace bindings defined on the {@link jQuery.rdf.databank}.
+     * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the triple. Defaults to the base URI defined on the {@link jQuery.rdf.databank}.
+     * @returns {jQuery.rdf.databank} The {@link jQuery.rdf.databank} object itself.
+     * @see jQuery.rdf#remove
+     */
     remove: function (triple, options) {
       var base = (options && options.base) || this.base(),
         namespaces = $.extend({}, this.prefix(), (options && options.namespaces) || {}),
@@ -1288,6 +1692,17 @@
       return this;
     },
 
+    /**
+     * Creates a new databank containing all the triples in this {@link jQuery.rdf.databank} except those in the {@link jQuery.rdf.databank} passed as the argument.
+     * @param {jQuery.rdf.databank} data The other {@link jQuery.rdf.databank}
+     * @returns {jQuery.rdf.databank} A new {@link jQuery.rdf.databank} containing the triples in this {@link jQuery.rdf.databank} except for those in the data parameter.
+     * @example
+     * var old = $('html').rdf().databank;
+     * ...some processing occurs...
+     * var new = $('html').rdf().databank;
+     * var added = new.except(old);
+     * var removed = old.except(new);
+     */
     except: function (data) {
       var store = data.tripleStore,
         diff = [];
@@ -1306,6 +1721,10 @@
       return $.rdf.databank(diff);
     },
 
+    /**
+     * Provides a {@link jQuery} object containing the triples held in this {@link jQuery.rdf.databank}.
+     * @returns {jQuery} A {@link jQuery} object containing {@link jQuery.rdf.triple} objects.
+     */
     triples: function () {
       var triples = [];
       if (this.union === undefined) {
@@ -1321,10 +1740,21 @@
       return $(triples);
     },
 
+    /**
+     * Tells you how many triples the databank contains.
+     * @returns {Integer} The number of triples in the {@link jQuery.rdf.databank}.
+     * @example $('html').rdf().databank.size();
+     */
     size: function () {
       return this.triples().length;
     },
 
+    /**
+     * Provides <a href="http://n2.talis.com/wiki/Bounded_Descriptions_in_RDF#Simple_Concise_Bounded_Description">simple concise bounded descriptions</a> of the resources that are passed in the argument. This mirrors the <a href="http://www.w3.org/TR/rdf-sparql-query/#describe">DESCRIBE</a> form in SPARQL.
+     * @param {(String|jQuery.rdf.resource)[]} resources An array that can contain strings, {@link jQuery.rdf.resource}s or a mixture of the two.
+     * @returns {jQuery} A {@link jQuery} object holding the {@link jQuery.rdf.triple}s that describe the listed resources.
+     * @see jQuery.rdf#describe
+     */
     describe: function (resources) {
       var i, r, t, rhash = {}, triples = [];
       while (resources.length > 0) {
@@ -1357,12 +1787,24 @@
       return $.unique(triples);
     },
 
+    /**
+     * Dumps the triples in the databank into a format that can be shown to the user or sent to a server.
+     * @param {Object} [options] Options that control the formatting of the triples. See {@link jQuery.rdf.dump} for details.
+     * @returns {Object|Node|String}
+     * @see jQuery.rdf.dump
+     */
     dump: function (options) {
       options = $.extend({ namespaces: this.namespaces, base: this.base }, options || {});
       return $.rdf.dump(this.triples(), options);
     },
 
-    load: function (data, options) {
+    /**
+     * Loads some data into the databank.
+     * @param {Node|Object} data If the data is a node, it's interpreted to be an <a href="http://www.w3.org/TR/rdf-syntax-grammar/">RDF/XML syntax</a> document and will be parsed as such. Otherwise, it's taken to be a <a href="http://n2.talis.com/wiki/RDF_JSON_Specification">RDF/JSON</a> object. The data cannot be a string; it must be parsed before it is passed to this function.
+     * @returns {jQuery.rdf.databank} The {@link jQuery.rdf.databank} itself.
+     * @see jQuery.rdf#load
+     */
+    load: function (data) {
       var i, triples;
       if (data.ownerDocument !== undefined) {
         triples = parseRdfXml(data);
@@ -1375,6 +1817,10 @@
       return this;
     },
 
+    /**
+     * Provides a string representation of the databank which simply specifies how many triples it contains.
+     * @returns {String}
+     */
     toString: function () {
       return '[Databank with ' + this.size() + ' triples]';
     }
@@ -1382,15 +1828,34 @@
 
   $.rdf.databank.fn.init.prototype = $.rdf.databank.fn;
 
-/*
- * Patterns
- */
-
+  /**
+   * <p>Creates a new jQuery.rdf.pattern object. This should be invoked as a method rather than constructed using new; indeed you will not usually want to generate these objects directly, since they are automatically created from strings where necessary, such as by {@link jQuery.rdf#where}.</p>
+   * @class Represents a pattern that may or may not match a given {@link jQuery.rdf.triple}.
+   * @param {String|jQuery.rdf.resource|jQuery.rdf.blank} subject The subject pattern, or a single string that defines the entire pattern. If the subject is specified as a string, it can be a fixed resource (<code>&lt;<var>uri</var>&gt;</code> or <code><var>curie</var></code>), a blank node (<code>_:<var>id</var></code>) or a variable placeholder (<code>?<var>name</var></code>).
+   * @param {String|jQuery.rdf.resource} [property] The property pattern. If the property is specified as a string, it can be a fixed resource (<code>&lt;<var>uri</var>&gt;</code> or <code><var>curie</var></code>) or a variable placeholder (<code>?<var>name</var></code>).
+   * @param {String|jQuery.rdf.resource|jQuery.rdf.blank|jQuery.rdf.literal} [value] The value pattern. If the property is specified as a string, it can be a fixed resource (<code>&lt;<var>uri</var>&gt;</code> or <code><var>curie</var></code>), a blank node (<code>_:<var>id</var></code>), a literal (<code>"<var>value</var>"</code>) or a variable placeholder (<code>?<var>name</var></code>).
+   * @param {Object} [options] Initialisation of the pattern.
+   * @param {Object} [options.namespaces] An object representing a set of namespace bindings used when interpreting the CURIEs in the subject, property and object.
+   * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the subject, property and object.
+   * @param {boolean} [options.optional]
+   * @returns {jQuery.rdf.pattern} The newly-created pattern.
+   * @throws {String} Errors if any of the strings are not in a recognised format.
+   * @example pattern = $.rdf.pattern('?person', $.rdf.type, 'foaf:Person', { namespaces: { foaf: "http://xmlns.com/foaf/0.1/" }});
+   * @example 
+   * pattern = $.rdf.pattern('?person a foaf:Person', { 
+   *   namespaces: { foaf: "http://xmlns.com/foaf/0.1/" }, 
+   *   optional: true 
+   * });
+   * @see jQuery.rdf#where
+   * @see jQuery.rdf.resource
+   * @see jQuery.rdf.blank
+   * @see jQuery.rdf.literal
+   */
   $.rdf.pattern = function (subject, property, object, options) {
-    var pattern, m;
+    var pattern, m, optional;
     // using a two-argument version; first argument is a Turtle statement string
     if (object === undefined) {
-      options = property;
+      options = property || {};
       m = $.trim(subject).match(tripleRegex);
       if (m.length === 3 || (m.length === 4 && m[3] === '.')) {
         subject = m[0];
@@ -1399,15 +1864,20 @@
       } else {
         throw "Bad Pattern: Couldn't parse string " + subject;
       }
+      optional = (options.optional === undefined) ? $.rdf.pattern.defaults.optional : options.optional;
     }
-    if (memPattern[subject] && memPattern[subject][property] && memPattern[subject][property][object]) {
-      return memPattern[subject][property][object];
+    if (memPattern[subject] && 
+        memPattern[subject][property] && 
+        memPattern[subject][property][object] && 
+        memPattern[subject][property][object][optional]) {
+      return memPattern[subject][property][object][optional];
     }
     pattern = new $.rdf.pattern.fn.init(subject, property, object, options);
     if (memPattern[pattern.subject] &&
         memPattern[pattern.subject][pattern.property] &&
-        memPattern[pattern.subject][pattern.property][pattern.object]) {
-      return memPattern[pattern.subject][pattern.property][pattern.object];
+        memPattern[pattern.subject][pattern.property][pattern.object] &&
+        memPattern[pattern.subject][pattern.property][pattern.object][pattern.optional]) {
+      return memPattern[pattern.subject][pattern.property][pattern.object][pattern.optional];
     } else {
       if (memPattern[pattern.subject] === undefined) {
         memPattern[pattern.subject] = {};
@@ -1415,7 +1885,10 @@
       if (memPattern[pattern.subject][pattern.property] === undefined) {
         memPattern[pattern.subject][pattern.property] = {};
       }
-      memPattern[pattern.subject][pattern.property][pattern.object] = pattern;
+      if (memPattern[pattern.subject][pattern.property][pattern.object] === undefined) {
+        memPattern[pattern.subject][pattern.property][pattern.object] = {};
+      }
+      memPattern[pattern.subject][pattern.property][pattern.object][pattern.optional] = pattern;
       return pattern;
     }
   };
@@ -1423,13 +1896,38 @@
   $.rdf.pattern.fn = $.rdf.pattern.prototype = {
     init: function (s, p, o, options) {
       var opts = $.extend({}, $.rdf.pattern.defaults, options);
+      /**
+       * The placeholder for the subject of triples matching against this pattern.
+       * @type String|jQuery.rdf.resource|jQuery.rdf.blank
+       */
       this.subject = s.toString().substring(0, 1) === '?' ? s : subject(s, opts);
+      /**
+       * The placeholder for the property of triples matching against this pattern.
+       * @type String|jQuery.rdf.resource
+       */
       this.property = p.toString().substring(0, 1) === '?' ? p : property(p, opts);
+      /**
+       * The placeholder for the object of triples matching against this pattern.
+       * @type String|jQuery.rdf.resource|jQuery.rdf.blank|jQuery.rdf.literal
+       */
       this.object = o.toString().substring(0, 1) === '?' ? o : object(o, opts);
+      /**
+       * Whether the pattern should only optionally match against the triple
+       * @type boolean
+       */
       this.optional = opts.optional;
       return this;
     },
 
+    /**
+     * Creates a new {@link jQuery.rdf.pattern} with any variable placeholders within this one's subject, property or object filled in with values from the bindings passed as the argument.
+     * @param {Object} bindings An object holding the variable bindings to be used to replace any placeholders in the pattern. These bindings are of the type held by the {@link jQuery.rdf} object.
+     * @returns {jQuery.rdf.pattern} A new {@link jQuery.rdf.pattern} object.
+     * @example
+     * pattern = $.rdf.pattern('?thing a ?class');
+     * // pattern2 matches all triples that indicate the classes of this page. 
+     * pattern2 = pattern.fill({ thing: $.rdf.resource('<>') });
+     */
     fill: function (bindings) {
       var s = this.subject,
         p = this.property,
@@ -1446,6 +1944,15 @@
       return $.rdf.pattern(s, p, o, { optional: this.optional });
     },
 
+    /**
+     * Creates a new Object holding variable bindings by matching the passed triple against this pattern.
+     * @param {jQuery.rdf.triple} triple A {@link jQuery.rdf.triple} for this pattern to match against.
+     * @returns {null|Object} An object containing the bindings of variables (as specified in this pattern) to values (as specified in the triple), or <code>null</code> if the triple doesn't match the pattern.
+     * pattern = $.rdf.pattern('?thing a ?class');
+     * bindings = pattern.exec($.rdf.triple('<> a foaf:Person', { namespaces: ns }));
+     * thing = bindings.thing; // the resource for this page
+     * class = bindings.class; // a resource for foaf:Person
+     */
     exec: function (triple) {
       var binding = {};
       binding = testResource(triple.subject, this.subject, binding);
@@ -1460,12 +1967,31 @@
       return binding;
     },
 
+    /**
+     * Tests whether this pattern has any variable placeholders in it or not.
+     * @returns {boolean} True if the pattern doesn't contain any variable placeholders.
+     * @example
+     * $.rdf.pattern('?thing a ?class').isFixed(); // false
+     * $.rdf.pattern('<> a foaf:Person', { namespaces: ns }).isFixed(); // true
+     */
     isFixed: function () {
       return typeof this.subject !== 'string' &&
         typeof this.property !== 'string' &&
         typeof this.object !== 'string';
     },
 
+    /**
+     * Creates a new triple based on the bindings passed to the pattern, if possible.
+     * @param {Object} bindings An object holding the variable bindings to be used to replace any placeholders in the pattern. These bindings are of the type held by the {@link jQuery.rdf} object.
+     * @returns {null|jQuery.rdf.triple} A new {@link jQuery.rdf.triple} object, or null if not all the variable placeholders in the pattern are specified in the bindings. The {@link jQuery.rdf.triple#source} of the generated triple is set to the string value of this pattern.
+     * @example
+     * pattern = $.rdf.pattern('?thing a ?class');
+     * // triple is a new triple '<> a foaf:Person'
+     * triple = pattern.triple({ 
+     *   thing: $.rdf.resource('<>'),
+     *   class: $.rdf.resource('foaf:Person', { namespaces: ns }) 
+     * });
+     */
     triple: function (bindings) {
       var t = this;
       if (!this.isFixed()) {
@@ -1478,6 +2004,10 @@
       }
     },
 
+    /**
+     * Returns a string representation of the pattern by concatenating the subject, property and object.
+     * @returns {String}
+     */
     toString: function () {
       return this.subject + ' ' + this.property + ' ' + this.object;
     }
@@ -1491,10 +2021,27 @@
     optional: false
   };
 
-/*
- * Triples
- */
-
+  /**
+   * <p>Creates a new jQuery.rdf.triple object. This should be invoked as a method rather than constructed using new; indeed you will not usually want to generate these objects directly, since they are automatically created from strings where necessary, such as by {@link jQuery.rdf#add}.</p>
+   * @class Represents an RDF triple.
+   * @param {String|jQuery.rdf.resource|jQuery.rdf.blank} subject The subject of the triple, or a single string that defines the entire triple. If the subject is specified as a string, it can be a fixed resource (<code>&lt;<var>uri</var>&gt;</code> or <code><var>curie</var></code>) or a blank node (<code>_:<var>id</var></code>).
+   * @param {String|jQuery.rdf.resource} [property] The property pattern. If the property is specified as a string, it must be a fixed resource (<code>&lt;<var>uri</var>&gt;</code> or <code><var>curie</var></code>).
+   * @param {String|jQuery.rdf.resource|jQuery.rdf.blank|jQuery.rdf.literal} [value] The value pattern. If the property is specified as a string, it can be a fixed resource (<code>&lt;<var>uri</var>&gt;</code> or <code><var>curie</var></code>), a blank node (<code>_:<var>id</var></code>), or a literal (<code>"<var>value</var>"</code>).
+   * @param {Object} [options] Initialisation of the triple.
+   * @param {Object} [options.namespaces] An object representing a set of namespace bindings used when interpreting the CURIEs in the subject, property and object.
+   * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the subject, property and object.
+   * @returns {jQuery.rdf.triple} The newly-created triple.
+   * @throws {String} Errors if any of the strings are not in a recognised format.
+   * @example pattern = $.rdf.triple('<>', $.rdf.type, 'foaf:Person', { namespaces: { foaf: "http://xmlns.com/foaf/0.1/" }});
+   * @example 
+   * pattern = $.rdf.triple('<> a foaf:Person', { 
+   *   namespaces: { foaf: "http://xmlns.com/foaf/0.1/" }
+   * });
+   * @see jQuery.rdf#add
+   * @see jQuery.rdf.resource
+   * @see jQuery.rdf.blank
+   * @see jQuery.rdf.literal
+   */
   $.rdf.triple = function (subject, property, object, options) {
     var triple, graph, m;
     // using a two-argument version; first argument is a Turtle statement string
@@ -1542,22 +2089,53 @@
     init: function (s, p, o, options) {
       var opts;
       opts = $.extend({}, $.rdf.triple.defaults, options);
+      /**
+       * The subject of the triple.
+       * @type jQuery.rdf.resource|jQuery.rdf.blank
+       */
       this.subject = subject(s, opts);
+      /**
+       * The property of the triple.
+       * @type jQuery.rdf.resource
+       */
       this.property = property(p, opts);
+      /**
+       * The object of the triple.
+       * @type jQuery.rdf.resource|jQuery.rdf.blank|jQuery.rdf.literal
+       */
       this.object = object(o, opts);
+      /**
+       * (Experimental) The named graph the triple belongs to.
+       * @type jQuery.rdf.resource|jQuery.rdf.blank
+       */
       this.graph = opts.graph === undefined ? undefined : subject(opts.graph, opts);
+      /**
+       * The source of the triple, which might be a node within the page (if the RDF is generated from the page) or a string holding the pattern that generated the triple.
+       */
       this.source = opts.source;
       return this;
     },
 
+    /**
+     * Always returns true for triples.
+     * @see jQuery.rdf.pattern#isFixed
+     */
     isFixed: function () {
       return true;
     },
 
+    /**
+     * Always returns this triple.
+     * @see jQuery.rdf.pattern#triple
+     */
     triple: function (bindings) {
       return this;
     },
 
+    /**
+     * Returns a <a href="http://n2.talis.com/wiki/RDF_JSON_Specification">RDF/JSON</a> representation of this triple.
+     * @returns {Object}
+     */
     dump: function () {
       var e = {},
         s = this.subject.value.toString(),
@@ -1567,6 +2145,10 @@
       return e;
     },
 
+    /**
+     * Returns a string representing this triple in Turtle format.
+     * @returns {String}
+     */
     toString: function () {
       return this.subject + ' ' + this.property + ' ' + this.object + ' .';
     }
@@ -1580,10 +2162,22 @@
     namespaces: {}
   };
 
-/*
- * Resources
- */
-
+  /**
+   * <p>Creates a new jQuery.rdf.resource object. This should be invoked as a method rather than constructed using new; indeed you will not usually want to generate these objects directly, since they are automatically created from strings where necessary, such as by {@link jQuery.rdf#add}.</p>
+   * @class Represents an RDF resource.
+   * @param {String|jQuery.uri} value The value of the resource. If it's a string it must be in the format <code>&lt;<var>uri</var>&gt;</code> or <code><var>curie</var></code>.
+   * @param {Object} [options] Initialisation of the resource.
+   * @param {Object} [options.namespaces] An object representing a set of namespace bindings used when interpreting the CURIE specifying the resource.
+   * @param {String|jQuery.uri} [options.base] The base URI used to interpret any relative URIs used within the URI specifying the resource.
+   * @returns {jQuery.rdf.resource} The newly-created resource.
+   * @throws {String} Errors if the string is not in a recognised format.
+   * @example thisPage = $.rdf.resource('<>');
+   * @example foaf.Person = $.rdf.resource('foaf:Person', { namespaces: ns });
+   * @see jQuery.rdf.pattern
+   * @see jQuery.rdf.triple
+   * @see jQuery.rdf.blank
+   * @see jQuery.rdf.literal
+   */
   $.rdf.resource = function (value, options) {
     var resource;
     if (memResource[value]) {
@@ -1599,7 +2193,15 @@
   };
 
   $.rdf.resource.fn = $.rdf.resource.prototype = {
+    /**
+     * Always fixed to 'uri' for resources.
+     * @type String
+     */
     type: 'uri',
+    /**
+     * The URI for the resource.
+     * @type jQuery.rdf.uri
+     */
     value: undefined,
 
     init: function (value, options) {
@@ -1637,6 +2239,10 @@
       return this;
     }, // end init
 
+    /**
+     * Returns a <a href="http://n2.talis.com/wiki/RDF_JSON_Specification">RDF/JSON</a> representation of this triple.
+     * @returns {Object}
+     */
     dump: function () {
       return {
         type: 'uri',
@@ -1644,6 +2250,10 @@
       };
     },
 
+    /**
+     * Returns a string representing this resource in Turtle format.
+     * @returns {String}
+     */
     toString: function () {
       return '<' + this.value + '>';
     }
@@ -1656,21 +2266,74 @@
     namespaces: {}
   };
 
+  /**
+   * A {@link jQuery.rdf.resource} for rdf:type
+   * @constant
+   * @type jQuery.rdf.resource
+   */
   $.rdf.type = $.rdf.resource('<' + rdfNs + 'type>');
+  /**
+   * A {@link jQuery.rdf.resource} for rdfs:label
+   * @constant
+   * @type jQuery.rdf.resource
+   */
   $.rdf.label = $.rdf.resource('<' + rdfsNs + 'label>');
+  /**
+   * A {@link jQuery.rdf.resource} for rdf:first
+   * @constant
+   * @type jQuery.rdf.resource
+   */
   $.rdf.first = $.rdf.resource('<' + rdfNs + 'first>');
+  /**
+   * A {@link jQuery.rdf.resource} for rdf:rest
+   * @constant
+   * @type jQuery.rdf.resource
+   */
   $.rdf.rest = $.rdf.resource('<' + rdfNs + 'rest>');
+  /**
+   * A {@link jQuery.rdf.resource} for rdf:nil
+   * @constant
+   * @type jQuery.rdf.resource
+   */
   $.rdf.nil = $.rdf.resource('<' + rdfNs + 'nil>');
+  /**
+   * A {@link jQuery.rdf.resource} for rdf:subject
+   * @constant
+   * @type jQuery.rdf.resource
+   */
   $.rdf.subject = $.rdf.resource('<' + rdfNs + 'subject>');
+  /**
+   * A {@link jQuery.rdf.resource} for rdf:property
+   * @constant
+   * @type jQuery.rdf.resource
+   */
   $.rdf.property = $.rdf.resource('<' + rdfNs + 'property>');
+  /**
+   * A {@link jQuery.rdf.resource} for rdf:object
+   * @constant
+   * @type jQuery.rdf.resource
+   */
   $.rdf.object = $.rdf.resource('<' + rdfNs + 'object>');
 
-  $.rdf.blank = function (value, options) {
+  /**
+   * <p>Creates a new jQuery.rdf.blank object. This should be invoked as a method rather than constructed using new; indeed you will not usually want to generate these objects directly, since they are automatically created from strings where necessary, such as by {@link jQuery.rdf#add}.</p>
+   * @class Represents an RDF blank node.
+   * @param {String} value A representation of the blank node in the format <code>_:<var>id</var></code> or <code>[]</code> (which automatically creates a new blank node with a unique ID).
+   * @returns {jQuery.rdf.blank} The newly-created blank node.
+   * @throws {String} Errors if the string is not in a recognised format.
+   * @example newBlank = $.rdf.blank('[]');
+   * @example identifiedBlank = $.rdf.blank('_:fred');
+   * @see jQuery.rdf.pattern
+   * @see jQuery.rdf.triple
+   * @see jQuery.rdf.resource
+   * @see jQuery.rdf.literal
+   */
+  $.rdf.blank = function (value) {
     var blank;
     if (memBlank[value]) {
       return memBlank[value];
     }
-    blank = new $.rdf.blank.fn.init(value, options);
+    blank = new $.rdf.blank.fn.init(value);
     if (memBlank[blank]) {
       return memBlank[blank];
     } else {
@@ -1680,11 +2343,23 @@
   };
 
   $.rdf.blank.fn = $.rdf.blank.prototype = {
+    /**
+     * Always fixed to 'bnode' for blank nodes.
+     * @type String
+     */
     type: 'bnode',
+    /**
+     * The value of the blank node in the format <code>_:<var>id</var></code>
+     * @type String
+     */
     value: undefined,
+    /**
+     * The id of the blank node.
+     * @type String
+     */
     id: undefined,
 
-    init: function (value, options) {
+    init: function (value) {
       if (value === '[]') {
         this.id = blankNodeID();
         this.value = '_:' + this.id;
@@ -1697,6 +2372,10 @@
       return this;
     },
 
+    /**
+     * Returns a <a href="http://n2.talis.com/wiki/RDF_JSON_Specification">RDF/JSON</a> representation of this blank node.
+     * @returns {Object}
+     */
     dump: function () {
       return {
         type: 'bnode',
@@ -1704,13 +2383,36 @@
       };
     },
 
+    /**
+     * Returns the value this blank node.
+     * @returns {String}
+     */
     toString: function () {
-      return '_:' + this.id;
+      return this.value;
     }
   };
 
   $.rdf.blank.fn.init.prototype = $.rdf.blank.fn;
 
+  /**
+   * <p>Creates a new jQuery.rdf.literal object. This should be invoked as a method rather than constructed using new; indeed you will not usually want to generate these objects directly, since they are automatically created from strings where necessary, such as by {@link jQuery.rdf#add}.</p>
+   * @class Represents an RDF literal.
+   * @param {String|boolean|Number} value Either the value of the literal or a string representation of it. If the datatype or lang options are specified, the value is taken as given. Otherwise, if it's a Javascript boolean or numeric value, it is interpreted as a value with a xsd:boolean or xsd:double datatype. In all other cases it's interpreted as a literal as defined in <a href="http://www.w3.org/TeamSubmission/turtle/#literal">Turtle syntax</a>.
+   * @param {Object} [options] Initialisation options for the literal.
+   * @param {String} [options.datatype] The datatype for the literal. This should be a safe CURIE; in other words, it can be in the format <code><var>uri</var></code> or <code>[<var>curie</var>]</code>. Must not be specified if options.lang is also specified.
+   * @param {String} [options.lang] The language for the literal. Must not be specified if options.datatype is also specified.
+   * @param {Object} [options.namespaces] An object representing a set of namespace bindings used when interpreting a CURIE in the datatype.
+   * @param {String|jQuery.uri} [options.base] The base URI used to interpret a relative URI in the datatype.
+   * @returns {jQuery.rdf.literal} The newly-created literal.
+   * @throws {String} Errors if the string is not in a recognised format or if both options.datatype and options.lang are specified.
+   * @example trueLiteral = $.rdf.literal(true);
+   * @example numericLiteral = $.rdf.literal(5);
+   * @example dateLiteral = $.rdf.literal('"2009-07-13"^^xsd:date', { namespaces: ns });
+   * @see jQuery.rdf.pattern
+   * @see jQuery.rdf.triple
+   * @see jQuery.rdf.resource
+   * @see jQuery.rdf.blank
+   */
   $.rdf.literal = function (value, options) {
     var literal;
     if (memLiteral[value]) {
@@ -1726,9 +2428,25 @@
   };
 
   $.rdf.literal.fn = $.rdf.literal.prototype = {
+    /**
+     * Always fixed to 'literal' for literals.
+     * @type String
+     */
     type: 'literal',
+    /**
+     * The value of the literal as a string.
+     * @type String
+     */
     value: undefined,
+    /**
+     * The language of the literal, if it has one; otherwise undefined.
+     * @type String
+     */
     lang: undefined,
+    /**
+     * The datatype of the literal, if it has one; otherwise undefined.
+     * @type jQuery.uri
+     */
     datatype: undefined,
 
     init: function (value, options) {
@@ -1774,6 +2492,10 @@
       return this;
     }, // end init
 
+    /**
+     * Returns a <a href="http://n2.talis.com/wiki/RDF_JSON_Specification">RDF/JSON</a> representation of this blank node.
+     * @returns {Object}
+     */
     dump: function () {
       var e = {
         type: 'literal',
@@ -1786,7 +2508,11 @@
       }
       return e;
     },
-
+    
+    /**
+     * Returns a string representing this resource in <a href="http://www.w3.org/TeamSubmission/turtle/#literal">Turtle format</a>.
+     * @returns {String}
+     */
     toString: function () {
       var val = '"' + this.value + '"';
       if (this.lang !== undefined) {

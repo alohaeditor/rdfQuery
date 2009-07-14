@@ -16,6 +16,7 @@
  * @class
  * @name jQuery
  * @exports $ as jQuery
+ * @description rdfQuery is a <a href="http://jquery.com/">jQuery</a> plugin. The only fields and methods listed here are those that come as part of the rdfQuery library.
  */
 (function ($) {
 
@@ -78,6 +79,7 @@
    * @class Represents a URI
    * @param {String} [relative='']
    * @param {String|jQuery.uri} [base] Defaults to the base URI of the page
+   * @returns {jQuery.uri} The new jQuery.uri object.
    * @example uri = jQuery.uri('/my/file.html');
    */
   $.uri = function (relative, base) {
@@ -100,6 +102,32 @@
   };
 
   $.uri.fn = $.uri.prototype = {
+    /**
+     * The scheme used in the URI
+     * @type String
+     */
+    scheme: undefined,
+    /**
+     * The authority used in the URI
+     * @type String
+     */
+    authority: undefined,
+    /**
+     * The path used in the URI
+     * @type String
+     */
+    path: undefined,
+    /**
+     * The query part of the URI
+     * @type String
+     */
+    query: undefined,
+    /**
+     * The fragment part of the URI
+     * @type String
+     */
+    fragment: undefined,
+    
     init: function (relative, base) {
       var r = {};
       base = base || {};
@@ -209,7 +237,7 @@
   /**
    * Creates a {@link jQuery.uri} from a known-to-be-absolute URI
    * @param {String}
-   * @returns $.uri
+   * @returns {jQuery.uri}
    */
   $.uri.absolute = function (uri) {
     return $.uri(uri, {});
@@ -217,6 +245,7 @@
 
   /**
    * Creates a {@link jQuery.uri} from a relative URI and an optional base URI
+   * @returns {jQuery.uri}
    * @see jQuery.uri
    */
   $.uri.resolve = function (relative, base) {
@@ -227,7 +256,7 @@
    * Creates a string giving the relative path from a base URI to an absolute URI
    * @param {String} absolute
    * @param {String} base
-   * @returns String
+   * @returns {String}
    */
   $.uri.relative = function (absolute, base) {
     return $.uri(base, {}).relative(absolute);
@@ -235,7 +264,7 @@
   
   /**
    * Returns the base URI of the page
-   * @returns jQuery.uri
+   * @returns {jQuery.uri}
    */
   $.uri.base = function () {
     return $(document).base();
@@ -244,7 +273,8 @@
   /**
    * Returns the base URI in scope for the first selected element
    * @methodOf jQuery#
-   * @name jQuery.base
+   * @name jQuery#base
+   * @returns {jQuery.uri}
    * @example baseURI = $('img').base();
    */
   $.fn.base = function () {
