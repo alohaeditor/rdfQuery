@@ -12,7 +12,9 @@ var ns = { namespaces: {
 	ex: "http://example.org/",
 	sioc: "http://rdfs.org/sioc/ns#",
 	xhv: "http://www.w3.org/1999/xhtml/vocab#",
-	prism: "http://prism.talis.com/schema#"
+	prism: "http://prism.talis.com/schema#",
+	xml: 'http://www.w3.org/XML/1998/namespace',
+  xmlns: 'http://www.w3.org/2000/xmlns/'
 }};
 
 function setup(rdfa) {
@@ -182,12 +184,154 @@ test("Empty xmlns value", function () {
   $('#main > p').remove();
 });
 
+test("Non-NCName prefix", function () {
+  setup('<p xmlns:0="http://example.org/" property="0:test">Test</p>');
+  testTriples($('#main > p').rdf(), []);
+  $('#main > p').remove();
+});
+
+test("Underscore prefix", function () {
+  setup('<p xmlns:_="http://example.org/" property="_:test">Test</p>');
+  testTriples($('#main > p').rdf(), []);
+  $('#main > p').remove();
+});
+
+test("xml prefix with wrong namespace", function () {
+  setup('<p xmlns:xml="http://example.org/" property="xml:test">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> xml:test "Test" .', ns)
+  ]);
+  $('#main > p').remove();
+});
+
+test("xmlns declaration", function () {
+  setup('<p xmlns:xmlns="http://www.w3.org/2000/xmlns/" property="xmlns:test">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> xmlns:test "Test" .', ns)
+  ]);
+  $('#main > p').remove();
+});
+
+test("xmlns declaration with wrong namespace", function () {
+  setup('<p xmlns:xmlns="http://example.org/" property="xmlns:test">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> xmlns:test "Test" .', ns)
+  ]);
+  $('#main > p').remove();
+});
+
+test("bad namespace declaration (xml namespace)", function () {
+  setup('<p xmlns:ex2="http://www.w3.org/XML/1998/namespace" property="ex2:test">Test</p>');
+  testTriples($('#main > p').rdf(), []);
+  $('#main > p').remove();
+});
+
+test("bad namespace declaration (xmlns namespace)", function () {
+  setup('<p xmlns:ex2="http://www.w3.org/2000/xmlns/" property="ex2:test">Test</p>');
+  testTriples($('#main > p').rdf(), []);
+  $('#main > p').remove();
+});
+
+test("ignoring about with invalid prefix", function () {
+  setup('<p xmlns:ex="http://example.org/" xmlns:0="http://example.org/error/">' +
+    '<span src="http://example.com/">' +
+    '  <span property="ex:test1">Test</span>' +
+    '</span>' +
+    '<span about="[0:bogus]" src="http://example.com/">' +
+    '  <span property="ex:test">Test</span>' +
+    '</span>' +
+    '</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<http://example.com/> <http://example.org/test1> "Test" .'),
+    $.rdf.triple('<http://example.com/> <http://example.org/test> "Test" .')
+  ]);
+  $('#main > p').remove();
+});
+
+test("ignore rel attribute that contains invalid CURIEs", function () {
+  setup('<p xmlns:ex="http://example.org/" xmlns:0="http://example.org/error/">' +
+    '<span property="ex:test1" href="http://example.org/href">Test</span>' +
+    '<span rel="ex:test2" property="ex:test3" href="http://example.org/href">Test</span>' +
+    '<span rel="0:test4" property="ex:test5" href="http://example.org/href">Test</span>' +
+  '</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<http://example.org/href> <http://example.org/test1> "Test" .'),
+    $.rdf.triple('<> <http://example.org/test3> "Test" .'),
+    $.rdf.triple('<> <http://example.org/test2> <http://example.org/href> .'),
+    $.rdf.triple('<http://example.org/href> <http://example.org/test5> "Test" .')
+  ]);
+  $('#main > p').remove();
+});
+
+test("count rel attribute that is empty", function () {
+  setup('<p xmlns:ex="http://example.org/">' +
+    '<span property="ex:test1" href="http://example.org/href">Test</span>' +
+    '<span rel="ex:test2" property="ex:test3" href="http://example.org/href">Test</span>' +
+    '<span rel="" property="ex:test5" href="http://example.org/href">Test</span>' +
+  '</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<http://example.org/href> <http://example.org/test1> "Test" .'),
+    $.rdf.triple('<> <http://example.org/test3> "Test" .'),
+    $.rdf.triple('<> <http://example.org/test2> <http://example.org/href> .'),
+    $.rdf.triple('<> <http://example.org/test5> "Test" .')
+  ]);
+  $('#main > p').remove();
+});
+
+test("ignore property attribute that contains invalid CURIEs", function () {
+  setup('<div>' +
+  '<p xmlns:ex="http://example.org/" about="http://example.com/" rel="ex:rel1">' +
+  '  <span content="Content 1"><span about="http://example.net/">Test 1</span>' +
+  '</p>' +
+  '<p xmlns:ex="http://example.org/" about="http://example.com/" rel="ex:rel2">' +
+  '  <span property="ex:prop" content="Content 2"><span about="http://example.net/">Test 2</span></span>' +
+  '</p>' +
+  '<p xmlns:ex="http://example.org/" about="http://example.com/" rel="ex:rel3">' +
+  '  <span property="bogus:bogus" content="Content 3"><span about="http://example.net/">Test 3</span></span>' +
+  '</p>' +
+  '</div>');
+  var data = $('#main > div').rdf().databank.triples();
+  equals(data[0].toString(), $.rdf.triple('<http://example.com/> <http://example.org/rel1> <http://example.net/> .').toString());
+  equals(data[1].subject.value, 'http://example.com/');
+  equals(data[1].property.value, 'http://example.org/rel2');
+  equals(data[1].object.type, 'bnode');
+  equals(data[2].subject.type, 'bnode');
+  equals(data[2].property.value, 'http://example.org/prop');
+  equals(data[2].object.value, 'Content 2');
+  equals(data[3].toString(), $.rdf.triple('<http://example.com/> <http://example.org/rel3> <http://example.net/> .').toString())
+  $('#main > p').remove();
+});
+
 test("Digit in curie", function () {
   setup('<p xmlns:ex="http://example.org/" property="ex:one2three4">Test</p>');
   testTriples($('#main > p').rdf(), [
     $.rdf.triple('<> <http://example.org/one2three4> "Test" .', ns)
   ]);
   equals($('#main > p').rdf().databank.triples()[0].property.value, 'http://example.org/one2three4');
+  $('#main > p').remove();
+});
+
+test("Square brackets in CURIE", function () {
+  setup('<p xmlns:ex="http://example.org/1/" xmlns:[ex="http://example.org/2/" about="[[ex:test]]" property="ex:test">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> <http://example.org/1/test> "Test" .', ns)
+  ]);
+  $('#main > p').remove();
+});
+
+test("ignore about attribute that contains invalid CURIE", function () {
+  setup('<p about="http://example.net/" xmlns:ex="http://example.org/1/" xmlns:[ex="http://example.org/2/"><span about="[[ex:test]]" property="ex:test">Test</span></p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<http://example.net/> <http://example.org/1/test> "Test" .', ns)
+  ]);
+  $('#main > p').remove();
+});
+
+test("ignore about attribute that contains invalid CURIE when setting subject", function () {
+  setup('<p xmlns:ex="http://example.org/1/" xmlns:[ex="http://example.org/2/" about="[[ex:test]]" resource="http://example.net/" property="ex:test">Test</p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<http://example.net/> <http://example.org/1/test> "Test" .', ns)
+  ]);
   $('#main > p').remove();
 });
 

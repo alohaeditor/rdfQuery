@@ -1277,6 +1277,28 @@ test("loading RDF/XML with xml:lang attributes in it", function () {
   equals(triples[2].object.lang, 'en');
 });
 
+test("loading RDF/XML with xml:lang attributes on property elements", function () {
+  var xml =
+    '<rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +
+    '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+    '  rdf:about="http://example.org/buecher/baum">' +
+    '  <dc:title xml:lang="de">Der Baum</dc:title>' +
+    '  <dc:description xml:lang="de">Das Buch ist außergewöhnlich</dc:description>' +
+    '  <dc:title xml:lang="en">The Tree</dc:title>' +
+    '</rdf:Description>';
+  var doc = parseFromString(xml);
+  var databank = $.rdf.databank();
+  databank.load(doc);
+  equals(databank.size(), 3);
+  var triples = databank.triples();
+  equals(triples[0].object.value, 'Der Baum');
+  equals(triples[0].object.lang, 'de');
+  equals(triples[1].object.value, 'Das Buch ist außergewöhnlich');
+  equals(triples[1].object.lang, 'de');
+  equals(triples[2].object.value, 'The Tree');
+  equals(triples[2].object.lang, 'en');
+});
+
 test("loading RDF/XML containing XML literals", function () {
   var xml =
     '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"' +

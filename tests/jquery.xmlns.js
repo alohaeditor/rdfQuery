@@ -13,7 +13,9 @@ var ns = {
 	xhv: "http://www.w3.org/1999/xhtml/vocab#",
 	prism: "http://prism.talis.com/schema#",
 	xsd: "http://www.w3.org/2001/XMLSchema#",
-	rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+	xml: 'http://www.w3.org/XML/1998/namespace',
+  xmlns: 'http://www.w3.org/2000/xmlns/'
 }
 
 module("When getting all namespaces");
@@ -29,7 +31,7 @@ test("on an element with three namespaces declared on it, including an empty one
 	equals(namespaces.sioc, ns.sioc);
 	
 	for (n in namespaces) {
-		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd' ) {
+		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd' && n !== 'xml' && n !== 'xmlns') {
 			ok(false, 'unexpected namespace: ' + n + '=' + namespaces[n]);
 		}
 	}
@@ -41,7 +43,7 @@ test("on an element that inherits namespaces", function() {
 	equals(namespaces.foaf, ns.foaf);
 	equals(namespaces[''], ns.html);
 	for (n in namespaces) {
-		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd') {
+		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd' && n !== 'xml' && n !== 'xmlns') {
 			ok(false, 'unexpected namespace: ' + n + '=' + namespaces[n]);
 		}
 	}
@@ -55,7 +57,7 @@ test("on a sequence of two elements", function() {
 	equals(namespaces.foaf, 'http://www.example.org/foaf'); 
 	equals(namespaces[''], ns.html);
 	for (n in namespaces) {
-		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd') {
+		if (n !== 'dc' && n !== 'foaf' && n !== '' && n !== 'rdf' && n !== 'cc' && n !== 'ex'  && n !== 'sioc' && n !== 'xsd' && n !== 'xml' && n !== 'xmlns') {
 			ok(false, 'unexpected namespace: ' + n + '=' + namespaces[n]);
 		}
 	}
@@ -86,6 +88,14 @@ test("when the context is more than one element", function() {
 
 test("when the namespace hasn't been declared", function() {
 	equals($('body').xmlns('lic'), undefined);
+});
+
+test("when the namespace is the xml namespace", function () {
+  equals($('body').xmlns('xml'), 'http://www.w3.org/XML/1998/namespace');
+});
+
+test("when the namespace is the xmlns namespace", function () {
+  equals($('body').xmlns('xmlns'), 'http://www.w3.org/2000/xmlns/');
 });
 
 module("When setting a namespace");
