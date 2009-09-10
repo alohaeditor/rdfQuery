@@ -220,6 +220,20 @@ test("div with no attributes", function () {
 	$('#collections').remove();
 });
 
+test("table with RDFa around", function () {
+  setup('<div about="http://example.com/"  xmlns:ex="http://example.org/" id="table">' +
+        '<table>' +
+        '<tr>' +
+        '<td property="ex:test">Test</td>' +
+        '</tr>' +
+        '</table>' +
+        '</div>');
+  testTriples($('#table').rdf(), [
+    $.rdf.triple('<http://example.com/> <http://example.org/test> "Test"')
+  ]);
+  $('#table').remove();
+});
+
 module("RDFa Test Suite");
 
 test("Test 0001", function() {

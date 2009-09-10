@@ -214,7 +214,7 @@
         subject = resourceFromSafeCurie(atts.href, elem, curieOptions);
       }
       if (subject === undefined) {
-        if (/head|body/i.test(elem[0].nodeName)) {
+        if (/^(head|body)$/i.test(elem[0].nodeName)) {
           subject = docResource;
         } else if (atts['typeof'] !== undefined) {
           subject = $.rdf.blank('[]');
@@ -236,7 +236,10 @@
         lang = lang || context.atts['xml:lang'];
       } else {
         lang = elem[0].getAttribute('lang');
-        lang = (lang === null || lang === '') ? elem[0].getAttribute('xml:lang') : lang;
+        try {
+          lang = (lang === null || lang === '') ? elem[0].getAttribute('xml:lang') : lang;
+        } catch (e) {
+        }
         lang = (lang === null || lang === '') ? undefined : lang;
       }
       if (lang === undefined) {

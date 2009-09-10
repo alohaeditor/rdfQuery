@@ -360,8 +360,8 @@ test("when executing a ruleset using data.reason()", function () {
   data.reason(ruleset);
   equals(data.size(), 4);
   equals(data.triples()[0], $.rdf.triple('<#me> a foaf:Person', { namespaces: ns }));
-  equals(data.triples()[1], $.rdf.triple('<#me> a foaf:Agent', { namespaces: ns }));
-  equals(data.triples()[2], $.rdf.triple('<#you> a foaf:Person', { namespaces: ns }));
+  equals(data.triples()[1], $.rdf.triple('<#you> a foaf:Person', { namespaces: ns }));
+  equals(data.triples()[2], $.rdf.triple('<#me> a foaf:Agent', { namespaces: ns }));
   equals(data.triples()[3], $.rdf.triple('<#you> a foaf:Agent', { namespaces: ns }));
 });
 

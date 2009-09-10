@@ -88,6 +88,10 @@
      *     <td>string</td>
      *   </tr>
      *   <tr>
+     *     <td>http://www.w3.org/2001/XMLSchema#gYear</td>
+     *     <td>int</td>
+     *   </tr>
+     *   <tr>
      *     <td>http://www.w3.org/2001/XMLSchema#gMonthDay</td>
      *     <td>string</td>
      *   </tr>
@@ -148,6 +152,24 @@
     /** @ignore */
     value: function (v) {
       return v;
+    }
+  };
+
+  $.typedValue.types['http://www.w3.org/2001/XMLSchema#token'] = {
+    regex: /^.*$/,
+    strip: true,
+    /** @ignore */
+    value: function (v) {
+      return strip(v);
+    }
+  };
+
+  $.typedValue.types['http://www.w3.org/2001/XMLSchema#NCName'] = {
+    regex: /^[a-z_][-\.a-z0-9]+$/i,
+    strip: true,
+    /** @ignore */
+    value: function (v) {
+      return strip(v);
     }
   };
 
@@ -222,6 +244,24 @@
     }
   };
 
+  $.typedValue.types['http://www.w3.org/2001/XMLSchema#yearMonthDuration'] = {
+    regex: /^([\-\+])?P(?:([0-9]+)Y)?(?:([0-9]+)M)?$/,
+    /** @ignore */
+    validate: function (v) {
+      var m = this.regex.exec(v);
+      return m[2] || m[3];
+    },
+    strip: true,
+    /** @ignore */
+    value: function (v) {
+      var m = this.regex.exec(v),
+        years = m[2] || 0,
+        months = m[3] || 0;
+      months += years * 12;
+      return m[1] === '-' ? -1 * months : months;
+    }
+  };
+
   $.typedValue.types['http://www.w3.org/2001/XMLSchema#dateTime'] = {
     regex: /^(-?[0-9]{4,})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):(([0-9]{2})(\.([0-9]+))?)((?:[\-\+]([0-9]{2}):([0-9]{2}))|Z)?$/,
     /** @ignore */
@@ -287,6 +327,20 @@
     /** @ignore */
     value: function (v) {
       return v;
+    }
+  };
+
+  $.typedValue.types['http://www.w3.org/2001/XMLSchema#gYear'] = {
+    regex: /^-?([0-9]{4,})$/,
+    /** @ignore */
+    validate: function (v) {
+      var i = parseInt(v, 10);
+      return i !== 0;
+    },
+    strip: true,
+    /** @ignore */
+    value: function (v) {
+      return parseInt(v, 10);
     }
   };
 

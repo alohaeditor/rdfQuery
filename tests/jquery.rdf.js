@@ -644,6 +644,53 @@ test("filtering a union with a filter clause", function() {
   equals(union.get(1).author.value, "Alex");
 });
 
+test("grouping based on a binding", function () {
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .add('_:a  foaf:name   "Alice" .')
+    .add('_:a  foaf:mbox   <mailto:alice@work.example> .')
+    .add('_:a  foaf:mbox   <mailto:alice@home.example> .')
+    .add('_:b  foaf:name   "Bob" .')
+    .add('_:b  foaf:mbox   <mailto:bob@work.example> .')
+    .where('?person foaf:name ?name')
+    .where('?person foaf:mbox ?email');
+  equals(rdf.length, 3, "there should be three matches");
+  rdf = rdf.group('person');
+  equals(rdf.length, 2, "there should be two matches");
+  equals(rdf[0].person.value, "_:a");
+  equals(rdf[0].name[0].value, "Alice");
+  equals(rdf[0].email[0].value, "mailto:alice@work.example");
+  equals(rdf[0].email[1].value, "mailto:alice@home.example");
+  equals(rdf[1].person.value, "_:b");
+  equals(rdf[1].name[0].value, "Bob");
+  equals(rdf[1].email[0].value, "mailto:bob@work.example");
+});
+
+test("grouping based on two bindings", function () {
+  var rdf = $.rdf()
+    .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
+    .add('_:a  foaf:givenname   "Alice" .')
+    .add('_:a foaf:family_name "Hacker" .')
+    .add('_:c  foaf:givenname   "Alice" .')
+    .add('_:c foaf:family_name "Hacker" .')
+    .add('_:b  foaf:givenname   "Bob" .')
+    .add('_:b foaf:family_name "Hacker" .')
+    .where('?person foaf:givenname ?forename')
+    .where('?person foaf:family_name ?surname');
+  equals(rdf.length, 3, "there should be three matches");
+  group1 = rdf.group('surname');
+  equals(group1.length, 1, "there should be one group");
+  group2 = rdf.group(['surname', 'forename']);
+  equals(group2.length, 2, "there should be two groups");
+  equals(group2[0].forename.value, "Alice");
+  equals(group2[0].surname.value, "Hacker");
+  equals(group2[0].person[0].value, "_:a");
+  equals(group2[0].person[1].value, "_:c");
+  equals(group2[1].forename.value, "Bob");
+  equals(group2[1].surname.value, "Hacker");
+  equals(group2[1].person[0].value, "_:b");
+});
+
 test("getting just the first match", function() {
   var rdf = $.rdf()
     .prefix('foaf', 'http://xmlns.com/foaf/0.1/')
@@ -985,10 +1032,10 @@ test("creating a new databank", function() {
 		$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .', { namespaces: namespaces })
 	];
 	var data = $.rdf.databank(triples);
-	equals(data.tripleStore[triples[0].subject].length, 1);
-	equals(data.tripleStore[triples[0].subject][0], triples[0]);
-	equals(data.tripleStore[triples[1].subject].length, 1);
-	equals(data.tripleStore[triples[1].subject][0], triples[1]);
+	equals(data.subjectIndex[triples[0].subject].length, 1);
+	equals(data.subjectIndex[triples[0].subject][0], triples[0]);
+	equals(data.subjectIndex[triples[1].subject].length, 1);
+	equals(data.subjectIndex[triples[1].subject][0], triples[1]);
 	equals(data.size(), 2);
 
 	var e = data.dump();
@@ -1059,8 +1106,17 @@ test("loading JSON/RDF into a databank", function() {
   };
   var databank = $.rdf.databank();
   databank.load(json);
-  ok(databank.size(), 5);
+  equals(databank.size(), 5);
 });
+
+/*
+test("loading remote RDF/XML into a databank", function () {
+  var url = 'http://xmlns.com/foaf/0.1/';
+  var databank = $.rdf.databank();
+  databank.load(url);
+  ok(databank.size() > 5, "it should get the triples from the remote RDF/XML");
+});
+*/
 
 function parseFromString(xml){
   var doc;
@@ -1215,6 +1271,7 @@ test("loading RDF/XML with xml:lang attributes in it", function () {
   databank.load(doc);
   equals(databank.size(), 3);
   var triples = databank.triples();
+  equals(triples[0].object.value, 'Der Baum');
   equals(triples[0].object.lang, 'de');
   equals(triples[1].object.lang, 'de');
   equals(triples[2].object.lang, 'en');
@@ -1295,7 +1352,7 @@ test("loading RDF/XML with rdf:parseType='Resource'", function () {
   databank.load(doc);
   equals(databank.size(), 4);
   var triples = databank.triples();
-  equals(triples[1].object, triples[2].subject);
+  equals(triples[3].object, triples[1].subject);
 });
 
 test("loading RDF/XML with a property element having property attributes", function () {
