@@ -386,7 +386,7 @@
           content = atts.content;
           if (datatype !== undefined && datatype !== '') {
             datatype = $.curie(datatype, context.curieOptions);
-            if (datatype === rdfXMLLiteral) {
+            if (datatype.toString() === rdfXMLLiteral) {
               object = $.rdf.literal(serialize(this), { datatype: rdfXMLLiteral });
             } else if (content !== undefined) {
               object = $.rdf.literal(content, { datatype: datatype });

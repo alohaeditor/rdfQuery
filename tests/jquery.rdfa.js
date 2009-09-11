@@ -653,6 +653,165 @@ test("Test 0034", function() {
 	$('#main > div').remove();
 });
 
+test("Test 0035", function () {
+  setup('<div><img 	about="http://sw-app.org/mic.xhtml#i" rel="foaf:img" src="http://sw-app.org/img/mic_2007_01.jpg" href="http://sw-app.org/img/mic_2006_03.jpg" alt="A photo depicting Michael" /></div>');
+	testTriples($('#main > div').rdfa(), [
+	  $.rdf.triple('<http://sw-app.org/mic.xhtml#i> <http://xmlns.com/foaf/0.1/img> <http://sw-app.org/img/mic_2006_03.jpg> .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0036", function () {
+  setup('<div><img 	about="http://sw-app.org/mic.xhtml#i" rel="foaf:img" src="http://sw-app.org/img/mic_2007_01.jpg" resource="http://sw-app.org/img/mic_2006_03.jpg" alt="A photo depicting Michael" /></div>');
+	testTriples($('#main > div').rdfa(), [
+	  $.rdf.triple('<http://sw-app.org/mic.xhtml#i> <http://xmlns.com/foaf/0.1/img> <http://sw-app.org/img/mic_2006_03.jpg> .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0037", function () {
+  setup('<div><img 	about="http://sw-app.org/mic.xhtml#i" rel="foaf:img" src="http://sw-app.org/img/mic_2007_01.jpg"  href="http://sw-app.org/img/mic_2006_03.jpg" resource="http://sw-app.org/mic.xhtml#photo"  alt="A photo depicting Michael" /></div>');
+	testTriples($('#main > div').rdfa(), [
+	  $.rdf.triple('<http://sw-app.org/mic.xhtml#i> <http://xmlns.com/foaf/0.1/img> <http://sw-app.org/mic.xhtml#photo> .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0038", function () {
+  setup('<div about="http://sw-app.org/mic.xhtml#i" rev="foaf:depicts"><img src="http://sw-app.org/img/mic_2007_01.jpg" alt="A photo depicting Michael" /></div>');
+	testTriples($('#main > div').rdfa(), [
+	  $.rdf.triple('<http://sw-app.org/img/mic_2007_01.jpg> <http://xmlns.com/foaf/0.1/depicts> <http://sw-app.org/mic.xhtml#i> .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0039", function () {
+  setup('<div><img 	about="http://sw-app.org/mic.xhtml#i" rev="foaf:depicts" src="http://sw-app.org/img/mic_2007_01.jpg"  href="http://sw-app.org/img/mic_2006_03.jpg"  alt="A photo depicting Michael" /></div>');
+	testTriples($('#main > div').rdfa(), [
+	  $.rdf.triple('<http://sw-app.org/img/mic_2006_03.jpg> <http://xmlns.com/foaf/0.1/depicts> <http://sw-app.org/mic.xhtml#i> .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0040", function () {
+  setup('<div><img src="http://sw-app.org/img/mic_2007_01.jpg" rev="alternate" resource="http://sw-app.org/img/mic_2006_03.jpg" alt="A photo depicting Michael" /></div>');
+	testTriples($('#main > div').rdfa(), [
+	  $.rdf.triple('<http://sw-app.org/img/mic_2006_03.jpg>  <http://www.w3.org/1999/xhtml/vocab#alternate> <http://sw-app.org/img/mic_2007_01.jpg> .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0041", function () {
+  setup('<div><img 	about="http://sw-app.org/mic.xhtml#i" rev="foaf:depicts" src="http://sw-app.org/img/mic_2007_01.jpg" href="http://sw-app.org/img/mic_2006_03.jpg" resource="http://sw-app.org/mic.xhtml#photo"  alt="A photo depicting Michael" /></div>');
+	testTriples($('#main > div').rdfa(), [
+	  $.rdf.triple('<http://sw-app.org/mic.xhtml#photo> <http://xmlns.com/foaf/0.1/depicts> <http://sw-app.org/mic.xhtml#i> .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0042", function () {
+  setup('<div><img 	rel="foaf:img" src="http://sw-app.org/img/mic_2007_01.jpg"  alt="A photo depicting Michael" /></div>');
+	testTriples($('#main > div').rdfa(), []);
+	$('#main > div').remove();
+});
+
+test("Test 0046", function () {
+  setup('<div rel="foaf:maker" typeof="foaf:Document"><p property="foaf:name">John Doe</p></div>');
+  var triples = $('#main > div').rdf().databank.triples();
+  equals(triples[0].subject.type, 'bnode');
+  equals(triples[0].property.value, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+  equals(triples[0].object.value, 'http://xmlns.com/foaf/0.1/Document');
+  equals(triples[0].subject, triples[1].subject);
+  equals(triples[1].subject.type, 'bnode');
+  equals(triples[1].property.value, 'http://xmlns.com/foaf/0.1/maker');
+  equals(triples[1].object.type, 'bnode');
+  equals(triples[1].object, triples[2].subject);
+  equals(triples[2].subject.type, 'bnode');
+  equals(triples[2].property.value, 'http://xmlns.com/foaf/0.1/name');
+  equals(triples[2].object.value, 'John Doe');
+	$('#main > div').remove();
+});
+
+test("Test 0047", function () {
+  setup('<div rel="foaf:maker" typeof="foaf:Document" resource="http://www.example.org/#me"><p property="foaf:name">John Doe</p></div>');
+  var triples = $('#main > div').rdf().databank.triples();
+  equals(triples[0].subject.type, 'bnode');
+  equals(triples[0].property.value, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+  equals(triples[0].object.value, 'http://xmlns.com/foaf/0.1/Document');
+  equals(triples[0].subject, triples[1].subject);
+  equals(triples[1].subject.type, 'bnode');
+  equals(triples[1].property.value, 'http://xmlns.com/foaf/0.1/maker');
+  equals(triples[1].object.value, 'http://www.example.org/#me');
+  equals(triples[2], $.rdf.triple('<http://www.example.org/#me> <http://xmlns.com/foaf/0.1/name> "John Doe" .'));
+	$('#main > div').remove();
+});
+
+test("Test 0048", function () {
+  setup('<div about="http://www.example.org/#me" rel="foaf:knows" typeof="foaf:Person"><p property="foaf:name">John Doe</p></div>');
+  var triples = $('#main > div').rdf().databank.triples();
+  equals(triples[0], $.rdf.triple('<http://www.example.org/#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .'));
+  equals(triples[1].subject.value, 'http://www.example.org/#me');
+  equals(triples[1].property.value, 'http://xmlns.com/foaf/0.1/knows');
+  equals(triples[1].object.type, 'bnode');
+  equals(triples[1].object, triples[2].subject);
+  equals(triples[2].subject.type, 'bnode');
+  equals(triples[2].property.value, 'http://xmlns.com/foaf/0.1/name');
+  equals(triples[2].object.value, 'John Doe');
+	$('#main > div').remove();
+});
+
+test("Test 0049", function () {
+  setup('<div about="http://www.example.org/#me" typeof="foaf:Person"><p property="foaf:name">John Doe</p></div>');
+	testTriples($('#main > div').rdfa(), [
+  $.rdf.triple('<http://www.example.org/#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .'),
+	  $.rdf.triple('<http://www.example.org/#me> <http://xmlns.com/foaf/0.1/name> "John Doe" .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0050", function () {
+  setup('<div typeof="foaf:Person"><p property="foaf:name">John Doe</p></div>');
+  var triples = $('#main > div').rdf().databank.triples();
+  equals(triples[0].subject.type, 'bnode');
+  equals(triples[0].property.value, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+  equals(triples[0].object.value, 'http://xmlns.com/foaf/0.1/Person');
+  equals(triples[0].subject, triples[1].subject);
+  equals(triples[1].subject.type, 'bnode');
+  equals(triples[1].property.value, 'http://xmlns.com/foaf/0.1/name');
+  equals(triples[1].object.value, 'John Doe');
+	$('#main > div').remove();
+});
+
+/* TODO Fill in the missing tests: 0051-0085 */
+
+test("Test 0086", function () {
+  setup('<div about="http://www.example.org/#somebody" rel="foobar"><p resource="mailto:ivan@w3.org">mailto:ivan@w3.org</p></div>');
+	testTriples($('#main > div').rdfa(), []);
+	$('#main > div').remove();
+});
+
+/* TODO Fill in the missing tests: 0087-0091 */
+
+
+test("Test 0092", function () {
+  setup('<div about="">Author: <span property="dc:creator">Albert Einstein</span><h2 property="dc:title" datatype="rdf:XMLLiteral">E = mc<sup>2</sup>: The Most Urgent Problem of Our Time</h2></div>');
+	testTriples($('#main > div').rdfa(), [
+	  $.rdf.triple('<> <http://purl.org/dc/elements/1.1/creator> "Albert Einstein" .'),
+	  $.rdf.triple('<> <http://purl.org/dc/elements/1.1/title>  "E = mc<sup xmlns=\\"http://www.w3.org/1999/xhtml\\">2</sup>: The Most Urgent Problem of Our Time"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral> .')
+	]);
+	$('#main > div').remove();
+});
+
+test("Test 0093", function () {
+  setup('<div xmlns:ex="http://www.example.org/" about="">Author: <span property="dc:creator">Albert Einstein</span><h2 property="dc:title" datatype="ex:XMLLiteral">E = mc<sup>2</sup>: The Most Urgent Problem of Our Time</h2></div>');
+	testTriples($('#main > div').rdfa(), [
+    $.rdf.triple('<> <http://purl.org/dc/elements/1.1/creator> "Albert Einstein" .'),
+    $.rdf.triple('<> <http://purl.org/dc/elements/1.1/title>  "E = mc2: The Most Urgent Problem of Our Time"^^<http://www.example.org/XMLLiteral> .')
+	]);
+	$('#main > div').remove();
+});
+
+
 module("Adding RDFa to elements");
 
 test("adding RDFa to an element", function() {
