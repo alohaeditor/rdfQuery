@@ -248,7 +248,7 @@ test("ignoring about with invalid prefix", function () {
   $('#main > p').remove();
 });
 
-test("ignore rel attribute that contains invalid CURIEs", function () {
+test("count rel attribute that contains invalid CURIEs", function () {
   setup('<p xmlns:ex="http://example.org/" xmlns:0="http://example.org/error/">' +
     '<span property="ex:test1" href="http://example.org/href">Test</span>' +
     '<span rel="ex:test2" property="ex:test3" href="http://example.org/href">Test</span>' +
@@ -258,7 +258,7 @@ test("ignore rel attribute that contains invalid CURIEs", function () {
     $.rdf.triple('<http://example.org/href> <http://example.org/test1> "Test" .'),
     $.rdf.triple('<> <http://example.org/test3> "Test" .'),
     $.rdf.triple('<> <http://example.org/test2> <http://example.org/href> .'),
-    $.rdf.triple('<http://example.org/href> <http://example.org/test5> "Test" .')
+    $.rdf.triple('<> <http://example.org/test5> "Test" .')
   ]);
   $('#main > p').remove();
 });
@@ -278,7 +278,7 @@ test("count rel attribute that is empty", function () {
   $('#main > p').remove();
 });
 
-test("ignore property attribute that contains invalid CURIEs", function () {
+test("count property attribute that contains invalid CURIEs", function () {
   setup('<div>' +
   '<p xmlns:ex="http://example.org/" about="http://example.com/" rel="ex:rel1">' +
   '  <span content="Content 1"><span about="http://example.net/">Test 1</span>' +
@@ -298,7 +298,9 @@ test("ignore property attribute that contains invalid CURIEs", function () {
   equals(data[2].subject.type, 'bnode');
   equals(data[2].property.value, 'http://example.org/prop');
   equals(data[2].object.value, 'Content 2');
-  equals(data[3].toString(), $.rdf.triple('<http://example.com/> <http://example.org/rel3> <http://example.net/> .').toString())
+  equals(data[3].subject.value, 'http://example.com/');
+  equals(data[3].property.value, 'http://example.org/rel3');
+  equals(data[3].object.type, 'bnode');
   $('#main > p').remove();
 });
 
@@ -342,6 +344,16 @@ test("With both lang and xml:lang defined", function () {
   ]);
   $('#main > p').remove();
 });
+
+/*
+test("With conflicting lang inheritance", function () {
+  setup('<p lang="aa"><span xmlns:ex="http://example.org/" property="ex:test" xml:lang="bb">Test</span></p>');
+  testTriples($('#main > p').rdf(), [
+    $.rdf.triple('<> ex:test "Test"@aa .', ns)
+  ]);
+  $('#main > p').remove();
+});
+*/
 
 test("div with no attributes", function () {
   setup('<div id="collections">' +

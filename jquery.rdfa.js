@@ -354,19 +354,6 @@
         }
       }
       context.curieOptions = $.extend({}, rdfaCurieDefaults, { namespaces: namespaces, base: this.base() });
-      rels = resourcesFromCuries(atts.rel, this, true, context.curieOptions);
-      revs = resourcesFromCuries(atts.rev, this, true, context.curieOptions);
-      properties = resourcesFromCuries(atts.property, this, true, context.curieOptions);
-      // If all the CURIEs are invalid, act as if the rel/rev never existed
-      if (atts.rel && atts.rel.length > 0 && rels.length === 0) {
-        atts.rel = undefined;
-      }
-      if (atts.rev && atts.rev.length > 0 && revs.length === 0) {
-        atts.rev = undefined;
-      }
-      if (atts.property && atts.property.length > 0 && properties.length === 0) {
-        atts.property = undefined;
-      }
       subject = getSubject(this, context);
       lang = getLang(this, context);
       if (subject.skip) {
@@ -393,6 +380,7 @@
           triple = $.rdf.triple(subject, $.rdf.type, types[i], { source: this[0] });
           triples.push(triple);
         }
+        properties = resourcesFromCuries(atts.property, this, true, context.curieOptions);
         if (properties.length > 0) {
           datatype = atts.datatype;
           content = atts.content;
@@ -427,6 +415,8 @@
             triples.push(triple);
           }
         }
+        rels = resourcesFromCuries(atts.rel, this, true, context.curieOptions);
+        revs = resourcesFromCuries(atts.rev, this, true, context.curieOptions);
         if (atts.resource !== undefined || atts.href !== undefined) {
           // make the triples immediately
           if (rels !== undefined) {
