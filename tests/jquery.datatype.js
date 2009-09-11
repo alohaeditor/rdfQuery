@@ -9,10 +9,13 @@ module("Errors");
 
 test("an unrecognised datatype", function() {
   try {
-    var v = $.typedValue('true', 'http://www.w3.org/2001/XMLSchemaboolean'); // note missing #
-    ok(false, 'it should throw an error');
+    var v = $.typedValue(' true ', 'http://www.w3.org/2001/XMLSchemaboolean'); // note missing #
+    ok(true, 'it should not throw an error');
+    equals(v.representation, ' true ');
+    equals(v.datatype, 'http://www.w3.org/2001/XMLSchemaboolean');
+    equals(v.value, 'true');
   } catch (e) {
-    equals(typeof e, 'string', 'the error should be a string');
+    ok(false, 'it should not throw an error');
   }  
 });
 

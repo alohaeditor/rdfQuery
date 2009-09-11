@@ -56,6 +56,14 @@
      *     <td>string</td>
      *   </tr>
      *   <tr>
+     *     <td>http://www.w3.org/2001/XMLSchema#token</td>
+     *     <td>string</td>
+     *   </tr>
+     *   <tr>
+     *     <td>http://www.w3.org/2001/XMLSchema#NCName</td>
+     *     <td>string</td>
+     *   </tr>
+     *   <tr>
      *     <td>http://www.w3.org/2001/XMLSchema#boolean</td>
      *     <td>bool</td>
      *   </tr>
@@ -97,7 +105,7 @@
      *   </tr>
      *   <tr>
      *     <td>http://www.w3.org/2001/XMLSchema#anyURI</td>
-     *     <td>string</td>
+     *     <td>{@link jQuery.uri}</td>
      *   </tr>
      * </table>
      * @memberOf jQuery.typedValue#
@@ -110,12 +118,11 @@
     datatype: undefined,
 
     init: function (value, datatype) {
-      var d;
+      var d = $.typedValue.types[datatype];
       if ($.typedValue.valid(value, datatype)) {
-        d = $.typedValue.types[datatype];
         this.representation = value;
         this.datatype = datatype;
-        this.value = d.value(d.strip ? strip(value) : value);
+        this.value = d === undefined ? strip(value) : d.value(d.strip ? strip(value) : value);
         return this;
       } else {
         throw {
@@ -391,14 +398,13 @@
    * Checks whether a value is valid according to a given datatype. The datatype must be held in the {@link jQuery.typedValue.types} object.
    * @param {String} value The value to validate.
    * @param {String} datatype The URI for the datatype against which the value will be validated.
-   * @returns {boolean} True if the value is valid.
-   * @throws {String} Errors if the datatype has not been specified in the {@link jQuery.typedValue.types} object.
+   * @returns {boolean} True if the value is valid or the datatype is not recognised.
    * @example validDate = $.typedValue.valid(date, 'http://www.w3.org/2001/XMLSchema#date');
    */
   $.typedValue.valid = function (value, datatype) {
     var d = $.typedValue.types[datatype];
     if (d === undefined) {
-      throw "InvalidDatatype: The datatype " + datatype + " can't be recognised";
+      return true;
     } else {
       value = d.strip ? strip(value) : value;
       if (d.regex.test(value)) {
