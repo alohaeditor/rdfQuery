@@ -874,7 +874,8 @@ test("dumping in RDF/XML a triple whose subject is a blank node", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItem('rdf:nodeID');
+	// var a = d.attributes.getNamedItem('rdf:nodeID');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'nodeID');
 	ok(a !== undefined && a !== null, 'it should have an rdf:nodeID attribute');
 	equals(a.nodeValue, 'someone');
 });

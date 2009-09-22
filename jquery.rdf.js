@@ -25,7 +25,6 @@
  * @ignore
  */
 (function ($) {
-
   var
     memResource = {},
     memBlank = {},
@@ -880,21 +879,21 @@
       return results;
     },
     
-    queue = function (databank, url, callback) {
+    queue = function (databank, url, callbacks) {
       if (documentQueue[databank.id] === undefined) {
         documentQueue[databank.id] = {};
       }
       if (documentQueue[databank.id][url] === undefined) {
-        documentQueue[databank.id][url] = callback;
+        documentQueue[databank.id][url] = callbacks;
         return false;
       }
       return true;
     }
     
-    dequeue = function (databank, url) {
-      var callback = documentQueue[databank.id][url];
-      if ($.isFunction(callback)) {
-        callback.call(databank);
+    dequeue = function (databank, url, result, args) {
+      var callbacks = documentQueue[databank.id][url];
+      if ($.isFunction(callbacks[result])) {
+        callbacks[result].call(databank, args);
       }
       documentQueue[databank.id][url] = undefined;
     };
@@ -1288,7 +1287,7 @@
     /**
      * Groups the bindings held by this {@link jQuery.rdf} object based on the values of the variables passed as the parameter.
      * @param {String[]} [bindings] The variables to group by. The returned objects will contain all their current properties, but those aside from the specified variables will be arrays listing the relevant values.
-     * @returns {Object[]} An array of objects.
+     * @returns {jQuery} A jQuery object containing objects representing the grouped bindings.
      * @example
      * // returns one object per person and groups all the names and all the emails together in arrays
      * var grouped = rdf
@@ -1307,7 +1306,7 @@
       if (!$.isArray(bindings)) {
         bindings = [bindings];
       }
-      return group(this, bindings);
+      return $(group(this, bindings));
     },
 
     /**
@@ -1956,10 +1955,11 @@
       var i, triples, url, script,
         async = (opts && opts.async) || $.rdf.databank.defaults.async,
         success = (opts && opts.success) || $.rdf.databank.defaults.success,
+        error = (opts && opts.error) || $.rdf.databank.defaults.error,
         proxy = (opts && opts.proxy) || $.rdf.databank.defaults.proxy,
         depth = (opts && opts.depth) || $.rdf.databank.defaults.depth;
       if (typeof data === 'string' || data.scheme) {
-        if (!queue(this, data, success)) {
+        if (!queue(this, data, { success: success, error: error })) {
           url = typeof data === 'string' ? $.uri(data) : data;
           script = '<script type="text/javascript" src="' + proxy + '?id=' + this.id + '&amp;depth=' + depth + '&amp;url=' + encodeURIComponent(url.resolve('').toString()) + '"></script>';
           if (async) {
@@ -2002,15 +2002,16 @@
   $.rdf.databank.defaults = {
     async: true,
     success: null,
+    error: null,
     depth: 0,
     proxy: 'http://www.jenitennison.com/rdfquery/proxy.php'
   };
   
-  $.rdf.databank.load = function (id, url, proxy, depth, doc) {
+  $.rdf.databank.load = function (id, url, doc, opts) {
     if (doc !== undefined) {
-      databanks[id].load(doc, { proxy: proxy, depth: depth });
+      databanks[id].load(doc, opts);
     }
-    dequeue(databanks[id], url);
+    dequeue(databanks[id], url, (doc === undefined) ? 'error' : 'success', opts);
   };
 
   /**
