@@ -28,9 +28,15 @@ function testTriples (received, expected) {
   	for (i = 0; i < expected.length; i += 1) {
   		equals(triples[i].toString(), expected[i].toString());
   	}
+  	for (i; i < triples.length; i += 1) {
+  	  ok(false, 'also got ' + triples[i].toString());
+  	}
 	} else {
   	for (i = 0; i < triples.length; i += 1) {
   		equals(triples[i].toString(), expected[i].toString());
+  	}
+  	for (i; i < expected.length; i += 1) {
+  	  ok(false, 'did not get ' + expected[i].toString());
   	}
 	}
 };
@@ -71,6 +77,19 @@ test("Test 0001", function() {
 	setup('<p>This photo was taken by <span class="author" about="photo1.jpg" property="dc:creator">Mark Birbeck</span>.</p>');
 	testTriples($('#main > p > span').rdf(), 
 	            [$.rdf.triple('<photo1.jpg> dc:creator "Mark Birbeck" .', ns)]);
+	$('#main > p').remove();
+});
+
+test("With a callback", function() {
+	setup('<p>This photo was taken by <a about="photo1.jpg" rel="dc:creator" rev="foaf:img" href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.</p>');
+	testTriples(
+	  $('#main > p > a').rdf(function () {
+  	  if (this.subject.value.toString() === 'http://www.blogger.com/profile/1109404') {
+  	    return this;
+  	  }
+  	}), 
+    [$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg>', ns)]
+  );
 	$('#main > p').remove();
 });
 

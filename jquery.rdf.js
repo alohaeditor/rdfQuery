@@ -556,7 +556,7 @@
           ns = m[1];
           local = m[2];
           for (n in namespaces) {
-            if (namespaces[n] === ns) {
+            if (namespaces[n].toString() === ns) {
               prefix = n;
               break;
             }
@@ -576,7 +576,7 @@
             ns = m[1];
             local = m[2];
             for (n in namespaces) {
-              if (namespaces[n] === ns) {
+              if (namespaces[n].toString() === ns) {
                 prefix = n;
                 break;
               }
@@ -929,7 +929,7 @@
      * The version of rdfQuery.
      * @type String
      */
-    rdfquery: '0.9',
+    rdfquery: '1.1',
 
     init: function (options) {
       var databanks;
@@ -1591,17 +1591,24 @@
    * Gleans RDF triples from the nodes held by the {@link jQuery} object, puts them into a {@link jQuery.rdf.databank} and returns a {@link jQuery.rdf} object that allows you to query and otherwise manipulate them. The mechanism for gleaning RDF triples from the web page depends on the rdfQuery modules that have been included. The core version of rdfQuery doesn't support any gleaners; other versions support a RDFa gleaner, and there are some modules available for common microformats.
    * @methodOf jQuery#
    * @name jQuery#rdf
+   * @param {Function} [callback] A callback function that is called every time a triple is gleaned from the page. Within the function, <code>this</code> is set to the triple that has been located. The function can take up to two parameters:
+   * <dl>
+   *   <dt>node</dt><dd>The node on which the triple has been found; should be the same as <code>this.source</code>.</dd>
+   *   <dt>triple</dt><dd>The triple that's been found; the same as <code>this</code>.</dd>
+   * </dl>
+   * The callback should return the triple or triples that should be added to the databank. This enables you to filter, extend or modify the contents of the databank itself, should you wish to.
    * @returns {jQuery.rdf} An empty query over the triples stored within the page.
    * @example $('#content').rdf().databank.dump();
    */
-  $.fn.rdf = function () {
-    var triples = [];
+  $.fn.rdf = function (callback) {
+    var triples = [],
+      callback = callback || function () { return this; };
     if ($(this)[0] && $(this)[0].nodeType === 9) {
-      return $(this).children('*').rdf();
+      return $(this).children('*').rdf(callback);
     } else if ($(this).length > 0) {
       triples = $(this).map(function (i, elem) {
         return $.map($.rdf.gleaners, function (gleaner) {
-          return gleaner.call($(elem));
+          return gleaner.call($(elem), { callback: callback });
         });
       });
       return $.rdf({ triples: triples, namespaces: $(this).xmlns() });

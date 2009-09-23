@@ -336,11 +336,13 @@
         properties, rels, revs,
         forward, backward,
         triples = [],
+        callback,
         attsAndNs, atts, namespaces, ns,
         children = this.children();
       context = context || {};
       forward = context.forward || [];
       backward = context.backward || [];
+      callback = context.callback || function () { return this; };
       attsAndNs = getAttributes(this);
       atts = attsAndNs.atts;
       context.atts = atts;
@@ -367,18 +369,27 @@
           parent = context.subject || getSubject(this.parent()).subject;
           for (i = 0; i < forward.length; i += 1) {
             triple = $.rdf.triple(parent, forward[i], subject, { source: this[0] });
-            triples.push(triple);
+            triple = callback.call(triple, this.get(0), triple);
+            if (triple !== undefined && triple !== null) {
+              triples = triples.concat(triple);
+            }
           }
           for (i = 0; i < backward.length; i += 1) {
             triple = $.rdf.triple(subject, backward[i], parent, { source: this[0] });
-            triples.push(triple);
+            triple = callback.call(triple, this.get(0), triple);
+            if (triple !== undefined && triple !== null) {
+              triples = triples.concat(triple);
+            }
           }
         }
         resource = getObjectResource(this, context);
         types = resourcesFromCuries(atts['typeof'], this, false, context.curieOptions);
         for (i = 0; i < types.length; i += 1) {
           triple = $.rdf.triple(subject, $.rdf.type, types[i], { source: this[0] });
-          triples.push(triple);
+          triple = callback.call(triple, this.get(0), triple);
+          if (triple !== undefined && triple !== null) {
+            triples = triples.concat(triple);
+          }
         }
         properties = resourcesFromCuries(atts.property, this, true, context.curieOptions);
         if (properties.length > 0) {
@@ -412,7 +423,10 @@
           }
           for (i = 0; i < properties.length; i += 1) {
             triple = $.rdf.triple(subject, properties[i], object, { source: this[0] });
-            triples.push(triple);
+            triple = callback.call(triple, this.get(0), triple);
+            if (triple !== undefined && triple !== null) {
+              triples = triples.concat(triple);
+            }
           }
         }
         rels = resourcesFromCuries(atts.rel, this, true, context.curieOptions);
@@ -422,21 +436,27 @@
           if (rels !== undefined) {
             for (i = 0; i < rels.length; i += 1) {
               triple = $.rdf.triple(subject, rels[i], resource, { source: this[0] });
-              triples.push(triple);
+              triple = callback.call(triple, this.get(0), triple);
+              if (triple !== undefined && triple !== null) {
+                triples = triples.concat(triple);
+              }
             }
           }
           rels = [];
           if (revs !== undefined) {
             for (i = 0; i < revs.length; i += 1) {
               triple = $.rdf.triple(resource, revs[i], subject, { source: this[0] });
-              triples.push(triple);
+              triple = callback.call(triple, this.get(0), triple);
+              if (triple !== undefined && triple !== null) {
+                triples = triples.concat(triple);
+              }
             }
           }
           revs = [];
         }
       }
       children.each(function () {
-        triples = triples.concat(rdfa.call($(this), { forward: rels, backward: revs, subject: subject, object: resource || subject, lang: lang, namespaces: namespaces }));
+        triples = triples.concat(rdfa.call($(this), { forward: rels, backward: revs, subject: subject, object: resource || subject, lang: lang, namespaces: namespaces, callback: callback }));
       });
       return triples;
     },
@@ -460,7 +480,7 @@
         }
         return false;
       } else {
-        return rdfa.call(this);
+        return rdfa.call(this, options);
       }
     },
 
@@ -755,7 +775,7 @@
    * Creates a {@link jQuery.rdf} object containing the RDF triples parsed from the RDFa found in the current jQuery selection or adds the specified triple as RDFa markup on each member of the current jQuery selection. To create an {@link jQuery.rdf} object, you will usually want to use {@link jQuery#rdf} instead, as this may perform other useful processing (such as of microformats used within the page).
    * @methodOf jQuery#
    * @name jQuery#rdfa
-   * @param {jQuery.rdf.triple} [triple] The RDF triple to be added to each item in the jQuery selection. 
+   * @param {jQuery.rdf.triple} [triple] The RDF triple to be added to each item in the jQuery selection.
    * @returns {jQuery.rdf}
    * @example
    * // Extract RDFa markup from all span elements contained inside #main

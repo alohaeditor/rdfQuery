@@ -310,10 +310,11 @@ $(document).ready(function () {
       }
     },
     
-    resourceLabel = function (resource) {
-      var q = rdf
-        .prefix('rdfs', ns.rdfs)
-        .where(resource + ' rdfs:label ?label');
+    resourceLabel = function (resource, data) {
+      var data = data || rdf,
+        q = data
+          .prefix('rdfs', ns.rdfs)
+          .where(resource + ' rdfs:label ?label');
       if (q.length > 0) {
         return q.get(0).label.value;
       } else {
@@ -747,7 +748,7 @@ $(document).ready(function () {
               var list, span, label;
               span = findSpan(this.thing);
               if (span.length === 0) {
-                label = resourceLabel(this.thing, rdf);
+                label = resourceLabel(this.thing, newRdf);
                 span = markupText.call($('#content'), label.toString());
                 if (span === undefined) {
                   span = $('#meta').append('<span />').children('span:last');
