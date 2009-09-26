@@ -67,8 +67,7 @@
       if (prefix === undefined) { // get the in-scope declarations on the first element
         if (ns === undefined) {
           ns = {
-            xml: $.uri(xmlNs),
-            xmlns: $.uri(xmlnsNs)
+//            xml: $.uri(xmlNs)
           };
           if (e.attributes && e.attributes.getNamedItemNS) {
             for (i = 0; i < e.attributes.length; i += 1) {

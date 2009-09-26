@@ -217,25 +217,19 @@ test("Underscore prefix", function () {
 
 test("xml prefix with wrong namespace", function () {
   setup('<p xmlns:xml="http://example.org/" property="xml:test">Test</p>');
-  testTriples($('#main > p').rdf(), [
-    $.rdf.triple('<> xml:test "Test" .', ns)
-  ]);
+  testTriples($('#main > p').rdf(), []);
   $('#main > p').remove();
 });
 
 test("xmlns declaration", function () {
   setup('<p xmlns:xmlns="http://www.w3.org/2000/xmlns/" property="xmlns:test">Test</p>');
-  testTriples($('#main > p').rdf(), [
-    $.rdf.triple('<> xmlns:test "Test" .', ns)
-  ]);
+  testTriples($('#main > p').rdf(), []);
   $('#main > p').remove();
 });
 
 test("xmlns declaration with wrong namespace", function () {
   setup('<p xmlns:xmlns="http://example.org/" property="xmlns:test">Test</p>');
-  testTriples($('#main > p').rdf(), [
-    $.rdf.triple('<> xmlns:test "Test" .', ns)
-  ]);
+  testTriples($('#main > p').rdf(), []);
   $('#main > p').remove();
 });
 
@@ -300,7 +294,7 @@ test("count rel attribute that is empty", function () {
 test("count property attribute that contains invalid CURIEs", function () {
   setup('<div>' +
   '<p xmlns:ex="http://example.org/" about="http://example.com/" rel="ex:rel1">' +
-  '  <span content="Content 1"><span about="http://example.net/">Test 1</span>' +
+  '  <span content="Content 1"><span about="http://example.net/">Test 1</span></span>' +
   '</p>' +
   '<p xmlns:ex="http://example.org/" about="http://example.com/" rel="ex:rel2">' +
   '  <span property="ex:prop" content="Content 2"><span about="http://example.net/">Test 2</span></span>' +
@@ -311,14 +305,14 @@ test("count property attribute that contains invalid CURIEs", function () {
   '</div>');
   var data = $('#main > div').rdf().databank.triples();
   equals(data[0].toString(), $.rdf.triple('<http://example.com/> <http://example.org/rel1> <http://example.net/> .').toString());
-  equals(data[1].subject.value, 'http://example.com/');
-  equals(data[1].property.value, 'http://example.org/rel2');
+  equals(data[1].subject.value.toString(), 'http://example.com/');
+  equals(data[1].property.value.toString(), 'http://example.org/rel2');
   equals(data[1].object.type, 'bnode');
   equals(data[2].subject.type, 'bnode');
-  equals(data[2].property.value, 'http://example.org/prop');
+  equals(data[2].property.value.toString(), 'http://example.org/prop');
   equals(data[2].object.value, 'Content 2');
-  equals(data[3].subject.value, 'http://example.com/');
-  equals(data[3].property.value, 'http://example.org/rel3');
+  equals(data[3].subject.value.toString(), 'http://example.com/');
+  equals(data[3].property.value.toString(), 'http://example.org/rel3');
   equals(data[3].object.type, 'bnode');
   $('#main > p').remove();
 });
@@ -407,6 +401,12 @@ test("table with RDFa around", function () {
     $.rdf.triple('<http://example.com/> <http://example.org/test> "Test"')
   ]);
   $('#table').remove();
+});
+
+test("reserved name used within a property", function () {
+  setup('<p property="next">Next Page</p>');
+  testTriples($('#main > p').rdf(), []);
+  $('#main > p').remove();
 });
 
 module("RDFa Test Suite");

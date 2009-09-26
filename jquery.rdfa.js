@@ -36,6 +36,11 @@
     rdfXMLLiteral = ns.rdf + 'XMLLiteral',
 
     rdfaCurieDefaults = $.fn.curie.defaults,
+    relReserved = [
+      'alternate', 'appendix', 'bookmark', 'cite', 'chapter', 'contents', 'copyright',
+      'first', 'glossary', 'help', 'icon', 'index', 'last', 'license', 'meta', 'next',
+      'p3pv1', 'prev', 'role', 'section', 'stylesheet', 'subsection', 'start', 'top', 'up'
+    ],
 
     attRegex = /\s([^ =]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^ >]+))/g,
     
@@ -90,19 +95,16 @@
     getAttributes = function (elem) {
       var i, e, a, tag, name, value, attMap, prefix,
         atts = {},
-        nsMap = {
-          xml: $.uri(ns.xml),
-          xmlns: $.uri(ns.xmlns)
-        };
+        nsMap = {};
       e = elem[0];
-      nsMap[':length'] = 2;
+      nsMap[':length'] = 0;
       if (e.attributes && e.attributes.getNamedItemNS) {
         attMap = e.attributes;
         for (i = 0; i < attMap.length; i += 1) {
           a = attMap[i];
           if (/^xmlns(:(.+))?$/.test(a.nodeName) && a.nodeValue !== '') {
             prefix = /^xmlns(:(.+))?$/.exec(a.nodeName)[2] || '';
-            if (ncNameRegex.test(prefix) && prefix !== 'xml' && prefix !== 'xmlns' && a.nodeValue !== ns.xml && a.nodeValue !== ns.xmlns) {
+            if (ncNameRegex.test(prefix) && (prefix !== 'xml' || a.nodeValue === ns.xml) && (a.nodeValue !== ns.xml || prefix === 'xml') && prefix !== 'xmlns' && a.nodeValue !== ns.xmlns) {
               nsMap[prefix] = $.uri(a.nodeValue);
               nsMap[':length'] += 1;
             }
@@ -120,7 +122,7 @@
           value = a[2] || a[3] || a[4];
           if (/^xmlns/.test(name) && name !== 'xmlns:' && value !== '') {
             prefix = /^xmlns(:(.+))?$/.exec(name)[2] || '';
-            if (ncNameRegex.test(prefix) && prefix !== 'xml' && prefix !== 'xmlns' && a.nodeValue !== ns.xml && a.nodeValue !== ns.xmlns) {
+            if (ncNameRegex.test(prefix) && (prefix !== 'xml' || a.nodeValue === ns.xml) && (a.nodeValue !== ns.xml || prefix === 'xml') && prefix !== 'xmlns' && a.nodeValue !== ns.xmlns) {
               nsMap[prefix] = $.uri(value);
               nsMap[':length'] += 1;
             }
@@ -336,7 +338,7 @@
         properties, rels, revs,
         forward, backward,
         triples = [],
-        callback,
+        callback, relCurieOptions,
         attsAndNs, atts, namespaces, ns,
         children = this.children();
       context = context || {};
@@ -355,7 +357,8 @@
           }
         }
       }
-      context.curieOptions = $.extend({}, rdfaCurieDefaults, { namespaces: namespaces, base: this.base() });
+      context.curieOptions = $.extend({}, rdfaCurieDefaults, { reserved: [], namespaces: namespaces, base: this.base() });
+      relCurieOptions = $.extend({}, context.curieOptions, { reserved: relReserved });
       subject = getSubject(this, context);
       lang = getLang(this, context);
       if (subject.skip) {
@@ -429,8 +432,8 @@
             }
           }
         }
-        rels = resourcesFromCuries(atts.rel, this, true, context.curieOptions);
-        revs = resourcesFromCuries(atts.rev, this, true, context.curieOptions);
+        rels = resourcesFromCuries(atts.rel, this, true, relCurieOptions);
+        revs = resourcesFromCuries(atts.rev, this, true, relCurieOptions);
         if (atts.resource !== undefined || atts.href !== undefined) {
           // make the triples immediately
           if (rels !== undefined) {

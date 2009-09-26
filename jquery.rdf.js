@@ -870,7 +870,7 @@
         grouped[key].push(bindings[i]);
       }
       // call recursively on each group
-      variables = variables.splice(1);
+      variables = variables.splice(1, 1);
       for (v in grouped) {
         newbase = $.extend({}, base);
         newbase[variable] = grouped[v][0][variable];

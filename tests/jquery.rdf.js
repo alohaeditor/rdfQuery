@@ -874,8 +874,7 @@ test("dumping in RDF/XML a triple whose subject is a blank node", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	// var a = d.attributes.getNamedItem('rdf:nodeID');
-	var a = d.attributes.getNamedItemNS(ns.rdf, 'nodeID');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'nodeID') || d.attributes.getNamedItem('rdf:nodeID');
 	ok(a !== undefined && a !== null, 'it should have an rdf:nodeID attribute');
 	equals(a.nodeValue, 'someone');
 });
@@ -884,6 +883,9 @@ test("dumping a serialised version of RDF/XML", function() {
   var namespaces = { foaf: ns.foaf };
   var triple = $.rdf.triple('_:someone foaf:name "Jeni"', { namespaces: namespaces });
   var dump = $.rdf.dump([triple], { format: 'application/rdf+xml', serialize: true, namespaces: namespaces });
+  if (dump.substring(0, 5) === '<?xml') {
+    dump = dump.substring(dump.indexOf('?>') + 2);
+  }
   equals(dump, 
     '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" ' +
     'xmlns:foaf="http://xmlns.com/foaf/0.1/">' +
@@ -903,7 +905,7 @@ test("dumping in RDF/XML a triple whose property is rdf:type", function() {
 	var d = r.childNodes[0];
 	equals(d.namespaceURI, ns.foaf);
 	equals(d.nodeName, 'foaf:Person');
-	var a = d.attributes.getNamedItem('rdf:nodeID');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'nodeID') || d.attributes.getNamedItem('rdf:nodeID');
 	ok(a !== undefined && a !== null, 'it should have an rdf:nodeID attribute');
 	equals(a.nodeValue, 'someone');
 	equals(d.childNodes.length, 0, 'the rdf:type element shouldn\'t appear');
@@ -917,14 +919,14 @@ test("dumping in RDF/XML a triple whose object is a blank node", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItem('rdf:about');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'about') || d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value);
 	equals(d.childNodes.length, 1);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc);
 	equals(p.nodeName, 'dc:creator');
-	var a = p.attributes.getNamedItem('rdf:nodeID');
+	var a = p.attributes.getNamedItemNS(ns.rdf, 'nodeID') || p.attributes.getNamedItem('rdf:nodeID');
 	ok(a !== undefined && a !== null, 'it should have an rdf:nodeID attribute');
 	equals(a.nodeValue, 'someone');
 });
@@ -937,7 +939,7 @@ test("dumping in RDF/XML a triple whose object is a untyped literal", function()
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItem('rdf:about');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'about') || d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value);
 	equals(d.childNodes.length, 1);
@@ -956,7 +958,7 @@ test("dumping in RDF/XML a triple whose object is a typed literal", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItem('rdf:about');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'about') || d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value);
 	equals(d.childNodes.length, 1);
@@ -965,7 +967,7 @@ test("dumping in RDF/XML a triple whose object is a typed literal", function() {
 	equals(p.nodeName, 'dc:created');
 	equals(p.childNodes.length, 1);
 	equals(p.childNodes[0].nodeValue, '2009-01-01');
-	var a = p.attributes.getNamedItem('rdf:datatype');
+	var a = p.attributes.getNamedItemNS(ns.rdf, 'datatype') || p.attributes.getNamedItem('rdf:datatype');
 	ok(a !== undefined && a !== null, 'it should have an rdf:datatype attribute');
 	equals(a.nodeValue, ns.xsd + 'date');
 });
@@ -978,7 +980,7 @@ test("dumping in RDF/XML a triple whose object is a literal with a language", fu
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1);
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItem('rdf:about');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'about') || d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value);
 	equals(d.childNodes.length, 1);
@@ -987,7 +989,7 @@ test("dumping in RDF/XML a triple whose object is a literal with a language", fu
 	equals(p.nodeName, 'dc:creator');
 	equals(p.childNodes.length, 1);
 	equals(p.childNodes[0].nodeValue, 'Jeni');
-	var a = p.attributes.getNamedItem('xml:lang');
+	var a = p.attributes.getNamedItemNS(ns.xml, 'lang') || p.attributes.getNamedItem('xml:lang');
 	ok(a !== undefined && a !== null, 'it should have an xml:lang attribute');
 	equals(a.nodeValue, 'en');
 });
@@ -1000,14 +1002,14 @@ test("dumping in RDF/XML a triple whose object is an XML Literal", function() {
 	var r = dump.documentElement;
 	equals(r.childNodes.length, 1, 'the rdf:RDF element should have one child node');
 	var d = r.childNodes[0];
-	var a = d.attributes.getNamedItem('rdf:about');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'about') || d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triple.subject.value, 'the about attribute should hold the subject');
 	equals(d.childNodes.length, 1, 'the description element should have one child node');
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc, 'the property element should be in the dublin core namespace');
 	equals(p.nodeName, 'dc:title', 'the property element should be called title');
-	var a = p.attributes.getNamedItem('rdf:parseType');
+	var a = p.attributes.getNamedItemNS(ns.rdf, 'parseType') || p.attributes.getNamedItem('rdf:parseType');
 	ok(a !== undefined && a !== null, 'it should have an rdf:parseType attribute');
 	equals(a.nodeValue, 'Literal');
 	equals(p.childNodes.length, 3, 'the property element should have three child nodes');
@@ -1054,13 +1056,13 @@ test("creating a new databank", function() {
 	equals(x.documentElement.nodeName, 'rdf:RDF');
 	var r = x.documentElement;
 
-	var xmlnsRdf = r.attributes.getNamedItem('xmlns:rdf');
+	var xmlnsRdf = r.attributes.getNamedItemNS(ns.xmlns, 'rdf') || r.attributes.getNamedItem('xmlns:rdf');
 	ok(xmlnsRdf !== undefined && xmlnsRdf !== null, 'it should have an xmlns:rdf declaration');
 	equals(xmlnsRdf.nodeValue, ns.rdf);
-       var xmlnsDc = r.attributes.getNamedItem('xmlns:dc');
+  var xmlnsDc = r.attributes.getNamedItemNS(ns.xmlns, 'dc') || r.attributes.getNamedItem('xmlns:dc');
 	ok(xmlnsDc !== undefined && xmlnsDc !== null, 'it should have an xmlns:dc declaration');
 	equals(xmlnsDc.nodeValue, ns.dc);
-	var xmlnsFoaf = r.attributes.getNamedItem('xmlns:foaf');
+	var xmlnsFoaf = r.attributes.getNamedItemNS(ns.xmlns, 'foaf') || r.attributes.getNamedItem('xmlns:foaf');
 	ok(xmlnsFoaf !== undefined && xmlnsFoaf !== null, 'it should have an xmlns:foaf declaration');
 	equals(xmlnsFoaf.nodeValue, ns.foaf);
 
@@ -1068,26 +1070,26 @@ test("creating a new databank", function() {
 	var d = r.childNodes[0];
 	equals(d.namespaceURI, ns.rdf);
 	equals(d.nodeName, 'rdf:Description');
-	var a = d.attributes.getNamedItem('rdf:about');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'about') || d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triples[0].subject.value);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.dc);
 	equals(p.nodeName, 'dc:creator');
-	var a = p.attributes.getNamedItem('rdf:resource');
+	var a = p.attributes.getNamedItemNS(ns.rdf, 'resource') || p.attributes.getNamedItem('rdf:resource');
 	ok(a !== undefined && a !== null, 'it should have an rdf:resource attribute');
 	equals(a.nodeValue, triples[0].object.value);
 
 	var d = r.childNodes[1];
 	equals(d.namespaceURI, ns.rdf);
 	equals(d.nodeName, 'rdf:Description');
-	var a = d.attributes.getNamedItem('rdf:about');
+	var a = d.attributes.getNamedItemNS(ns.rdf, 'about') || d.attributes.getNamedItem('rdf:about');
 	ok(a !== undefined && a !== null, 'it should have an rdf:about attribute');
 	equals(a.nodeValue, triples[1].subject.value);
 	var p = d.childNodes[0];
 	equals(p.namespaceURI, ns.foaf);
 	equals(p.nodeName, 'foaf:img');
-	var a = p.attributes.getNamedItem('rdf:resource');
+	var a = p.attributes.getNamedItemNS(ns.rdf, 'resource') || p.attributes.getNamedItem('rdf:resource');
 	ok(a !== undefined && a !== null, 'it should have an rdf:resource attribute');
 	equals(a.nodeValue, triples[1].object.value);
 });

@@ -90,12 +90,14 @@ test("when the namespace hasn't been declared", function() {
 	equals($('body').xmlns('lic'), undefined);
 });
 
+/*
 test("when the namespace is the xml namespace", function () {
   equals($('body').xmlns('xml'), 'http://www.w3.org/XML/1998/namespace');
 });
+*/
 
 test("when the namespace is the xmlns namespace", function () {
-  equals($('body').xmlns('xmlns'), 'http://www.w3.org/2000/xmlns/');
+  equals($('body').xmlns('xmlns'), undefined);
 });
 
 module("When setting a namespace");
