@@ -2012,6 +2012,13 @@ test("creating a literal with a language by specifying the language in the value
 	equals(r.lang, 'fr');
 });
 
+test("creating an XMLLiteral with a language", function () {
+  var r = $.rdf.literal('<foo />', { datatype: ns.rdf + 'XMLLiteral', lang: 'fr' });
+  equals(r.value, '<foo />');
+  equals(r.datatype, ns.rdf + 'XMLLiteral');
+  equals(r.lang, 'fr');
+});
+
 module("Creating blank nodes");
 
 test("two blank nodes with the same id", function() {

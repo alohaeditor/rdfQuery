@@ -2646,12 +2646,16 @@
       var
         m, datatype,
         opts = $.extend({}, $.rdf.literal.defaults, options);
-      if (opts.lang !== undefined && opts.datatype !== undefined) {
+      datatype = $.safeCurie(opts.datatype, { namespaces: opts.namespaces });
+      if (opts.lang !== undefined && opts.datatype !== undefined && datatype.toString() !== (rdfNs + 'XMLLiteral')) {
         throw "Malformed Literal: Cannot define both a language and a datatype for a literal (" + value + ")";
       }
       if (opts.datatype !== undefined) {
         datatype = $.safeCurie(opts.datatype, { namespaces: opts.namespaces });
         $.extend(this, $.typedValue(value.toString(), datatype));
+        if (datatype.toString() === rdfNs + 'XMLLiteral') {
+          this.lang = opts.lang;
+        }
       } else if (opts.lang !== undefined) {
         this.value = value.toString();
         this.lang = opts.lang;

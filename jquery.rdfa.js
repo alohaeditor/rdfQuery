@@ -333,7 +333,7 @@
     },
 
     rdfa = function (context) {
-      var i, subject, resource, lang, datatype, content,
+      var i, subject, resource, lang, datatype, content, text,
         types, object, triple, parent,
         properties, rels, revs,
         forward, backward,
@@ -398,6 +398,7 @@
         if (properties.length > 0) {
           datatype = atts.datatype;
           content = atts.content;
+          text = this.text().replace(/"/g, '\\"');
           if (datatype !== undefined && datatype !== '') {
             datatype = $.curie(datatype, context.curieOptions);
             if (datatype.toString() === rdfXMLLiteral) {
@@ -405,7 +406,7 @@
             } else if (content !== undefined) {
               object = $.rdf.literal(content, { datatype: datatype });
             } else {
-              object = $.rdf.literal(this.text(), { datatype: datatype });
+              object = $.rdf.literal(text, { datatype: datatype });
             }
           } else if (content !== undefined) {
             if (lang === undefined) {
@@ -417,9 +418,9 @@
                      datatype === '') {
             lang = getLang(this, context);
             if (lang === undefined) {
-              object = $.rdf.literal('"' + this.text() + '"');
+              object = $.rdf.literal('"' + text + '"');
             } else {
-              object = $.rdf.literal(this.text(), { lang: lang });
+              object = $.rdf.literal(text, { lang: lang });
             }
           } else {
             object = $.rdf.literal(serialize(this), { datatype: rdfXMLLiteral });

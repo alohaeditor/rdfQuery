@@ -409,6 +409,16 @@ test("reserved name used within a property", function () {
   $('#main > p').remove();
 });
 
+test("double quotes in literal", function() {
+	setup('<p>This photo was taken by <span about="photo1.jpg" property="dc:creator">Mark "foo" Birbeck</span>.</p>');
+	rdf = $('#main > p > span').rdfa();
+	testTriples(rdf,
+    [$.rdf.triple('<photo1.jpg> dc:creator "Mark \\"foo\\" Birbeck" .', ns)]
+  );
+  equals(rdf.databank.triples()[0].object.value, 'Mark "foo" Birbeck');
+	$('#main > p').remove();
+});
+
 module("RDFa Test Suite");
 
 test("Test 0001", function() {
