@@ -1118,7 +1118,9 @@
      * @see jQuery.rdf.databank#load
      */
     load: function (data, options) {
-      var rdf = this, success = options.success;
+      var rdf = this,
+        options = options || {},
+        success = options.success;
       if (success !== undefined) {
         options.success = function () {
           success.call(rdf);
