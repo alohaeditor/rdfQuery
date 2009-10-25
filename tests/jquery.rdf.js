@@ -16,6 +16,7 @@ var ns = {
 
 /* Example adapted from http://www.w3.org/Submission/CBD/ */
 var books = $.rdf.databank()
+  .prefix('rdf', ns.rdf)
   .prefix('rdfs', 'http://www.w3.org/2000/01/rdf-schema#')
   .prefix('foaf', ns.foaf)
   .prefix('dc', ns.dc)
@@ -51,6 +52,59 @@ var books = $.rdf.databank()
   .add('<http://example.com/anotherGreatBook> rdfs:seeAlso <http://example.com/aReallyGreatBook> .')
   .add('<http://example.com/aBookCritic> ex:likes <http://example.com/aReallyGreatBook> .')
   .add('<http://example.com/aBookCritic> ex:dislikes <http://example.com/anotherGreatBook> .');
+
+module("Navigation Tests");
+
+test("navigating to a resource", function () {
+  var rdf = $.rdf({ databank: books });
+  var nodes = rdf.node('<http://example.com/aReallyGreatBook>');
+  equals(nodes.length, 1, "it should have found one resource");
+  equals(nodes[0].node.value, 'http://example.com/aReallyGreatBook', "it should have found the resource that was requested");
+});
+
+test("navigating to a literal", function () {
+  var rdf = $.rdf({ databank: books });
+  var nodes = rdf.node('"John Doe"');
+  equals(nodes.length, 1, "it should have found one literal");
+});
+
+test("navigating to several nodes via a where", function () {
+  var rdf = $.rdf({ databank: books })
+    .where('?book dc:title ?title');
+  var nodes = rdf.node('?book');
+  equals(nodes.length, 2, "it should have found two books");
+  equals(nodes[0].node.value, 'http://example.com/aReallyGreatBook');
+  equals(nodes[1].node.value, 'http://example.com/anotherGreatBook');
+});
+
+test("navigating from a node to a property", function () {
+  var rdf = $.rdf({ databank: books });
+  var nodes = rdf.node('<http://example.com/aReallyGreatBook>');
+  equals(nodes.length, 1, "it should find a single resource");
+  var creator = nodes.find('dc:creator');
+  equals(creator.length, 1, "it should have found one creator");
+  equals(creator[0].node.value, '_:creator');
+  var name = creator.find('foaf:name');
+  equals(name.length, 1, "it should have found one name");
+  equals(name[0].node.value, 'John Doe');
+});
+
+test("navigating to several nodes and then to their property", function () {
+  var rdf = $.rdf({ databank: books });
+  var creators = rdf
+    .where('?book dc:title ?title')
+    .node('?book')
+    .find('dc:creator');
+  equals(creators.length, 2, "it should have found two creators");
+});
+
+test("navigating backwards", function () {
+  var rdf = $.rdf({ databank: books });
+  var people = rdf
+    .node('foaf:Person')
+    .back('rdf:type');
+  equals(people.length, 2, "it should have found two people");
+});
 
 module("Triplestore Tests");
 
@@ -642,6 +696,21 @@ test("filtering a union with a filter clause", function() {
   equals(union.get(0).author.value, "Alice");
   equals(union.get(1).title.value, "SPARQL");
   equals(union.get(1).author.value, "Alex");
+});
+
+test("selecting a subset of bindings to retain", function () {
+  var rdf = $.rdf()
+    .prefix('foaf', ns.foaf)
+    .add('_:alice foaf:knows _:bob')
+    .add('_:bob foaf:knows _:clare')
+    .add('_:alice foaf:knows _:dave')
+    .add('_:dave foaf:knows _:clare')
+    .where('?a foaf:knows ?b');
+  equals(rdf.length, 4, "there should be four matches after the first clause");
+  rdfA = rdf.where('?b foaf:knows ?c');
+  equals(rdfA.length, 2, "there should normally be two matches with the second clause");
+  rdfB = rdf.where('?b foaf:knows ?c', { distinct: ['a', 'c'] });
+  equals(rdfB.length, 1, "there should be one distinct match");
 });
 
 test("grouping based on a binding", function () {

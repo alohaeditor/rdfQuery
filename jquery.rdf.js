@@ -236,6 +236,58 @@
       }
     },
 
+    filterMatches = function (matches, variables) {
+      var i, bindings, triples, j, k, variable, value, nvariables = variables.length,
+        newbindings, match = {}, keyobject = {}, keys = {}, filtered = [];
+      for (i = 0; i < matches.length; i += 1) {
+        bindings = matches[i].bindings;
+        triples = matches[i].triples;
+        keyobject = keys;
+        for (j = 0; j < nvariables; j += 1) {
+          variable = variables[j];
+          value = bindings[variable];
+          if (j === nvariables - 1) {
+            if (keyobject[value] === undefined) {
+              match = { bindings: {}, triples: triples };
+              for (k = 0; k < nvariables; k += 1) {
+                match.bindings[variables[k]] = bindings[variables[k]];
+              }
+              keyobject[value] = match;
+              filtered.push(match);
+            } else {
+              match = keyobject[value];
+              match.triples = match.triples.concat(triples);
+            }
+          } else {
+            if (keyobject[value] === undefined) {
+              keyobject[value] = {};
+            }
+            keyobject = keyobject[value];
+          }
+        }
+      }
+      return filtered;
+    },
+
+    renameMatches = function (matches, old) {
+      var i, match, newMatch, keys = {}, renamed = [];
+      for (i = 0; i < matches.length; i += 1) {
+        match = matches[i];
+        if (keys[match.bindings[old]] === undefined) {
+          newMatch = {
+            bindings: { node: match.bindings[old] },
+            triples: match.triples
+          };
+          renamed.push(newMatch);
+          keys[match.bindings[old]] = newMatch;
+        } else {
+          newMatch = keys[match.bindings[old]];
+          newMatch.triples = newMatch.triples.concat(match.triples);
+        }
+      }
+      return renamed;
+    },
+
     leftActivate = function (query, matches) {
       var newMatches;
       if (query.union === undefined) {
@@ -247,14 +299,21 @@
             newMatches = $.map(matches, function (match, i) {
               return query.filterExp.call(match.bindings, i, match.bindings, match.triples) ? match : null;
             });
-          } else {
+          } else if (query.filterExp !== undefined) {
             newMatches = mergeMatches(matches, query.alphaMemory, query.filterExp.optional);
+          } else {
+            newMatches = matches;
           }
         }
       } else {
         newMatches = $.map(query.union, function (q) {
           return q.matches;
         });
+      }
+      if (query.selections !== undefined) {
+        newMatches = filterMatches(newMatches, query.selections);
+      } else if (query.navigate !== undefined) {
+        newMatches = renameMatches(newMatches, query.navigate);
       }
       updateQuery(query, newMatches);
     },
@@ -1038,7 +1097,7 @@
     rdfquery: '1.1',
 
     init: function (options) {
-      var databanks;
+      var databanks, i;
       options = options || {};
       /* must specify either a parent or a union, otherwise it's the top */
       this.parent = options.parent;
@@ -1068,6 +1127,8 @@
       this.children = [];
       this.partOf = [];
       this.filterExp = options.filter;
+      this.selections = options.distinct;
+      this.navigate = options.navigate;
       this.alphaMemory = [];
       this.matches = [];
       /**
@@ -1079,6 +1140,14 @@
         if (!$.isFunction(this.filterExp)) {
           registerQuery(this.databank, this);
           this.alphaMemory = findMatches(this.databank, this.filterExp);
+        }
+      } else if (options.nodes !== undefined) {
+        this.alphaMemory = [];
+        for (i = 0; i < options.nodes.length; i += 1) {
+          this.alphaMemory.push({
+            bindings: { node: options.nodes[i] },
+            triples: []
+          });
         }
       }
       leftActivate(this);
@@ -1390,6 +1459,62 @@
       query = $.rdf({ parent: this, filter: func });
       this.children.push(query);
       return query;
+    },
+
+    /**
+     * Creates a new {@link jQuery.rdf} object containing one binding for each selected resource.
+     * @param {String|Object} node The node to be selected. If this is a string beginning with a question mark the resources are those identified by the bindings of that value in the currently selected bindings. Otherwise, only the named resource is selected as the node.
+     * @returns {jQuery.rdf} A new {@link jQuery.rdf} object.
+     * @see jQuery.rdf#find
+     * @see jQuery.rdf#back
+     * @example
+     * // returns an rdfQuery object with a pointer to <http://example.com/aReallyGreatBook>
+     * var rdf = $('html').rdf()
+     *   .node('<http://example.com/aReallyGreatBook>');
+     */
+    node: function (resource) {
+      var variable, query;
+      if (resource.toString().substring(0, 1) === '?') {
+        variable = resource.toString().substring(1);
+        query = $.rdf({ parent: this, navigate: variable });
+      } else {
+        if (typeof resource === 'string') {
+          resource = object(resource, { namespaces: this.prefix(), base: this.base() });
+        }
+        query = $.rdf({ parent: this, nodes: [resource] });
+      }
+      this.children.push(query);
+      return query;
+    },
+    
+    /**
+     * Navigates from the resource identified by the 'node' binding to another node through the property passed as the argument.
+     * @param {String|Object} property The property whose value will be the new node.
+     * @returns {jQuery.rdf} A new {@link jQuery.rdf} object whose {@link jQuery.rdf#parent} is this {@link jQuery.rdf}.
+     * @see jQuery.rdf#back
+     * @see jQuery.rdf#node
+     * @example
+     * var creators = $('html').rdf()
+     *   .node('<>')
+     *   .find('dc:creator');
+     */
+    find: function (property) {
+      return this.where('?node ' + property + ' ?object', { navigate: 'object' });
+    },
+    
+    /**
+     * Navigates from the resource identified by the 'node' binding to another node through the property passed as the argument, like {jQuery.rdf#find}, but backwards.
+     * @param {String|Object} property The property whose value will be the new node.
+     * @returns {jQuery.rdf} A new {@link jQuery.rdf} object whose {@link jQuery.rdf#parent} is this {@link jQuery.rdf}.
+     * @see jQuery.rdf#find
+     * @see jQuery.rdf#node
+     * @example
+     * var people = $('html').rdf()
+     *   .node('foaf:Person')
+     *   .back('rdf:type');
+     */
+    back: function (property) {
+      return this.where('?subject ' + property + ' ?node', { navigate: 'subject' });
     },
 
     /**
