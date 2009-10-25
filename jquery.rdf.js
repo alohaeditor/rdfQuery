@@ -447,6 +447,90 @@
       return triples;
     },
 
+    createTurtle = function(triples, options) {
+      var dump = createJson(triples),
+        namespaces = options.namespaces || {},
+        indent = options.indent || false,
+        firstP,
+        s, p, v, i,
+        result = '';
+      for (prefix in namespaces) {
+        result += '@prefix ' + prefix + ': <' + namespaces[prefix] + '> . ';
+        if (indent) {
+          result += '\n';
+        }
+      }
+      for (s in dump) {
+        if (indent) {
+          result += '\n';
+        }
+        if (s.substring(0, 2) === '_:') {
+          result += s;
+        } else {
+          try {
+            result += $.createCurie(s, { namespaces: namespaces });
+          } catch (e) {
+            result += '<' + s + '>';
+          }
+        }
+        result += ' ';
+        firstP = true;
+        for (p in dump[s]) {
+          if (indent) {
+            result += '\n  ';
+          }
+          firstP = false;
+          if (p === $.rdf.type.value.toString()) {
+            result += 'a'
+          } else {
+            try {
+              result += $.createCurie(p, { namespaces: namespaces });
+            } catch (e) {
+              result += '<' + p + '>';
+            }
+          }
+          result += ' ';
+          for (i = 0; i < dump[s][p].length; i += 1) {
+            if (i > 0 && indent) {
+              result += '\n    ';
+            }
+            v = dump[s][p][i];
+            if (v.type === 'uri') {
+              try {
+                result += $.createCurie(v.value, { namespaces: namespaces });
+              } catch (e) {
+                result += '<' + v.value + '>';
+              }
+            } else if (v.type === 'bnode') {
+              result += v.value;
+            } else {
+              result += '"' + v.value + '"';
+              if (v.lang) {
+                result += '@' + v.lang;
+              }
+              if (v.datatype) {
+                result += '^^';
+                try {
+                  result += $.createCurie(v.datatype, { namespaces: namespaces });
+                } catch (e) {
+                  result += '<' + v.datatype + '>';
+                }
+              }
+            }
+            result += ' , ';
+          }
+          result = result.substring(0, result.length - 3);
+          result += ' ; ';
+        }
+        result = result.substring(0, result.length - 3);
+        result += ' . ';
+        if (indent) {
+          result += '\n';
+        }
+      }
+      return result;
+    },
+
     addAttribute = function (parent, namespace, name, value) {
       var doc = parent.ownerDocument,
         a;
@@ -469,7 +553,8 @@
     },
 
     createXmlnsAtt = function (parent, namespace, prefix) {
-      if (prefix) {
+      if (namespace === 'http://www.w3.org/XML/1998/namespace' || namespace === 'http://www.w3.org/2000/xmlns/') {
+      } else if (prefix) {
         addAttribute(parent, 'http://www.w3.org/2000/xmlns/', 'xmlns:' + prefix, namespace);
       } else {
         addAttribute(parent, undefined, 'xmlns', namespace);
@@ -505,13 +590,21 @@
       }
     },
 
-    appendElement = function (parent, namespace, name) {
+    appendElement = function (parent, namespace, name, indent) {
       var doc = parent.ownerDocument,
         e;
       if (namespace !== undefined && namespace !== null) {
         e = doc.createElementNS ? doc.createElementNS(namespace, name) : doc.createNode(1, name, namespace);
       } else {
         e = doc.createElement(name);
+      }
+      if (indent !== -1) {
+        appendText(parent, '\n');
+        if (indent === 0) {
+          appendText(parent, '\n');
+        } else {
+          appendText(parent, '  ');
+        }
       }
       parent.appendChild(e);
       return e;
@@ -545,6 +638,7 @@
       var doc = createDocument(rdfNs, 'rdf:RDF'),
         dump = createJson(triples),
         namespaces = options.namespaces || {},
+        indent = options.indent || false,
         n, s, se, p, pe, i, v,
         m, local, ns, prefix;
       for (n in namespaces) {
@@ -561,9 +655,9 @@
               break;
             }
           }
-          se = appendElement(doc.documentElement, ns, prefix + ':' + local);
+          se = appendElement(doc.documentElement, ns, prefix + ':' + local, indent ? 0 : -1);
         } else {
-          se = appendElement(doc.documentElement, rdfNs, 'rdf:Description');
+          se = appendElement(doc.documentElement, rdfNs, 'rdf:Description', indent ? 0 : -1);
         }
         if (/^_:/.test(s)) {
           addAttribute(se, rdfNs, 'rdf:nodeID', s.substring(2));
@@ -583,14 +677,20 @@
             }
             for (i = (p === $.rdf.type.value.toString() ? 1 : 0); i < dump[s][p].length; i += 1) {
               v = dump[s][p][i];
-              pe = appendElement(se, ns, prefix + ':' + local);
+              pe = appendElement(se, ns, prefix + ':' + local, indent ? 1 : -1);
               if (v.type === 'uri') {
                 addAttribute(pe, rdfNs, 'rdf:resource', v.value);
               } else if (v.type === 'literal') {
                 if (v.datatype !== undefined) {
                   if (v.datatype === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
                     addAttribute(pe, rdfNs, 'rdf:parseType', 'Literal');
+                    if (indent) {
+                      appendText(pe, '\n    ');
+                    }
                     appendXML(pe, v.value);
+                    if (indent) {
+                      appendText(pe, '\n  ');
+                    }
                   } else {
                     addAttribute(pe, rdfNs, 'rdf:datatype', v.datatype);
                     appendText(pe, v.value);
@@ -606,8 +706,14 @@
                 addAttribute(pe, rdfNs, 'rdf:nodeID', v.value.substring(2));
               }
             }
+            if (indent) {
+              appendText(se, '\n');
+            }
           }
         }
+      }
+      if (indent) {
+        appendText(doc.documentElement, '\n\n');
       }
       return doc;
     },
@@ -1556,6 +1662,7 @@
    * </table>
    * @param {Object} [options.namespaces={}] A set of namespace bindings used when mapping resource URIs to CURIEs or QNames (particularly in a RDF/XML serialisation).
    * @param {boolean} [options.serialize=false] If true, rather than creating an Object, the function will return a string which is ready to display or send to a server.
+   * @param {boolean} [options.indent=false] If true, the serialised (RDF/XML) output has indentation added to it to make it more readable.
    * @returns {Object|String} The alternative representation of the triples.
    */
   $.rdf.dump = function (triples, options) {
@@ -1566,6 +1673,8 @@
     if (format === 'application/json') {
       dump = createJson(triples, opts);
       return serialize ? $.toJSON(dump) : dump;
+    } else if (format === 'text/turtle') {
+      return createTurtle(triples, opts);
     } else if (format === 'application/rdf+xml') {
       dump = createRdfXml(triples, opts);
       if (serialize) {
@@ -1586,6 +1695,7 @@
   $.rdf.dump.defaults = {
     format: 'application/json',
     serialize: false,
+    indent: false,
     namespaces: {}
   }
 
