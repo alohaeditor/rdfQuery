@@ -121,7 +121,7 @@ test("Structured XML Literal", function () {
 
 test("RDFa from html element", function () {
   testTriples($('html').rdf(), 
-              [$.rdf.triple('<> <http://www.w3.org/1999/xhtml/vocab#stylesheet> <../jquery/jquery.qunit/testsuite.css>')]);
+              [$.rdf.triple('<> <http://www.w3.org/1999/xhtml/vocab#stylesheet> <../jquery/jquery.qunit/qunit.css>')]);
 });
 
 test("XMLLiteral including comments", function () {
