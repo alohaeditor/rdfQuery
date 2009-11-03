@@ -1232,6 +1232,10 @@
    *     <td><code>application/rdf+xml</code></td>
    *     <td>An DOMDocument node holding XML in <a href="http://www.w3.org/TR/rdf-syntax-grammar/">RDF/XML syntax</a></td>
    *   </tr>
+   *   <tr>
+   *     <td><code>text/turtle</code></td>
+   *     <td>A String holding a representation of the RDF in <a href="http://www.w3.org/TeamSubmission/turtle/">Turtle syntax</a></td>
+   *   </tr>
    * </table>
    * @param {Object} [options.namespaces={}] A set of namespace bindings used when mapping resource URIs to CURIEs or QNames (particularly in a RDF/XML serialisation).
    * @param {boolean} [options.serialize=false] If true, rather than creating an Object, the function will return a string which is ready to display or send to a server.
@@ -1253,27 +1257,6 @@
     }
     dump = parser.dump(triples, opts);
     return serialize ? parser.serialize(dump) : dump;
-    /*
-    if (format === 'application/json') {
-      dump = createJson(triples, opts);
-      return serialize ? $.toJSON(dump) : dump;
-    } else if (format === 'text/turtle') {
-      return createTurtle(triples, opts);
-    } else if (format === 'application/rdf+xml') {
-      dump = createRdfXml(triples, opts);
-      if (serialize) {
-        if (dump.xml) {
-          return dump.xml.replace(/\s+$/,'');
-        } else {
-          serializer = new XMLSerializer();
-          return serializer.serializeToString(dump);
-        }
-      } else {
-        return dump;
-      }
-    } else {
-    }
-    */
   };
 
   $.rdf.dump.defaults = {
@@ -1650,13 +1633,19 @@
 
     /**
      * Loads some data into the databank.
-     * @param {Node|Object} data If the data is a node, it's interpreted to be an <a href="http://www.w3.org/TR/rdf-syntax-grammar/">RDF/XML syntax</a> document and will be parsed as such. Otherwise, it's taken to be a <a href="http://n2.talis.com/wiki/RDF_JSON_Specification">RDF/JSON</a> object. The data cannot be a string; it must be parsed before it is passed to this function.
+     * @param {Node|Object|String} data If the data is a string and starts with 'http://' then it's taken to be a URI and data is loaded from that URI via the proxy specified in the options. If it doesn't start with 'http://' then it's taken to be a serialized version of some format capable of representing RDF, parsed and interpreted. If the data is a node, it's interpreted to be an <a href="http://www.w3.org/TR/rdf-syntax-grammar/">RDF/XML syntax</a> document and will be parsed as such. Otherwise, it's taken to be a <a href="http://n2.talis.com/wiki/RDF_JSON_Specification">RDF/JSON</a> object.
+     * @param {Object} opts Options governing the loading of the data.
+     * @param {String} [opts.format] The mime type of the format the data is in, particularly useful if you're supplying the data as a string. If unspecified, the data will be sniffed to see if it might be HTML, RDF/XML, RDF/JSON or Turtle.
+     * @param {boolean} [opts.async=true] When loading data from a URI, this determines whether it will be done synchronously or asynchronously.
+     * @param {Function} [opts.success] When loading data from a URI, a function that will be called after the data is successfully loaded.
+     * @param {Function} [opts.error] When loading data from a URI, a function that will be called if there's an error when accessing the URI.
+     * @param {String} [opts.proxy='http://www.jenitennison.com/rdfquery/proxy.php'] The URI for a server-side proxy through which the data can be accessed. This does not have to be hosted on the same server as this Javascript, the HTML page or the remote data. The proxy must accept id, url and depth parameters and respond with some Javascript that will invoke the {@link jQuery.rdf.databank.load} function. <a href="http://code.google.com/p/rdfquery/source/browse/#svn/trunk/proxies">Example proxies</a> that do the right thing are available. If you are intending to use this facility a lot, please do not use the default proxy.
+     * @param {integer} [opts.depth=0] Triggers recursive loading of located resources, to the depth specified. This is useful for automatically populating a databank with linked data.
      * @returns {jQuery.rdf.databank} The {@link jQuery.rdf.databank} itself.
      * @see jQuery.rdf#load
      */
     load: function (data, opts) {
       var i, triples, url, script, parser, docElem,
-        parse = (opts && opts.parse) || $.rdf.databank.defaults.parse,
         format = (opts && opts.format),
         async = (opts && opts.async) || $.rdf.databank.defaults.async,
         success = (opts && opts.success) || $.rdf.databank.defaults.success,
@@ -1677,12 +1666,14 @@
       } else {
         if (format === undefined) {
           if (typeof data === 'string') {
-            if (data.substring(1, 1) === '{') {
+            if (data.substring(0, 1) === '{') {
               format = 'application/json';
-            } else if (data.substring(1, 14) === '<!DOCTYPE html' || data.substring(1, 5) === '<html') {
+            } else if (data.substring(0, 14) === '<!DOCTYPE html' || data.substring(0, 5) === '<html') {
               format = 'application/xhtml+xml';
-            } else {
+            } else if (data.substring(0, 5) === '<?xml' || data.substring(0, 8) === '<rdf:RDF') {
               format = 'application/rdf+xml';
+            } else {
+              format = 'text/turtle';
             }
           } else if (data.documentElement || data.ownerDocument) {
             docElem = data.documentElement ? data.documentElement : data.ownerDocument.documentElement;
@@ -1705,21 +1696,6 @@
         }
         return this;
       }
-      /*
-        if (data.ownerDocument !== undefined) {
-        if (data.documentElement.nodeName === 'html') {
-          triples = $(data).children('*').map(function (i, elem) {
-            return $.map($.rdf.gleaners, function (gleaner) {
-              return gleaner.call($(elem));
-            });
-          });
-        } else {
-          triples = parseRdfXml(data);
-        }
-      } else {
-        triples = parseJson(data);
-      }
-      */
     },
 
     /**
