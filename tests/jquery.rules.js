@@ -5,6 +5,7 @@
 
 var ns = {
 	rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+	rdfs: "http://www.w3.org/2000/01/rdf-schema#",
 	xsd: "http://www.w3.org/2001/XMLSchema#",
 	dc: "http://purl.org/dc/elements/1.1/",
 	foaf: "http://xmlns.com/foaf/0.1/",
@@ -365,5 +366,19 @@ test("when executing a ruleset using data.reason()", function () {
   equals(data.triples()[3], $.rdf.triple('<#you> a foaf:Agent', { namespaces: ns }));
 });
 
+module("RDFS rules");
+
+test("when running RDFS rules on a single statement", function () {
+  var data = $.rdf.databank()
+    .prefix('foaf', ns.foaf)
+    .prefix('rdfs', ns.rdfs)
+    .add('<#me> foaf:surname "Tennison" .')
+    .add('foaf:surname rdfs:domain foaf:Person .')
+    .add('foaf:Person rdfs:subClassOf foaf:Agent .');
+  equals(data.size(), 3);
+  data.reason($.rdf.ruleset.rdfs);
+  equals(data.size(), 13);
+  console.log(data.dump({format: 'text/turtle', indent: true }))
+});
 
 })(jQuery);

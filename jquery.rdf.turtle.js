@@ -538,7 +538,7 @@
     },
   
     createTurtle = function (triples, options) {
-      var dump = createJson(triples),
+      var dump = $.rdf.parsers['application/json'].dump(triples),
         namespaces = options.namespaces || {},
         indent = options.indent || false,
         firstP, prefix,
