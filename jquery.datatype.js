@@ -194,6 +194,19 @@
     strip: true,
     /** @ignore */
     value: function (v) {
+      v = v.replace(/^0+/, '')
+        .replace(/0+$/, '');
+      if (v === '') {
+        v = '0.0';
+      }
+      if (v.substring(0, 1) === '.') {
+        v = '0' + v;
+      }
+      if (/\.$/.test(v)) {
+        v = v + '0';
+      } else if (!/\./.test(v)) {
+        v = v + '.0';
+      }
       return v;
     }
   };
