@@ -821,6 +821,15 @@ $(document).ready(function () {
     answer.dialog('open');
   });
 
+  $('#turtle').bind("click", function () {
+      var turtle = $('#content').rdf().databank.dump({ format: 'text/turtle' }),
+        answer = $('#answer');
+      answer.dialog('option', 'title', 'TURTLE');
+      answer.dialog('option', 'width', '75%');
+      answer.text(turtle);
+      answer.dialog('open');
+    });
+
   $('#statement').select();
 
 });
