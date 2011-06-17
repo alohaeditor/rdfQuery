@@ -1156,7 +1156,6 @@ test('selecting nodes with a particular subject', function () {
   setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="#CharlesRobertDarwin"><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span> and his mother <span about="#SusannahDarwin" property="rdf:label">Susannah Darwin</span></p>');
   var spans = $('#main > p span');
   var darwin = $("#main span:about('#CharlesRobertDarwin')");
-  debugger;
   equals(darwin.length, 3, "there should be three spans about #CharlesRobertDarwin");
   equals(darwin[0], spans[0]);
   equals(darwin[1], spans[1]);

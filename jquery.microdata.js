@@ -30,40 +30,10 @@
         schema: "http://schema.org/"
     },
     
-    /*
-    <div itemscope itemtype="http://schema.org/Person">
-  <span itemprop="name">Jane Doe</span>
-  <img src="janedoe.jpg" itemprop="image" />
-
-  <span itemprop="jobTitle">Professor</span>
-  <div itemprop="address" itemscope itemtype="http://schema.org/PostalAddress">
-    <span itemprop="streetAddress">
-      20341 Whitworth Institute
-      405 N. Whitworth
-    </span>
-    <span itemprop="addressLocality">Seattle</span>,
-    <span itemprop="addressRegion">WA</span>
-    <span itemprop="postalCode">98052</span>
-  </div>
-  <span itemprop="telephone">(425) 123-4567</span>
-  <a href="mailto:jane-doe@xyz.edu" itemprop="email">
-    jane-doe@xyz.edu</a>
-
-  Jane's home page:
-  <a href="www.janedoe.com" itemprop="url">janedoe.com</a>
-
-  Graduate students:
-  <a href="www.xyz.edu/students/alicejones.html" itemprop="colleagues">
-    Alice Jones</a>
-  <a href="www.xyz.edu/students/bobsmith.html" itemprop="colleagues">
-    Bob Smith</a>
-</div>
-*/
-
     getSubjectElem = function (elem) {
         var par = elem.parent();
         if (par.length) {
-            if (par.attr('itemscope')) {
+            if (par.attr('itemscope') !== undefined) {
                 return par;
             }
             else {
@@ -73,32 +43,108 @@
         return undefined;
     },
     
-    microdata = function (context) {
+    getSubjectFromElement = function () {
+        if (this.attr('itemid')) {
+            return $.rdf.resource(this.attr('itemid'));
+        } else {
+            return $.rdf.blank('[]');
+        }
+    },
+    
+    getTypeFromElement = function () {
+        var type = this.attr('itemtype');
+        if (type) {
+            return $.rdf.resource('<' + type + '>');
+        } else {
+            return $.rdf.resource('<http://www.w3.org/2002/07/owl#Thing>');
+        }
+    },
+    
+   
+    
+    extractReferences = function (context) {
+        
+    },
+    
+    extractProps = function (context) {
         var triples = [];
         
-        var subjElem;
-        if ($(this).attr('itemscope')) {
-            //elem is a subject itself
-            subjElem = this;
+        if (!context) {
+            context =  {};
+        }
+        //there are two types of properties
+        // (1 - the easy ones): literals
+        if ($(this).attr('itemprop') !== undefined) {
+            if ($(this).attr('itemscope') === undefined) {
+                //TODO: implement me
+                
+                //traverse deeper in the hierarchy
+                var propertyTriples = $.map($(this).children(), function(elem) {
+                    return extractProps.call(elem);
+                });
+                triples = triples.concat(propertyTriples);
+            }
+            // (2 - the complex ones): resources
+            else {
+                //recursively call microdata to parse the triples
+                var resTriples = microdata.call(this);
+                triples = triples.concat(resTriples);
+            }
         } else {
-            subjElem = getSubjectElem($(this));
+            return [];
+        }
+        return triples;
+    },
+    
+    extractResource = function (context) {
+        var triples = [];
+        
+        if (!context) {
+            context =  {};
         }
         
         var subjResource;
-        if (subjElem) {
-            if (subjElem.attr('itemid')) {
-                subjResource = $.rdf.resource(subjElem.attr('itemid'));
-            } else {
-                subjResource = $.rdf.resource('<>');
-            }
+        if (this.attr('itemscope') !== undefined) {
+            subjResource = getSubjectFromElement.call(this);
         }
         
-        if (!subjResource) {
-            return [];
+        //get type of element
+        triples.push(
+                $.rdf.triple(
+                    subjResource, 
+                    $.rdf.type, 
+                    getTypeFromElement.call(this), {namespaces: ns})
+                );
+        
+        //query for referenced items and add triples recursively
+        if ($(this).attr('itemref')) {
+            var selector = $.map($(this).attr('itemref').split(" "), 
+            function (n, i) {
+                return "#" + n;
+            })
+            .join(", ");
+            var referencedResources = extractResource.call($(selector), {
+                subject: subjResource
+            });
+            triples = triples.concat(referencedTriples);
         }
         
-        //TODO: implement me!
+        //parse children for properties (recursively)!
+        var propertyTriples = $.map($(this).children(), function (elem) {
+            return extractProps.call(elem, {subject: subjResource});
+        });
+        triples = triples.concat(propertyTriples);
         
+        return {
+            subject: subjResource,
+            triples: triples
+        };
+    },
+    
+    microdata = function (context) {
+        var triples = extractResource.call($(this)).triples;
+        
+        console.log("[DEBUG]", "Extracted ", triples.length, " triple(s)!");
         return triples;
     },
     
@@ -116,10 +162,12 @@
     },
 
     addMicrodata = function (triple) {
+      //TODO: implement me!
       return this;
     },
 
     removeMicrodata = function (what) {
+      //TODO: implement me!
       return this;
     };
 
