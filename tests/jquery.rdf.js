@@ -295,10 +295,10 @@ test("using three arguments with each() to get the source triples", function() {
 	rdf.each(function (index, match, source) {
 		sources.push(source);
 	});
-	equals(sources[0][0], $.rdf.triple(triples[0], { namespaces: namespaces }));
-	equals(sources[0][1], $.rdf.triple(triples[1], { namespaces: namespaces }));
-	equals(sources[1][0], $.rdf.triple(triples[2], { namespaces: namespaces }));
-	equals(sources[1][1], $.rdf.triple(triples[3], { namespaces: namespaces }));
+	equals(sources[0][1], $.rdf.triple(triples[0], { namespaces: namespaces }));
+	equals(sources[0][0], $.rdf.triple(triples[1], { namespaces: namespaces }));
+	equals(sources[1][1], $.rdf.triple(triples[2], { namespaces: namespaces }));
+	equals(sources[1][0], $.rdf.triple(triples[3], { namespaces: namespaces }));
 });
 
 test("mapping each match to an array", function() {
