@@ -33,6 +33,7 @@
             <arg value="jquery.curie.js"/>
             <arg value="jquery.rdf.js"/>
             <arg value="jquery.rdfa.js"/>
+            <arg value="jquery.microdata.js"/>
             <arg value="jquery.rules.js"/>
         </java>
     </target>
@@ -63,10 +64,17 @@
             <fileset dir="${JS}/" includes="jquery.rdfquery.core-${VERSION}.js" />
             <fileset dir="." includes="jquery.rdfa.js" />            
         </concat>
+
+        <echo message="Building rdfQuery Microdata Distribution" />
+        <concat destfile="${JS}/jquery.rdfquery.microdata-${VERSION}.js">
+            <fileset dir="${JS}/" includes="jquery.rdfquery.rdfa-${VERSION}.js" />
+            <fileset dir="." includes="jquery.microdata.js" />
+        </concat>
+
         
         <echo message="Building rdfQuery Rules Distribution" />
         <concat destfile="${JS}/jquery.rdfquery.rules-${VERSION}.js">
-            <fileset dir="${JS}/" includes="jquery.rdfquery.rdfa-${VERSION}.js" />
+            <fileset dir="${JS}/" includes="jquery.rdfquery.microdata-${VERSION}.js" />
             <fileset dir="." includes="jquery.rules.js" />            
         </concat>
     </target>
@@ -74,6 +82,7 @@
     <target name="minimise">
         <echo message="Minimising rdfQuery Core Distribution" />
         <echo message="Minimising rdfQuery RDFa Distribution" />
+        <echo message="Minimising rdfQuery Microdata Distribution" />
         <echo message="Minimising rdfQuery Rules Distribution" />
 
         <antcall target="minimiseJSFile">
@@ -83,6 +92,10 @@
         <antcall target="minimiseJSFile">
             <param name="inputFile" value="${JS}/jquery.rdfquery.rdfa-${VERSION}.js" />
             <param name="outputFile" value="${JS_MIN}/jquery.rdfquery.rdfa.min-${VERSION}.js" />
+        </antcall>
+        <antcall target="minimiseJSFile">
+            <param name="inputFile" value="${JS}/jquery.rdfquery.microdata-${VERSION}.js" />
+            <param name="outputFile" value="${JS_MIN}/jquery.rdfquery.microdata.min-${VERSION}.js" />
         </antcall>
         <antcall target="minimiseJSFile">
             <param name="inputFile" value="${JS}/jquery.rdfquery.rules-${VERSION}.js" />

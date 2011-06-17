@@ -118,8 +118,8 @@ test("creating an empty triple store", function() {
 test("creating a triple store from an array of $.rdf.triple objects", function() {
 	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [
-		$.rdf.triple('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .', { namespaces: namespaces }),
-		$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .', { namespaces: namespaces })
+		$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .', { namespaces: namespaces }),
+		$.rdf.triple('<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .', { namespaces: namespaces })
 	];
 	var rdf = $.rdf({ triples: triples });
 	equals(rdf.databank.size(), 2, "the length of the databank should be two");
@@ -216,8 +216,8 @@ test("adding another triple that matches the original search pattern", function(
 test("selecting triples using two search patterns", function() {
 	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [
-		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
+		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .'
 	];
 	var rdf = $.rdf({triples: triples, namespaces: namespaces});
@@ -227,16 +227,17 @@ test("selecting triples using two search patterns", function() {
 	equals(filtered.length, 1, "number of items after filtering");
 	equals(filtered[0].photo.value, $.uri('photo1.jpg'));
 	equals(filtered[0].creator.value, $.uri('http://www.blogger.com/profile/1109404'));
-	equals(filtered.sources()[0][0], $.rdf.triple(triples[0], {namespaces: namespaces}));
-	equals(filtered.sources()[0][1], $.rdf.triple(triples[1], {namespaces: namespaces}));
+    var srces = filtered.sources();
+    equals(srces[0][0], $.rdf.triple(triples[0], {namespaces: namespaces}));
+	equals(srces[0][1], $.rdf.triple(triples[1], {namespaces: namespaces}));
 	var selected = filtered.select();
 	equals(selected[0].photo.type, 'uri');
 	equals(selected[0].photo.value, $.uri('photo1.jpg'));
 	equals(selected[0].creator.type, 'uri');
-	equals(selected[0].creator.value, 'http://www.blogger.com/profile/1109404');
+	equals(selected[0].creator.value.toString(), 'http://www.blogger.com/profile/1109404');
 	var selected2 = filtered.select(['creator']);
 	equals(selected2[0].creator.type, 'uri');
-	equals(selected2[0].creator.value, 'http://www.blogger.com/profile/1109404');
+	equals(selected2[0].creator.value.toString(), 'http://www.blogger.com/profile/1109404');
 	ok(selected2[0].photo === undefined, 'there should not be a photo property');
 });
 
@@ -283,10 +284,10 @@ test("using three arguments with each() to get the source triples", function() {
 	var sources = [];
 	var namespaces = { dc: ns.dc, foaf: ns.foaf };
 	var triples = [
-		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
 		'<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .',
-		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
-		'<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .'
+		'<photo1.jpg> dc:creator <http://www.blogger.com/profile/1109404> .',
+		'<http://www.blogger.com/profile/1109404> foaf:img <photo2.jpg> .',
+		'<photo2.jpg> dc:creator <http://www.blogger.com/profile/1109404> .'
 	];
 	var rdf = $.rdf({ triples: triples, namespaces: namespaces })
 		.where('?photo dc:creator ?creator')
@@ -294,10 +295,10 @@ test("using three arguments with each() to get the source triples", function() {
 	rdf.each(function (index, match, source) {
 		sources.push(source);
 	});
-	equals(sources[0][0], $.rdf.triple(triples[0], { namespaces: namespaces }));
-	equals(sources[0][1], $.rdf.triple(triples[1], { namespaces: namespaces }));
-	equals(sources[1][0], $.rdf.triple(triples[2], { namespaces: namespaces }));
-	equals(sources[1][1], $.rdf.triple(triples[3], { namespaces: namespaces }));
+	equals(sources[0][1], $.rdf.triple(triples[0], { namespaces: namespaces }));
+	equals(sources[0][0], $.rdf.triple(triples[1], { namespaces: namespaces }));
+	equals(sources[1][1], $.rdf.triple(triples[2], { namespaces: namespaces }));
+	equals(sources[1][0], $.rdf.triple(triples[3], { namespaces: namespaces }));
 });
 
 test("mapping each match to an array", function() {
@@ -344,12 +345,12 @@ test("using the result of sources() as a jQuery object", function() {
 		.where('?creator foaf:img ?photo');
 	var triples = rdf.sources().get(0);
 	equals(triples.length, 2, "there are two triples in the first match");
-	equals(triples[0].subject, $.rdf.resource('<photo1.jpg>'));
-	equals(triples[0].property, '<' + ns.dc + 'creator>');
-	equals(triples[0].object, '<http://www.blogger.com/profile/1109404>');
-	equals(triples[1].subject, '<http://www.blogger.com/profile/1109404>');
-	equals(triples[1].property, '<' + ns.foaf + 'img>');
-	equals(triples[1].object, $.rdf.resource('<photo1.jpg>'));
+	equals(triples[0].subject, '<http://www.blogger.com/profile/1109404>');
+	equals(triples[0].property, '<' + ns.foaf + 'img>');
+	equals(triples[0].object, $.rdf.resource('<photo1.jpg>'));
+	equals(triples[1].subject, $.rdf.resource('<photo1.jpg>'));
+	equals(triples[1].property, '<' + ns.dc + 'creator>');
+	equals(triples[1].object, '<http://www.blogger.com/profile/1109404>');
 });
 
 test("creating a jQuery object from the rdfQuery object", function() {
@@ -1119,7 +1120,7 @@ test("creating a new databank", function() {
 	equals(e[triples[0].subject.value][triples[0].property.value][0].value, 'http://www.blogger.com/profile/1109404');
 
   var j = data.dump({ serialize: true });
-  equals(j, '{"' + triples[0].subject.value + '": {"http://purl.org/dc/elements/1.1/creator": [{"type": "uri", "value": "http://www.blogger.com/profile/1109404"}]}, "http://www.blogger.com/profile/1109404": {"http://xmlns.com/foaf/0.1/img": [{"type": "uri", "value": "' + triples[0].subject.value + '"}]}}');
+  equals(j, '{"' + triples[0].subject.value + '":{"http://purl.org/dc/elements/1.1/creator":[{"type":"uri","value":"http://www.blogger.com/profile/1109404"}]},"http://www.blogger.com/profile/1109404":{"http://xmlns.com/foaf/0.1/img":[{"type":"uri","value":"' + triples[0].subject.value + '"}]}}');
 
 	var x = data.dump({ format: 'application/rdf+xml', namespaces: namespaces });
 	equals(x.documentElement.nodeName, 'rdf:RDF');
@@ -1335,7 +1336,7 @@ test("loading RDF/XML with xml:lang attributes in it", function () {
     '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
     '  rdf:about="http://example.org/buecher/baum" xml:lang="de">' +
     '  <dc:title>Der Baum</dc:title>' +
-    '  <dc:description>Das Buch ist außergewöhnlich</dc:description>' +
+    '  <dc:description>Das Buch ist auÃŸergewÃ¶hnlich</dc:description>' +
     '  <dc:title xml:lang="en">The Tree</dc:title>' +
     '</rdf:Description>';
   var doc = parseFromString(xml);
@@ -1355,7 +1356,7 @@ test("loading RDF/XML with xml:lang attributes on property elements", function (
     '  xmlns:dc="http://purl.org/dc/elements/1.1/"' +
     '  rdf:about="http://example.org/buecher/baum">' +
     '  <dc:title xml:lang="de">Der Baum</dc:title>' +
-    '  <dc:description xml:lang="de">Das Buch ist außergewöhnlich</dc:description>' +
+    '  <dc:description xml:lang="de">Das Buch ist auÃŸergewÃ¶hnlich</dc:description>' +
     '  <dc:title xml:lang="en">The Tree</dc:title>' +
     '</rdf:Description>';
   var doc = parseFromString(xml);
@@ -1365,7 +1366,7 @@ test("loading RDF/XML with xml:lang attributes on property elements", function (
   var triples = databank.triples();
   equals(triples[0].object.value, 'Der Baum');
   equals(triples[0].object.lang, 'de');
-  equals(triples[1].object.value, 'Das Buch ist außergewöhnlich');
+  equals(triples[1].object.value, 'Das Buch ist auÃŸergewÃ¶hnlich');
   equals(triples[1].object.lang, 'de');
   equals(triples[2].object.value, 'The Tree');
   equals(triples[2].object.lang, 'en');
@@ -1621,8 +1622,8 @@ test("describing a resource that is not the object of any triples, and the subje
   equals(books.size(), 29);
   var d1 = books.describe(['<http://example.com/aBookCritic>']);
   equals(d1.length, 2);
-  equals(d1[0], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/likes> <http://example.com/aReallyGreatBook> .'));
-  equals(d1[1], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/dislikes> <http://example.com/anotherGreatBook> .'));
+  equals(d1[0], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/dislikes> <http://example.com/anotherGreatBook> .'));
+  equals(d1[1], $.rdf.triple('<http://example.com/aBookCritic> <http://example.com/likes> <http://example.com/aReallyGreatBook> .'));
 });
 
 test("describing a resource that is also the object of two triples", function () {
