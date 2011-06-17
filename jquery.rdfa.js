@@ -827,6 +827,9 @@
     return this;
   };
 
-  $.rdf.gleaners.push(gleaner);
+  $.rdf.gleaners.push({
+      name: "rdfa",
+      gleaner: gleaner
+  });
 
 })(jQuery);

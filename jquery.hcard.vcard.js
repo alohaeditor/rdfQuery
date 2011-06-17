@@ -398,8 +398,8 @@ example:
 geo:
 
   <span class="geo">
-	 <abbr class="latitude" title="48.816667">N 48¡ 81.6667</abbr>
-	 <abbr class="longitude" title="2.366667">E 2¡ 36.6667</abbr>
+	 <abbr class="latitude" title="48.816667">N 48ï¿½ 81.6667</abbr>
+	 <abbr class="longitude" title="2.366667">E 2ï¿½ 36.6667</abbr>
   </span>
 
 - also in a short form
@@ -678,6 +678,9 @@ bday:
 		//alert(trips);
 		return trips;	   
 	},
-	$.rdf.gleaners.push(gleaner);
+	$.rdf.gleaners.push({
+      name: "hcard.vcard",
+      gleaner: gleaner
+  });
 
 })(jQuery);

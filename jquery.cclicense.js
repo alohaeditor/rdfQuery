@@ -74,6 +74,9 @@
     }
   };
 
-  $.rdf.gleaners.push(gleaner);
+  $.rdf.gleaners.push({
+      name: "cclicense",
+      gleaner: gleaner
+  });
 
 })(jQuery);

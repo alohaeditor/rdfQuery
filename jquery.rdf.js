@@ -154,7 +154,7 @@
         return bindings === null ? null : { bindings: bindings, triples: [triple] };
       });
     },
-
+    
     mergeMatches = function (existingMs, newMs, optional) {
       return $.map(existingMs, function (existingM, i) {
         var compatibleMs = $.map(newMs, function (newM) {
@@ -1120,10 +1120,12 @@
      *   });
      */
     sources: function () {
-      return $($.map(this.matches, function (match) {
-        // return an array-of-an-array because arrays automatically get expanded by $.map()
-        return [match.triples];
-      }));
+         
+            return $($.map(this.matches, 
+                function(match){
+                    // return an array-of-an-array because arrays automatically get expanded by $.map()
+                    return [match.triples.reverse()];
+                }));
     },
 
     /**
@@ -1286,8 +1288,8 @@
       return $(this).children('*').rdf(callback);
     } else if ($(this).length > 0) {
       triples = $(this).map(function (i, elem) {
-        return $.map($.rdf.gleaners, function (gleaner) {
-          return gleaner.call($(elem), { callback: callback });
+        return $.map($.rdf.gleaners, function (g) {
+          return g.gleaner.call($(elem), { callback: callback });
         });
       });
       return $.rdf({ triples: triples, namespaces: $(this).xmlns() });
@@ -1302,11 +1304,8 @@
       var j = $(a),
         resource = m[3] ? j.safeCurie(m[3]) : null,
         isAbout = false;
-      $.each($.rdf.gleaners, function (i, gleaner) {
-        isAbout = gleaner.call(j, { about: resource });
-        if (isAbout) {
-          return null;
-        }
+      $.each($.rdf.gleaners, function (i, g) {
+        isAbout |= g.gleaner.call(j, { about: resource });
       });
       return isAbout;
     },
@@ -1315,11 +1314,8 @@
       var j = $(a),
         type = m[3] ? j.curie(m[3]) : null,
         isType = false;
-      $.each($.rdf.gleaners, function (i, gleaner) {
-        if (gleaner.call(j, { type: type })) {
-          isType = true;
-          return null;
-        }
+      $.each($.rdf.gleaners, function (i, g) {
+          isType |= g.gleaner.call(j, {  type: type });
       });
       return isType;
     }
@@ -1617,7 +1613,9 @@
           rhash[r] = true;
         }
       }
-      return $.unique(triples);
+      return $.grep(triples,function(v,k) {
+                 return $.inArray(v,triples) === k;
+             }).reverse();
     },
 
     /**

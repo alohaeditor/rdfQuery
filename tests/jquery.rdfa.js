@@ -121,7 +121,7 @@ test("Structured XML Literal", function () {
 
 test("RDFa from html element", function () {
   testTriples($('html').rdf(), 
-              [$.rdf.triple('<> <http://www.w3.org/1999/xhtml/vocab#stylesheet> <../jquery/jquery.qunit/qunit.css>')]);
+              [$.rdf.triple('<> <http://www.w3.org/1999/xhtml/vocab#stylesheet> <../jquery/tests/qunit/qunit.css>')]);
 });
 
 test("XMLLiteral including comments", function () {
@@ -505,11 +505,11 @@ test("Test 0014", function() {
 
 test("Test 0015", function() {
 	$('head').append('<link rel="dc:source" href="urn:isbn:0140449132" /><meta property="dc:creator" content="Fyodor Dostoevsky" />');
-	testTriples($('link[rel=dc:source]').rdfa(), 
+	testTriples($('link[rel="dc:source"]').rdfa(), 
 		[$.rdf.triple('<> dc:source <urn:isbn:0140449132> .', ns)]);
 	testTriples($('meta').rdfa(), 
 		[$.rdf.triple('<> dc:creator "Fyodor Dostoevsky"  .', ns)]);
-	$('link[rel=dc:source]').remove();
+	$('link[rel="dc:source"]').remove();
 	$('meta').remove();
 })
 
@@ -966,7 +966,7 @@ test("adding RDFa where the subject is a resource which is already referenced", 
   var a = $('#main > p > a');
   a.rdfa('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .');
   equals(a.attr('about'), 'photo1.jpg');
-  equals(a.attr('rel'), '');
+  equals(a.attr('rel'), undefined);
   equals(a.attr('rev'), 'foaf:img');
   equals(a.attr('href'), 'http://www.blogger.com/profile/1109404');
   equals(a.attr('resource'), undefined);
@@ -1156,6 +1156,7 @@ test('selecting nodes with a particular subject', function () {
   setup('<p><span datatype="" property="rdf:label" typeof="foaf:Person" about="#CharlesRobertDarwin"><span property="foaf:firstName">Charles</span> Robert <span property="foaf:surname">Darwin</span></span> and his mother <span about="#SusannahDarwin" property="rdf:label">Susannah Darwin</span></p>');
   var spans = $('#main > p span');
   var darwin = $("#main span:about('#CharlesRobertDarwin')");
+  debugger;
   equals(darwin.length, 3, "there should be three spans about #CharlesRobertDarwin");
   equals(darwin[0], spans[0]);
   equals(darwin[1], spans[1]);
