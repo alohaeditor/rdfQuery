@@ -60,30 +60,28 @@
 </div>
 */
 
-    getSubject = function (elem) {
+    getSubjectElem = function (elem) {
         var par = elem.parent();
-        if (par) {
+        if (par.length) {
             if (par.attr('itemscope')) {
-                //TODO!
                 return par;
             }
             else {
-                return getSubject(par);
+                return getSubjectElem(par);
             }
         }
         return undefined;
     },
     
-    microdata = function (elem) {
+    microdata = function (context) {
         var triples = [];
         
-        
         var subjElem;
-        if ($(elem).attr('itemscope')) {
+        if ($(this).attr('itemscope')) {
             //elem is a subject itself
-            subjElem = elem;
+            subjElem = this;
         } else {
-            subjElem = getSubject($(elem));
+            subjElem = getSubjectElem($(this));
         }
         
         var subjResource;
@@ -99,27 +97,26 @@
             return [];
         }
         
+        //TODO: implement me!
         
-
-        
-
-
         return triples;
     },
     
     gleaner = function (options) {
       
       if (options && options.about !== undefined) {
-        return false;
+          //TODO: implement me!
+          return false;
       } else if (options && options.type !== undefined) {
-        return false;
+          //TODO: implement me!
+          return false;
       } else {
         return microdata.call(this, options);
       }
     },
 
     addMicrodata = function (triple) {
-      return span;
+      return this;
     },
 
     removeMicrodata = function (what) {
@@ -184,6 +181,9 @@
     return this;
   };
 
-  $.rdf.gleaners.push(gleaner);
+  $.rdf.gleaners.push({
+      name: "microdata",
+      gleaner: gleaner
+  });
 
 })(jQuery);

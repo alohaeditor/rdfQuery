@@ -83,6 +83,9 @@
         }
     };
 
-    $.rdf.gleaners.push(gleaner);
+    $.rdf.gleaners.push({
+      name: "xfn.foaf",
+      gleaner: gleaner
+  });
 
 })(jQuery);
