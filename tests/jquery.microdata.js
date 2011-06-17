@@ -1,5 +1,5 @@
 /*
- * jquery.rdfa.js unit tests
+ * jquery.microdata.js unit tests
  */
 (function($){
 
@@ -17,8 +17,8 @@ var ns = { namespaces: {
   xmlns: 'http://www.w3.org/2000/xmlns/'
 }};
 
-function setup(rdfa) {
-	$('#main').html(rdfa);
+function setup(microdata) {
+    $('#main').html(microdata);
 };
 
 function testTriples (received, expected) {
@@ -46,32 +46,32 @@ module("Performance Tests");
 test("multiple elements with about and property attributes", function () {
   var i, main = $('#main');
   for (i = 0; i < 100; i += 1) {
-    main.append('<p about="bPerson' + i + '" property="foaf:name">Person ' + i + '</p>');
+    main.append('<p itemscope itemId="bPerson' + i + '" itemprop="name">Person ' + i + '</p>');
   }
   var t1 = new Date();
-  main.rdfa();
+  main.microdata();
   var t2 = new Date();
   var d = t2 - t1;
   ok(d < 1000, "it should parse in less than a second: " + d);
   $('#main > *').remove();
-  $('#main').removeData('rdfa.triples');
+  $('#main').removeData('microdata.triples');
 });
 
 test("multiple elements with about, rel and resource attributes", function () {
   var i, main = $('#main');
   for (i = 0; i < 100; i += 1) {
-    main.append('<p about="photo' + i + '.jpg" rel="foaf:depicts" resource="aPerson' + i + '">Paragraph ' + i + '</p>');
+    main.append('<p itemscope itemId="photo' + i + '.jpg" itemref="depicts" resource="aPerson' + i + '">Paragraph ' + i + '</p>');
   }
   var t1 = new Date();
-  main.rdfa();
+  main.microdata();
   var t2 = new Date();
   var d = t2 - t1;
   ok(d < 1000, "it should parse in less than a second: " + d);
   $('#main > *').remove();
-  $('#main').removeData('rdfa.triples');
+  $('#main').removeData('microdata.triples');
 });
 
-module("RDF Gleaner");
+module("Microdata Gleaner");
 
 test("Test 0001", function() {
 	setup('<p>This photo was taken by <span class="author" about="photo1.jpg" property="dc:creator">Mark Birbeck</span>.</p>');

@@ -505,11 +505,11 @@ test("Test 0014", function() {
 
 test("Test 0015", function() {
 	$('head').append('<link rel="dc:source" href="urn:isbn:0140449132" /><meta property="dc:creator" content="Fyodor Dostoevsky" />');
-	testTriples($('link[rel=dc:source]').rdfa(), 
+	testTriples($('link[rel="dc:source"]').rdfa(), 
 		[$.rdf.triple('<> dc:source <urn:isbn:0140449132> .', ns)]);
 	testTriples($('meta').rdfa(), 
 		[$.rdf.triple('<> dc:creator "Fyodor Dostoevsky"  .', ns)]);
-	$('link[rel=dc:source]').remove();
+	$('link[rel="dc:source"]').remove();
 	$('meta').remove();
 })
 
@@ -966,7 +966,7 @@ test("adding RDFa where the subject is a resource which is already referenced", 
   var a = $('#main > p > a');
   a.rdfa('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg> .');
   equals(a.attr('about'), 'photo1.jpg');
-  equals(a.attr('rel'), '');
+  equals(a.attr('rel'), undefined);
   equals(a.attr('rev'), 'foaf:img');
   equals(a.attr('href'), 'http://www.blogger.com/profile/1109404');
   equals(a.attr('resource'), undefined);

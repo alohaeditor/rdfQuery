@@ -154,7 +154,7 @@
         return bindings === null ? null : { bindings: bindings, triples: [triple] };
       });
     },
-
+    
     mergeMatches = function (existingMs, newMs, optional) {
       return $.map(existingMs, function (existingM, i) {
         var compatibleMs = $.map(newMs, function (newM) {
@@ -1120,10 +1120,12 @@
      *   });
      */
     sources: function () {
-      return $($.map(this.matches, function (match) {
-        // return an array-of-an-array because arrays automatically get expanded by $.map()
-        return [match.triples];
-      }));
+         
+            return $($.map(this.matches, 
+                function(match){
+                    // return an array-of-an-array because arrays automatically get expanded by $.map()
+                    return [match.triples.reverse()];
+                }));
     },
 
     /**
@@ -1617,7 +1619,9 @@
           rhash[r] = true;
         }
       }
-      return $.unique(triples);
+      return $.grep(triples,function(v,k) {
+                 return $.inArray(v,triples) === k;
+             }).reverse();
     },
 
     /**
