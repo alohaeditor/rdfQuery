@@ -30,22 +30,9 @@
         schema: "http://schema.org/"
     },
     
-    getSubjectElem = function (elem) {
-        var par = elem.parent();
-        if (par.length) {
-            if (par.attr('itemscope') !== undefined) {
-                return par;
-            }
-            else {
-                return getSubjectElem(par);
-            }
-        }
-        return undefined;
-    },
-    
     getSubjectFromElement = function () {
         if (this.attr('itemid')) {
-            return $.rdf.resource(this.attr('itemid'));
+            return $.rdf.resource('<' + this.attr('itemid') + '>');
         } else {
             return $.rdf.blank('[]');
         }
@@ -56,43 +43,102 @@
         if (type) {
             return $.rdf.resource('<' + type + '>');
         } else {
-            return $.rdf.resource('<http://www.w3.org/2002/07/owl#Thing>');
+      //TODO: implement me
+            return $.rdf.resource('<' + ns.schema + 'Thing>');
         }
     },
     
-   
-    
-    extractReferences = function (context) {
-        
+    getPropertyFromElement = function () {
+        var prop = this.attr('itemprop');
+        if (prop) {
+      //TODO: implement me
+            return $.rdf.resource('<' + ns.schema + prop + '>');
+        } 
+        return undefined;
     },
     
-    extractProps = function (context) {
-        var triples = [];
-        
-        if (!context) {
-            context =  {};
-        }
-        //there are two types of properties
-        // (1 - the easy ones): literals
-        if ($(this).attr('itemprop') !== undefined) {
-            if ($(this).attr('itemscope') === undefined) {
-                //TODO: implement me
-                
-                //traverse deeper in the hierarchy
-                var propertyTriples = $.map($(this).children(), function(elem) {
-                    return extractProps.call(elem);
-                });
-                triples = triples.concat(propertyTriples);
-            }
-            // (2 - the complex ones): resources
-            else {
-                //recursively call microdata to parse the triples
-                var resTriples = microdata.call(this);
-                triples = triples.concat(resTriples);
+    resolveURL = function (str) {
+      //TODO: implement me
+      return '<' + str + '>';  
+    },
+    
+    getValueFromElement = function () {
+        var tag = this.get(0).nodeName.toLowerCase();
+        var value;
+        if (tag === 'meta') {
+            return $.rdf.literal(this.attr('content') === undefined ? '""' : this.attr('content'));
+        } else if (tag === 'audio' || 
+            tag === 'embed' || 
+            tag === 'iframe' || 
+            tag === 'img' || 
+            tag === 'source' || 
+            tag === 'track' || 
+            tag === 'video') {
+                if (this.attr('src')) {
+                    return $.rdf.resource(resolveURL(this.attr('src')));
+                } else {
+                   return $.rdf.resource('<>');
+                }
+        } else if (tag === 'a' || 
+            tag === 'area' || 
+            tag === 'link') {
+                if (this.attr('href')) {
+                    return $.rdf.resource(resolveURL(this.attr('href')));
+                } else {
+                   return $.rdf.resource('<>');
+                }
+        } else if (tag === 'object') {
+                if (this.attr('data')) {
+                    return $.rdf.resource(resolveURL(this.attr('data')));
+                } else {
+                   return $.rdf.resource('<>');
+                }
+        } else if (tag === 'time' && this.attr('datetime') !== undefined) {
+           if (this.attr('datetime')) {
+                return $.rdf.literal('"' + this.attr('datetime') + '"');
+            } else {
+               return $.rdf.literal('""');
             }
         } else {
-            return [];
+            return $.rdf.literal('"' + this.text() + '"');
         }
+    },
+    
+    extractProperties = function (context) {
+        var triples = [];
+                
+        //there are two types of properties
+        // (1 - the easy ones): literals
+        var property = getPropertyFromElement.call(this);
+        if (property !== undefined) {
+            if (this.attr('itemscope') === undefined) {
+                var value = getValueFromElement.call(this);
+                
+                var triple = $.rdf.triple(
+                    context.subject,
+                    property,
+                    value, {namespaces: ns});
+                
+                triples.push(triple);
+            }
+            else {
+                // (2 - the more complex ones): resources
+                //recursively call extractResource to parse the triples
+                                
+                var res = extractResource.call(this, {
+                    subject: context.subject,
+                    property: property
+                });
+                triples = triples.concat(res.triples);
+                return triples;
+            }
+        }
+        
+        //search for children with properties
+        var propertyTriples = $.map(this.children(), function (elem) {
+            return extractProperties.call($(elem), context);
+        });
+        triples = triples.concat(propertyTriples);
         return triples;
     },
     
@@ -103,61 +149,79 @@
             context =  {};
         }
         
-        var subjResource;
-        if (this.attr('itemscope') !== undefined) {
-            subjResource = getSubjectFromElement.call(this);
+        var subject = getSubjectFromElement.call(this);
+        //add possible back-reference
+        if (context.subject && context.property) {
+            triples.push(
+                $.rdf.triple(
+                    context.subject, 
+                    context.property, 
+                    subject, {namespaces: ns}));
         }
-        
+       
+       
         //get type of element
+        var type = getTypeFromElement.call(this);
         triples.push(
                 $.rdf.triple(
-                    subjResource, 
+                    subject, 
                     $.rdf.type, 
-                    getTypeFromElement.call(this), {namespaces: ns})
-                );
-        
-        //query for referenced items and add triples recursively
-        if ($(this).attr('itemref')) {
-            var selector = $.map($(this).attr('itemref').split(" "), 
+                    type, {namespaces: ns}));
+       
+       //query for referenced items and add triples recursively
+        if (this.attr('itemref') !== undefined) {
+            var selector = $.map(this.attr('itemref').split(" "), 
             function (n, i) {
                 return "#" + n;
             })
             .join(", ");
-            var referencedResources = extractResource.call($(selector), {
-                subject: subjResource
+            var referencedProperties = extractProperties.call($(selector), {
+                subject: subject
             });
-            triples = triples.concat(referencedTriples);
+            triples = triples.concat(referencedProperties);
         }
-        
+               
         //parse children for properties (recursively)!
-        var propertyTriples = $.map($(this).children(), function (elem) {
-            return extractProps.call(elem, {subject: subjResource});
+        var propertyTriples = $.map(this.children(), function (elem) {
+            return extractProperties.call($(elem), {subject: subject});
         });
         triples = triples.concat(propertyTriples);
         
         return {
-            subject: subjResource,
             triples: triples
         };
     },
     
     microdata = function (context) {
-        var triples = extractResource.call($(this)).triples;
-        
-        console.log("[DEBUG]", "Extracted ", triples.length, " triple(s)!");
-        return triples;
+        //only call .microdata on an element with 'itemscope' attribute
+        if (this.attr('itemscope') === undefined) {
+            console.log("[DEBUG]", "No itemscope attribute found!");
+            return [];
+        }
+        else {
+            var triples = extractResource.call($(this)).triples;
+            console.log("[DEBUG]", "Extracted ", triples.length, " triple(s)!", triples);
+            return triples;
+        }
     },
     
     gleaner = function (options) {
-      
       if (options && options.about !== undefined) {
-          //TODO: implement me!
-          return false;
+          if (options.about === null) {
+              return this.attr('itemprop') !== undefined ||
+                     this.attr('itemref') !== undefined ||
+                     this.attr('itemtype') !== undefined;
+          } else {
+              return getSubjectFromElement.call(this) === options.about;
+          }
       } else if (options && options.type !== undefined) {
-          //TODO: implement me!
+          var type = getTypeFromElement.call(this);
+          if (type !== undefined) {
+              return options.type === null ? true : (type === options.type);
+          }
           return false;
       } else {
-        return microdata.call(this, options);
+          return microdata.call(this, options);
       }
     },
 

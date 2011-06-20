@@ -9,10 +9,11 @@ test("Simple parsing test!", function () {
 var main = $('<div itemscope>' +
  '  <p itemprop="a">1</p>' +
  '  <p itemprop="a">2</p>' +
+ '  <p itemprop="a">2</p>' +
  '  <p itemprop="b">test</p>' +
  '</div>');
-  var triples = main.microdata();
-  equals(triples.databank.size(), 4);
+  var rdf = main.microdata();
+  equals(rdf.databank.size(), 4);
 });
 
 test("Complex parsing test, based on http://schema.org", function () {
@@ -20,6 +21,8 @@ test("Complex parsing test, based on http://schema.org", function () {
   '<span itemprop="name">Jane Doe</span>' + 
   '<img src="http://www.example.com/janedoe.jpg" itemprop="image" />' + 
   '<span itemprop="jobTitle">Professor</span>' + 
+  '<span>This here is a dummy that should <b>not</b> get processed!</span>' +
+  '<span>This here is a <span itemprop="name">dummy</span> that should get processed!</span>' +
   '<div itemprop="address" itemscope itemtype="http://schema.org/PostalAddress">' + 
   '  <span itemprop="streetAddress">' + 
   '    20341 Whitworth Institute' + 
@@ -40,18 +43,18 @@ test("Complex parsing test, based on http://schema.org", function () {
   '<a href="www.xyz.edu/students/bobsmith.html" itemprop="colleagues">' + 
   '  Bob Smith</a>' + 
   '</div>');
-  var triples = main.microdata();
-  equals(triples.databank.size(), 5);
+  var rdf = main.microdata();
+  equals(rdf.databank.size(), 16);
 });
 
 test("Most-Complex parsing test", function () {
   var main = $('<div itemscope itemtype="http://example.org/Thing">' + 
   '<span itemprop="name">Jane Doe</span>' + 
   '<span itemprop="name">Jane Doe2</span>' + 
-  '<a href="http://example2.org/ itemprop="link>Jane Doe</a>' + 
+  '<a href="http://example2.org/sample.html" itemprop="link">Jane Doe</a>' + 
   '<img src="http://www.example.com/janedoe.jpg" itemprop="image" />' + 
-  '<div itemprop="something" itemscope itemtype="http://example.org/Thing2" itemid="#test">' +
-  '<figure itemscope itemtype="http://n.whatwg.org/work" itemref="licenses">' +
+  '<div itemprop="something" itemscope itemtype="http://example.org/Thing2" itemid="http://example.org/#test">' +
+  '<figure itemprop="work" itemscope itemtype="http://n.whatwg.org/work" itemref="licenses">' +
   ' <img itemprop="work" src="images/mailbox.jpeg" alt="Outside the house is a mailbox. It has a leaflet inside.">' +
   ' <figcaption itemprop="title">The mailbox.</figcaption>' +
   '</figure>' +
@@ -60,8 +63,8 @@ test("Most-Complex parsing test", function () {
   '<a itemprop="license" href="http://www.opensource.org/licenses/mit-license.php">MIT license</a>' +
   '.</p>' +
   '</div>');
-  var triples = main.microdata();
-  equals(triples.databank.size(), 5);
+  var rdf = main.microdata();
+  equals(rdf.databank.size(), 12);
 });
 
 
