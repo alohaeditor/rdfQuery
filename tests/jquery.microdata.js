@@ -3,6 +3,34 @@
  */
 (function($){
 
+
+
+function setup(microdata) {
+	$('#main').html(microdata);
+};
+
+function testTriples (received, expected) {
+	var i, triples = received.databank.triples();
+	equals(triples.length, expected.length, 'there should be ' + expected.length + ' triples');
+	if (triples.length >= expected.length) {
+  	for (i = 0; i < expected.length; i += 1) {
+  		equals(triples[i].toString(), expected[i].toString());
+  	}
+  	for (i; i < triples.length; i += 1) {
+  	  ok(false, 'also got ' + triples[i].toString());
+  	}
+	} else {
+  	for (i = 0; i < triples.length; i += 1) {
+  		equals(triples[i].toString(), expected[i].toString());
+  	}
+  	for (i; i < expected.length; i += 1) {
+  	  ok(false, 'did not get ' + expected[i].toString());
+  	}
+	}
+};
+
+
+
 module("Parsing Tests");
 
 test("Simple parsing test!", function () {
@@ -67,5 +95,66 @@ test("Most-Complex parsing test", function () {
   equals(rdf.databank.size(), 12);
 });
 
+module("Performance Tests");
+
+test("multiple elements with about and property attributes", function () {
+  var i, main = $('#main');
+  for (i = 0; i < 100; i += 1) {
+    main.append('<div itemscope itemtype="http://schema.org/Person">'+
+				'<p itemid="bPerson' + i + '" itemprop="name">Person ' + i + '</p></div>');
+  }
+  var t1 = new Date();
+  main.microdata();//????
+  var t2 = new Date();
+  var d = t2 - t1;
+  ok(d < 1000, "it should parse in less than a second: " + d);
+  $('#main > *').remove();
+  $('#main').removeData('microdata.triples');//????????????
+});
+
+test("multiple elements with about, rel and resource attributes", function () {
+  var i, main = $('#main');
+  for (i = 0; i < 100; i += 1) {
+    main.append('<div itemscope itemtype="http://schema.org/ImageObject">'+
+					'<p itemid="photo' + i + '.jpg" </p>'+
+					'<div itemprop="about" itemscope itemtype="http://schema.org/Person" '+
+					'itemref="aPerson' + i + '">Paragraph ' + i + '</div>'+
+				'</div>');
+  }
+  var t1 = new Date();
+  main.microdata();//?????
+  var t2 = new Date();
+  var d = t2 - t1;
+  ok(d < 1000, "it should parse in less than a second: " + d);
+  $('#main > *').remove();
+  $('#main').removeData('micordata.triples');//????????
+});
+
+module("RDF Gleaner");
+
+test("Test 0001", function() {
+	setup('<div itemscope itemtype="http://schema.org/ImageObject" itemref="photo1.jpg">'+
+			'<p>This photo was taken by '+
+			'<div  itemprop="author"  itemscope itemtype="http://schema.org/Person" itemprop="name">Mark Birbeck.</p></div>'+
+		'</div>');
+	testTriples($('#main > p > span').rdf(), 
+	            [$.rdf.triple('<photo1.jpg> dc:creator "Mark Birbeck" .', ns)]);//??????
+	$('#main > p').remove();
+});
+
+
+test("With a callback", function() {
+	setup('<div itemscope itemtype="http://schema.org/ImageObject">'+
+			'<p>This photo was taken by <a about="photo1.jpg" rel="dc:creator" rev="foaf:img" href="http://www.blogger.com/profile/1109404">Mark Birbeck</a>.</p></div>');
+	testTriples(
+	  $('#main > p > a').rdf(function () {
+  	  if (this.subject.value.toString() === 'http://www.blogger.com/profile/1109404') {
+  	    return this;
+  	  }
+  	}), 
+    [$.rdf.triple('<http://www.blogger.com/profile/1109404> foaf:img <photo1.jpg>', ns)]
+  );
+	$('#main > p').remove();
+});
 
 })(jQuery);
