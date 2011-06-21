@@ -57,6 +57,9 @@
             <fileset dir="." includes="jquery.datatype.js" />
             <fileset dir="." includes="jquery.curie.js" />
             <fileset dir="." includes="jquery.rdf.js" />
+            <fileset dir="." includes="jquery.rdf.json.js" />
+            <fileset dir="." includes="jquery.rdf.turle.js" />
+            <fileset dir="." includes="jquery.rdf.xml.js" />
         </concat>
         
         <echo message="Building rdfQuery RDFa Distribution" />
